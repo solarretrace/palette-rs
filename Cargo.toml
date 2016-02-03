@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Skylor R Schermer <skyschermer@gmail.com>"]
 
 [lib]
-name = "ramptools"
+name = "rampeditor"
 
 # The development profile, used for `cargo build`
 [profile.dev]

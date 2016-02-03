@@ -4,6 +4,14 @@
 		"selected_items":
 		[
 			[
+				"ramp",
+				"rampeditor::core::utilities::{clamped	(utilities.rs)"
+			],
+			[
+				"lo",
+				"lower_bound"
+			],
+			[
 				"column",
 				"columns_per_line"
 			],
@@ -506,14 +514,6 @@
 			[
 				"le",
 				"lex_pattern"
-			],
-			[
-				"page",
-				"page_position"
-			],
-			[
-				"str",
-				"stream_position"
 			]
 		]
 	},
@@ -523,15 +523,26 @@
 			"file": "src/main.rs",
 			"settings":
 			{
-				"buffer_size": 577,
+				"buffer_size": 1792,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "src/core/utilities.rs",
+			"contents": "// The MIT License (MIT)\n// \n// Copyright (c) 2016 Skylor R. Schermer\n// \n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n// \n// The above copyright notice and this permission notice shall be included in \n// all copies or substantial portions of the Software.\n// \n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n// SOFTWARE.\n\n//! Defines an element, which encapsulates the component of a Palette that is\n//! needed to provide a single color.\nuse super::color::Color;\n\nuse std::cell::RefCell;\nuse std::rc::Rc;\nuse std::fmt;\n\n\npub type PaletteElement<'P> Rc<RefCell<Element<'p>>>\n\n/// \npub enum ColorElement<'p> {\n	ZerothOrder {\n		color: Color\n	},\n	FirstOrder {\n		parent: Rc<RefCell<ColorElement<'p>>>, \n		build: Box<Fn(&ColorElement) -> Color>,\n	}\n}\n\nimpl<'p> ColorElement<'p> {\n	pub fn get_color(&self) -> Color {\n		match *self {\n			ColorElement::ZerothOrder {color} \n				=> color,\n			ColorElement::FirstOrder {ref parent, ref build} \n				=> build(&*parent.borrow()),\n		}\n	}\n}\n\nimpl<'p> fmt::Debug for ColorElement<'p> {\n	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {\n		match *self {\n			ColorElement::ZerothOrder {ref color} \n				=> write!(f, \"ColorElement::ZerothOrder({:?})\", color),\n			ColorElement::FirstOrder {ref parent, ref build} \n				=> write!(f, \"ColorElement::FirstOrder({:?})\", parent),\n		}\n	}\n}",
+			"file": "src/core/element.rs",
+			"file_size": 1920,
+			"file_write_time": 130989369870000000,
 			"settings":
 			{
-				"buffer_size": 885,
+				"buffer_size": 2151,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/core/palette.rs",
+			"settings":
+			{
+				"buffer_size": 2045,
 				"line_ending": "Unix"
 			}
 		},
@@ -539,7 +550,7 @@
 			"file": "src/core/mod.rs",
 			"settings":
 			{
-				"buffer_size": 94,
+				"buffer_size": 199,
 				"line_ending": "Unix"
 			}
 		},
@@ -555,7 +566,7 @@
 			"file": "Cargo.toml",
 			"settings":
 			{
-				"buffer_size": 1320,
+				"buffer_size": 1321,
 				"line_ending": "Unix"
 			}
 		}
@@ -807,10 +818,14 @@
 	],
 	"file_history":
 	[
+		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/core/color.rs",
+		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/core/address.rs",
+		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/core/utilities.rs",
+		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/.gitignore",
+		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/core/palette.rs",
 		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/element.rs",
 		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/palette.rs",
 		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/utilities.rs",
-		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/core/color.rs",
 		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/Cargo.toml",
 		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/color.rs",
 		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/address.rs",
@@ -930,11 +945,7 @@
 		"/Volumes/archive$/WOLTERLK/tagAllFiles.py",
 		"/Volumes/archive$/WOLTERLK/PilotCorpus2014/tagged/T-114-F12-6173569.txt",
 		"/Volumes/archive$/WOLTERLK/PilotCorpus2014/tagged/T-114-F12-5228517.txt",
-		"/Users/skyschermer/Documents/research/Wolter (Summer 2015)/test/T-114-F12-5898459.txt",
-		"/Users/skyschermer/Documents/research/Wolter (Summer 2015)/test/T-114-F12-6128460.txt",
-		"/Volumes/archive$/WOLTERLK/Summer 2014/temp/tagged/T-114-F12-5228517.txt",
-		"/Volumes/archive$/WOLTERLK/tagged/T-116-S13-5985967.txt",
-		"/Volumes/archive$/WOLTERLK/tagged/T-116-S14-6026742.txt"
+		"/Users/skyschermer/Documents/research/Wolter (Summer 2015)/test/T-114-F12-5898459.txt"
 	],
 	"find":
 	{
@@ -955,6 +966,11 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"Element",
+			"u16",
+			"ub",
+			"val",
+			"lb",
 			"fn",
 			"fn ",
 			"Cell::new",
@@ -1077,12 +1093,7 @@
 			" + _",
 			"G: fmt::Debug + fmt::Display{",
 			"G: fmt::Debug + fmt::Display {",
-			"G: fmt::Debug {",
-			"None",
-			"Rc::new(Token::new(",
-			"\",",
-			"lexer::Token::new(",
-			"G: Grammar"
+			"G: fmt::Debug {"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1122,7 +1133,7 @@
 	"groups":
 	[
 		{
-			"selected": 0,
+			"selected": 1,
 			"sheets":
 			[
 				{
@@ -1131,15 +1142,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 577,
+						"buffer_size": 1792,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								405,
-								405
+								1251,
+								1251
 							]
 						],
 						"settings":
@@ -1150,85 +1161,112 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "src/core/utilities.rs",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 885,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								491,
-								491
-							],
-							[
-								612,
-								612
-							]
-						],
-						"settings":
-						{
-							"WordCountShouldRun": true,
-							"WordCountSyntax": "rust",
-							"syntax": "Packages/Rust/Rust.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
-					"type": "text"
-				}
-			]
-		},
-		{
-			"selected": 1,
-			"sheets":
-			[
-				{
-					"buffer": 2,
-					"file": "src/core/mod.rs",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 94,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								19,
-								19
-							]
-						],
-						"settings":
-						{
-							"WordCountShouldRun": true,
-							"WordCountSyntax": "plain text",
-							"syntax": "Packages/Rust/Rust.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 213.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 2,
 					"type": "text"
 				},
 				{
+					"buffer": 1,
+					"file": "src/core/element.rs",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2151,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1401,
+								1401
+							]
+						],
+						"settings":
+						{
+							"WordCountShouldRun": true,
+							"WordCountSyntax": "rust",
+							"syntax": "Packages/Rust/Rust.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 187.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "src/core/palette.rs",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2045,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1336,
+								1360
+							]
+						],
+						"settings":
+						{
+							"WordCountShouldRun": true,
+							"WordCountSyntax": "rust",
+							"syntax": "Packages/Rust/Rust.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 351.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 2,
+			"sheets":
+			[
+				{
 					"buffer": 3,
+					"file": "src/core/mod.rs",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 199,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								79,
+								79
+							]
+						],
+						"settings":
+						{
+							"WordCountShouldRun": true,
+							"WordCountSyntax": "rust",
+							"syntax": "Packages/Rust/Rust.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
 					"file": "src/lib.rs",
 					"semi_transient": false,
 					"settings":
@@ -1247,31 +1285,31 @@
 						"settings":
 						{
 							"WordCountShouldRun": true,
-							"WordCountSyntax": "plain text",
+							"WordCountSyntax": "rust",
 							"syntax": "Packages/Rust/Rust.tmLanguage"
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 4,
 					"type": "text"
 				},
 				{
-					"buffer": 4,
+					"buffer": 5,
 					"file": "Cargo.toml",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1320,
+						"buffer_size": 1321,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								131,
-								131
+								132,
+								132
 							]
 						],
 						"settings":
@@ -1394,7 +1432,7 @@
 		],
 		"width": 392.0
 	},
-	"selected_group": 1,
+	"selected_group": 0,
 	"settings":
 	{
 	},

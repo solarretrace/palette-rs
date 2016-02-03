@@ -1,15 +1,46 @@
+// The MIT License (MIT)
+// 
+// Copyright (c) 2016 Skylor R. Schermer
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in 
+// all copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
+//! Provides a Page:Line:Column addressing object for organizing the palette.
 use std::fmt;
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Address
+////////////////////////////////////////////////////////////////////////////////
+/// Encapsulates a single address name.
 #[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Copy, Clone)]
-struct Address {
-	pub page: u16,
+pub struct Address {
+	/// The page of the Address.
+	pub page: u8,
+	/// The line of the Address.
 	pub line: u8,
+	/// The column of the Address.
 	pub column: u8,
 }
 
 impl Address {
-	fn new(page: u16, line: u8, column: u8) -> Self {
+	/// Creates a new Address.
+	pub fn new(page: u8, line: u8, column: u8) -> Self {
 		Address {
 			page: page,
 			line: line,
@@ -17,24 +48,44 @@ impl Address {
 		}
 	}
 
-	fn next(&self, lines_per_page: u8, columns_per_line: u8) {
+	/// Returns the next address, assuming the given wrapping parameters.
+	///
+	/// # Example
+	/// ```rust
+	/// # use rampeditor::core::address::Address;
+	/// let a = Address::new(0, 9, 9);
+	/// let b = a.wrapped_next(10, 10);
+	/// 
+	/// assert_eq!(b, Address::new(1, 0, 0));
+	/// ```
+	pub fn wrapped_next(
+		&self, 
+		lines_per_page: u8, 
+		columns_per_line: u8) 
+		-> Address 
+	{
 		let mut next = Address::new(
 			self.page,
 			self.line,
 			self.column.wrapping_add(1)
 		);
+		// Check for column wrap.
 		if next.column % columns_per_line == 0 { 
 			next.column = 0;
-			next.line.wrapping_add(1);
+			next.line = next.line.wrapping_add(1);
+			// Check for line wrap.
 			if next.line % lines_per_page == 0 {
 				next.line = 0;
-				next.page.wrapping_add(1);
+				next.page = next.page.wrapping_add(1);
+				// Check for page wrap.
 				if next.page == 0 {
 					panic!("Address.next called on maximum Address.");
 				}
 			}
 		}
+		next
 	}
+
 }
 
 impl fmt::Display for Address {
