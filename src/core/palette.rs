@@ -29,7 +29,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::fmt;
 use std::collections::BTreeMap;
-use std::collections::btree_map::{Iter, Keys};
+use std::collections::btree_map::{Iter, Keys, Values};
 
 
 const DEFAULT_COLUMN_WRAP: u8 = 16;
@@ -42,10 +42,8 @@ const DEFAULT_LINE_WRAP: u8 = 16;
 /// Encapsulates a single palette.
 #[derive(Debug)]
 pub struct Palette {
-	// The contents of the palette.
-	elements: Vec<PaletteElement>,
-	// A map associating addresses to indices into the elements vector.
-	address_map: BTreeMap<Address, usize>,
+	// A map associating addresses to elements of the palette.
+	address_map: BTreeMap<Address, PaletteElement>,
 	// The internal address cursor that is used to track the next available 
 	// address.
 	address_cursor: Select,
@@ -90,7 +88,6 @@ impl Palette {
     /// ```
 	pub fn with_wrapping(line_wrap: u8, column_wrap: u8) -> Self {
 		Palette {
-			elements: Vec::new(),
 			address_cursor: Select::All,
 			line_wrap: line_wrap,
 			column_wrap: column_wrap,
@@ -101,45 +98,61 @@ impl Palette {
 
 	/// Returns the number of colors in the Palette.
 	pub fn len(&self) -> usize {
-		self.elements.len()
+		self.address_map.len()
 	}
 
 	/// Returns the Color associated with the given index.
 	pub fn get_color(&self, address: Address) -> Option<Color> {
 		self.address_map
 			.get(&address)
-		    .map(|&i| self.elements[i].borrow().get_color())
+		    .map(|ref element| element.borrow().get_color())
 	}
 
-	/// Add the given color to the palette.
-	pub fn add_color(&mut self, color: Color) {
-		self.add_element(ColorElement::ZerothOrder{color: color});
+	/// Adds the given color to the palette and returns the address of its 
+	/// location.
+	pub fn add_color(&mut self, color: Color) -> Address {
+		let address = self.next_free_address_advance_cursor();
+		let element = Rc::new(RefCell::new(ColorElement::ZerothOrder {
+			color: color
+		}));
+		self.address_map.insert(address, element);
+
+		// Update the cursor.
+		self.address_cursor = address.wrapped_next(
+			self.line_wrap, 
+			self.column_wrap
+		).into();
+
+		address
 	}
 
 	/// Adds to the Palette a linearly interpolated RGB color ramp of the given 
 	/// length between the colors given by their indices in the palette.
 	pub fn add_ramp_between(
 		&mut self, 
-		start_index: usize, 
-		end_index: usize, 
+		start_address: Address, 
+		end_address: Address, 
 		length: u8)
 	{
 		// Return if ramp would have no colors.
-		if length == 0 || start_index == end_index {return;}
+		if length == 0 || start_address == end_address {return;}
 		for i in 0..length {
-			let p1 = self.get_element(start_index);
-			let p2 = self.get_element(end_index);
+			let p1 = self.address_map.get(&start_address).unwrap().clone();
+			let p2 = self.address_map.get(&end_address).unwrap().clone();
+			
 			// Compute distance between points for this element.
 			let factor = (i + 1) as f32 * (1.0 / (length + 1) as f32);
-			self.add_element(ColorElement::SecondOrder{
+
+			let address = self.next_free_address_advance_cursor();
+			let element = Rc::new(RefCell::new(ColorElement::SecondOrder{
 				build: Box::new(move |a, b| {
 					// Build color by doing lerp with computed factor.
 					lerp_rgb(a.get_color(), b.get_color(), factor)
 				}),
 				parents: (p1, p2)
-			});
+			}));
+			self.address_map.insert(address, element);
 		}
-
 	}
 
 	/// Returns an iterator over the (Address, Color) entries of the palette.
@@ -157,30 +170,8 @@ impl Palette {
 		AddressIterator::new(self)
 	}
 
-	/// Adds a new element to the palette.
-	fn add_element(&mut self, element: ColorElement) {
-		// Add element to the vector.
-		self.elements.push(Rc::new(RefCell::new(element)));
-		// Find next free address.
-		let next_address = self.next_free_address();
-		// Update the address map.
-		self.address_map.insert(
-			next_address, 
-			self.elements.len() -1
-		);
-		// Update the cursor.
-		self.address_cursor = next_address.wrapped_next(
-			self.line_wrap, 
-			self.column_wrap
-		).into();
-	}
 
-	/// Returns the element stored at the given index.
-	fn get_element(&self, index: usize) -> PaletteElement {
-		self.elements[index].clone()
-	}
-
-	/// Returns the next available address after the 
+	/// Returns the next available address after the cursor.
 	fn next_free_address(&self) -> Address {
 		let mut next_address = self.address_cursor.base_address();
 		while self.address_map.contains_key(&next_address) {
@@ -189,6 +180,18 @@ impl Palette {
 				self.column_wrap
 			);
 		}
+		next_address
+	}
+
+	/// Returns the next available address after the cursor, and also advances
+	/// the cursor to the next (wrapped) address.
+	fn next_free_address_advance_cursor(&mut self) -> Address {
+		let next_address = self.next_free_address();
+		// Update the cursor.
+		self.address_cursor = next_address.wrapped_next(
+			self.line_wrap, 
+			self.column_wrap
+		).into();
 		next_address
 	}
 }
@@ -202,17 +205,16 @@ impl fmt::Display for Palette {
 			self.address_cursor
 		));
 
-		for address in self.addresses() {
-			let index = *self.address_map.get(&address).unwrap();
-			try!(write!(f, "\t{}\t{:?}\t\n",
+		for (&address, ref element) in self.address_map.iter() {
+			try!(write!(f, "\t{}\t{:?}\t{}\n",
 				address,
-				self.get_color(address)
-					.expect("address iterator color lookup"),
-				// match self.get_element(index) {
-				// 	ColorElement::ZerothOrder {color} => "0",
-				// 	ColorElement::FirstOrder {build, parent} => "1",
-				// 	ColorElement::SecondOrder {build, parents} => "2"
-				// }
+				element.borrow().get_color(),
+
+				match element.borrow() {
+					ColorElement::ZerothOrder {color} => "0",
+					ColorElement::FirstOrder {build, parent} => "1",
+					ColorElement::SecondOrder {build, parents} => "2"
+				}
 			));
 		}
 		Ok(())
@@ -225,17 +227,13 @@ impl fmt::Display for Palette {
 /// An iterator over the (Address, Color) entries of a palette. The entries are 
 /// returned in address order.
 pub struct PaletteIterator<'p> {
-	palette: &'p Palette,
-	inner: Iter<'p, Address, usize>
+	inner: Iter<'p, Address, PaletteElement>
 }
 
 
 impl<'p> PaletteIterator<'p> {
 	fn new(palette: &'p Palette) -> Self {
-		PaletteIterator {
-			palette: palette,
-			inner: palette.address_map.iter()
-		}
+		PaletteIterator {inner: palette.address_map.iter()}
 	}
 }
 
@@ -244,8 +242,8 @@ impl<'p> Iterator for PaletteIterator<'p> {
 	type Item = (Address, Color);
 
 	fn next(&mut self) -> Option<Self::Item> {
-		self.inner.next().map(|(&address, &i)| 
-			(address, (*self.palette.elements[i]).borrow().get_color())
+		self.inner.next().map(|(&address, ref element)| 
+			(address, element.borrow().get_color())
 		)
 	}
 }
@@ -257,13 +255,13 @@ impl<'p> Iterator for PaletteIterator<'p> {
 /// An iterator over the colors of a palette. The colors are returned in address 
 /// order.
 pub struct ColorIterator<'p> {
-	inner: PaletteIterator<'p>
+	inner: Values<'p, Address, PaletteElement>
 }
 
 
 impl<'p> ColorIterator<'p> {
 	fn new(palette: &'p Palette) -> Self {
-		ColorIterator {inner: PaletteIterator::new(palette)}
+		ColorIterator {inner: palette.address_map.values()}
 	}
 }
 
@@ -272,7 +270,7 @@ impl<'p> Iterator for ColorIterator<'p> {
 	type Item = Color;
 
 	fn next(&mut self) -> Option<Self::Item> {
-		self.inner.next().map(|(_, color)| color)
+		self.inner.next().map(|ref element| element.borrow().get_color())
 	}
 }
 
@@ -283,7 +281,7 @@ impl<'p> Iterator for ColorIterator<'p> {
 /// An iterator over the colors of a palette. The colors are returned in address 
 /// order.
 pub struct AddressIterator<'p> {
-	inner: Keys<'p, Address, usize>
+	inner: Keys<'p, Address, PaletteElement>
 }
 
 

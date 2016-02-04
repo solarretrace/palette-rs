@@ -31,10 +31,10 @@ fn main() {
 	let c2 = Color(188, 35, 123);
 	let c3 = Color(0, 0, 0);
 	let mut pal = Palette::new();
-	pal.add_color(c1);
+	let a1 = pal.add_color(c1);
 	pal.add_color(c2);
-	pal.add_color(c3);
-	pal.add_ramp_between(1, 2, 12);
+	let a2 = pal.add_color(c3);
+	pal.add_ramp_between(a1, a2, 12);
 	
 	println!("{}", &pal);
 }
