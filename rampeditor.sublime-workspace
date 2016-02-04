@@ -4,6 +4,10 @@
 		"selected_items":
 		[
 			[
+				"Palette",
+				"PaletteElement"
+			],
+			[
 				"ramp",
 				"rampeditor::core::utilities::{clamped	(utilities.rs)"
 			],
@@ -510,39 +514,46 @@
 			[
 				"lexer",
 				"lexer_flags"
-			],
-			[
-				"le",
-				"lex_pattern"
 			]
 		]
 	},
 	"buffers":
 	[
 		{
+			"contents": "// The MIT License (MIT)\n// \n// Copyright (c) 2016 Skylor R. Schermer\n// \n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n// \n// The above copyright notice and this permission notice shall be included in \n// all copies or substantial portions of the Software.\n// \n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n// SOFTWARE.\n\nextern crate rampeditor;\n\nuse rampeditor::core::color::Color;\nuse rampeditor::core::palette::Palette;\nuse rampeditor::core::element::{ColorElement};\n\nfn main() {\n	\n	let c1 = Color(34, 68, 122);\n	let c2 = Color(188, 35, 123);\n	let c3 = Color(0, 0, 0);\n	let mut pal = Palette::new();\n	\n	println!(\"{:?}\", pal);\n}\n",
 			"file": "src/main.rs",
+			"file_size": 1819,
+			"file_write_time": 130989433990000000,
 			"settings":
 			{
-				"buffer_size": 1792,
+				"buffer_size": 1460,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"contents": "// The MIT License (MIT)\n// \n// Copyright (c) 2016 Skylor R. Schermer\n// \n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n// \n// The above copyright notice and this permission notice shall be included in \n// all copies or substantial portions of the Software.\n// \n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n// SOFTWARE.\n\n//! Defines an element, which encapsulates the component of a Palette that is\n//! needed to provide a single color.\nuse super::color::Color;\n\nuse std::cell::RefCell;\nuse std::rc::Rc;\nuse std::fmt;\n\n\npub type PaletteElement<'P> Rc<RefCell<Element<'p>>>\n\n/// \npub enum ColorElement<'p> {\n	ZerothOrder {\n		color: Color\n	},\n	FirstOrder {\n		parent: Rc<RefCell<ColorElement<'p>>>, \n		build: Box<Fn(&ColorElement) -> Color>,\n	}\n}\n\nimpl<'p> ColorElement<'p> {\n	pub fn get_color(&self) -> Color {\n		match *self {\n			ColorElement::ZerothOrder {color} \n				=> color,\n			ColorElement::FirstOrder {ref parent, ref build} \n				=> build(&*parent.borrow()),\n		}\n	}\n}\n\nimpl<'p> fmt::Debug for ColorElement<'p> {\n	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {\n		match *self {\n			ColorElement::ZerothOrder {ref color} \n				=> write!(f, \"ColorElement::ZerothOrder({:?})\", color),\n			ColorElement::FirstOrder {ref parent, ref build} \n				=> write!(f, \"ColorElement::FirstOrder({:?})\", parent),\n		}\n	}\n}",
 			"file": "src/core/element.rs",
-			"file_size": 1920,
-			"file_write_time": 130989369870000000,
 			"settings":
 			{
-				"buffer_size": 2151,
+				"buffer_size": 3228,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "src/core/palette.rs",
+			"file": "src/core/address.rs",
 			"settings":
 			{
-				"buffer_size": 2045,
+				"buffer_size": 2906,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "// The MIT License (MIT)\n// \n// Copyright (c) 2016 Skylor R. Schermer\n// \n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n// \n// The above copyright notice and this permission notice shall be included in \n// all copies or substantial portions of the Software.\n// \n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n// SOFTWARE.\n\n//! Defines a structured Palette object for storing and generating colors.\nuse super::element::{ColorElement, PaletteElement};\nuse super::color::Color;\n\nuse std::cell::RefCell;\nuse std::rc::Rc;\nuse std::fmt;\n\n// use std::collections::BTreeMap;\n\n/// Encapsulates a single palette.\npub struct Palette<'p> {\n	elements: Vec<PaletteElement<'p>>\n}\n\n\nimpl<'p> Palette<'p> {\n	/// Constructs a new, empty Palette.\n	pub fn new() -> Palette<'p> {\n		Palette {elements: Vec::new()}\n	}\n\n	pub fn from_colors(colors)\n\n	/// Returns the Color associated with the given index.\n	pub fn get_color(&self, index: usize) -> Color {\n		self.elements[index].borrow().get_color()\n	}\n\n	/// Adds a new element to the palette.\n	fn add_element(&mut self, element: ColorElement<'p>) {\n		self.elements.push(Rc::new(RefCell::new(element)));\n	}\n\n	/// Returns the element stored at the given index.\n	fn get_element(&self, index: usize) -> PaletteElement<'p> {\n		self.elements[index].clone()\n	}\n\n\n\n}\n\nimpl<'p> fmt::Debug for Palette<'p> {\n	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {\n		try!(write!(f, \"Palette:\\n\"));\n		for ref elem in &self.elements {\n			try!(write!(f, \"\\t{:?} Color = {:?}\\n\", elem, elem.borrow().get_color()))\n		}\n		Ok(())\n	}\n}",
+			"file": "src/core/palette.rs",
+			"file_size": 2359,
+			"file_write_time": 130989444810000000,
+			"settings":
+			{
+				"buffer_size": 2380,
 				"line_ending": "Unix"
 			}
 		},
@@ -967,6 +978,8 @@
 		"find_history":
 		[
 			"Element",
+			"element",
+			"Element",
 			"u16",
 			"ub",
 			"val",
@@ -1091,9 +1104,7 @@
 			" + l",
 			" - _",
 			" + _",
-			"G: fmt::Debug + fmt::Display{",
-			"G: fmt::Debug + fmt::Display {",
-			"G: fmt::Debug {"
+			"G: fmt::Debug + fmt::Display{"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1133,7 +1144,7 @@
 	"groups":
 	[
 		{
-			"selected": 1,
+			"selected": 3,
 			"sheets":
 			[
 				{
@@ -1142,15 +1153,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1792,
+						"buffer_size": 1460,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1251,
-								1251
+								1431,
+								1431
 							]
 						],
 						"settings":
@@ -1161,10 +1172,10 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 213.0,
+						"translation.y": 248.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
@@ -1173,15 +1184,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2151,
+						"buffer_size": 3228,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1401,
-								1401
+								2024,
+								2024
 							]
 						],
 						"settings":
@@ -1192,27 +1203,57 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 187.0,
+						"translation.y": 136.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 2,
 					"type": "text"
 				},
 				{
 					"buffer": 2,
-					"file": "src/core/palette.rs",
+					"file": "src/core/address.rs",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2045,
+						"buffer_size": 2906,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1336,
-								1360
+								2868,
+								2868
+							]
+						],
+						"settings":
+						{
+							"WordCountSyntax": "rust",
+							"syntax": "Packages/Rust/Rust.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 232.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "src/core/palette.rs",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2380,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1649,
+								1649
 							]
 						],
 						"settings":
@@ -1223,10 +1264,10 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 351.0,
+						"translation.y": 366.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 0,
 					"type": "text"
 				}
 			]
@@ -1236,7 +1277,7 @@
 			"sheets":
 			[
 				{
-					"buffer": 3,
+					"buffer": 4,
 					"file": "src/core/mod.rs",
 					"semi_transient": false,
 					"settings":
@@ -1248,13 +1289,12 @@
 						"selection":
 						[
 							[
-								79,
-								79
+								121,
+								121
 							]
 						],
 						"settings":
 						{
-							"WordCountShouldRun": true,
 							"WordCountSyntax": "rust",
 							"syntax": "Packages/Rust/Rust.tmLanguage"
 						},
@@ -1262,11 +1302,11 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 5,
+					"stack_index": 6,
 					"type": "text"
 				},
 				{
-					"buffer": 4,
+					"buffer": 5,
 					"file": "src/lib.rs",
 					"semi_transient": false,
 					"settings":
@@ -1284,7 +1324,6 @@
 						],
 						"settings":
 						{
-							"WordCountShouldRun": true,
 							"WordCountSyntax": "rust",
 							"syntax": "Packages/Rust/Rust.tmLanguage"
 						},
@@ -1296,7 +1335,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 5,
+					"buffer": 6,
 					"file": "Cargo.toml",
 					"semi_transient": false,
 					"settings":
@@ -1308,13 +1347,12 @@
 						"selection":
 						[
 							[
-								132,
-								132
+								839,
+								839
 							]
 						],
 						"settings":
 						{
-							"WordCountShouldRun": true,
 							"WordCountSyntax": "toml",
 							"syntax": "Packages/TOML/TOML.tmLanguage"
 						},

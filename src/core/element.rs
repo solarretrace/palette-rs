@@ -32,6 +32,9 @@ use std::fmt;
 /// structures.
 pub type PaletteElement<'p> = Rc<RefCell<ColorElement<'p>>>;
 
+
+
+
 /// Encapsulates a Palette component for generating a single color.
 pub enum ColorElement<'p> {
 	/// An element with no dependencies. Generates the given color.
@@ -79,13 +82,21 @@ impl<'p> fmt::Debug for ColorElement<'p> {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
 		match *self {
 			ColorElement::ZerothOrder {ref color} 
-				=> write!(f, "ColorElement::ZerothOrder({:?})", color),
+				=> write!(f, 
+					"ColorElement::ZerothOrder {{ color: {:?} }}", 
+					color),
 
 			ColorElement::FirstOrder {build: ref _b, ref parent} 
-				=> write!(f, "ColorElement::FirstOrder({:?})", parent),
+				=> write!(f, 
+					"ColorElement::FirstOrder {{ parent: {:?}, build: {:?} }}", 
+					parent, 
+					self.get_color()),
 
 			ColorElement::SecondOrder {build: ref _b, ref parents} 	
-				=> write!(f, "ColorElement::FirstOrder({:?})", parents),
+				=> write!(f, 
+					"ColorElement::SecondOrder {{ parents: {:?}, build: {:?} }}", 
+					parents, 
+					self.get_color()),
 		}
 	}
 }

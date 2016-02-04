@@ -24,7 +24,6 @@ extern crate rampeditor;
 
 use rampeditor::core::color::Color;
 use rampeditor::core::palette::Palette;
-use rampeditor::core::element::{ColorElement};
 
 fn main() {
 	
@@ -32,17 +31,12 @@ fn main() {
 	let c2 = Color(188, 35, 123);
 	let c3 = Color(0, 0, 0);
 	let mut pal = Palette::new();
-	pal.add_element(ColorElement::ZerothOrder {color: c1});
-	pal.add_element(ColorElement::ZerothOrder {color: c2});
-	pal.add_element(ColorElement::ZerothOrder {color: c3});
-	let e = ColorElement::FirstOrder {
-		parent: pal.get_element(0),
-		build: Box::new(|elem| {
-			let c = elem.get_color();
-			Color(c.0 + 1, c.1 + 2, c.2 + 3)
-		})
-	};
-	pal.add_element(e);
+	pal.add_color(c1);
+	pal.add_color(c2);
+	pal.add_color(c3);
+	pal.add_ramp_between(1, 2, 12);
 	
-	println!("{:?}", pal);
+	for color in pal.iter() {
+		println!("{:?}", color);
+	}
 }
