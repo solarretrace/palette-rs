@@ -84,29 +84,19 @@ impl Address {
 		}
 		next
 	}
-
 }
 
 
 impl fmt::Display for Address {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		write!(f, 
-			"{}:{}:{}",
-			self.page,
-			self.line,
-			self.column
-		)
+		write!(f, "{}:{}:{}", self.page, self.line, self.column)
 	}
 }
 
 
 impl Into<Select> for Address {
 	fn into(self) -> Select {
-		Select::Address {
-			page: self.page,
-			line: self.line,
-			column: self.column
-		}
+		Select::Address(self)
 	}
 }
 
@@ -117,14 +107,7 @@ impl Into<Select> for Address {
 #[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Copy, Clone)]
 pub enum Select {
 	/// A single address selection.
-	Address {
-		/// The page of the selection.
-		page: u8, 
-		/// The line of the selection.
-		line: u8, 
-		/// The column of the selection.
-		column: u8
-	},
+	Address(Address),
 	/// A single line selection.
 	Line {
 		/// The page of the selection.
@@ -146,17 +129,10 @@ impl Select {
 	/// Returns the first address located within the selection.
 	pub fn base_address(&self) -> Address {
 		match *self {
-			Select::Address {page, line, column} 
-				=> Address::new(page, line, column),
-
-			Select::Line {page, line}
-				=> Address::new(page, line, 0),
-
-			Select::Page {page}
-				=> Address::new(page, 0, 0),
-
-			Select::All
-				=> Address::new(0, 0, 0),
+			Select::Address(addr) => addr,
+			Select::Line {page, line} => Address::new(page, line, 0),
+			Select::Page {page} => Address::new(page, 0, 0),
+			Select::All => Address::new(0, 0, 0),
 		}
 	}
 }
@@ -172,17 +148,10 @@ impl Into<Address> for Select {
 impl fmt::Display for Select {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
 		match *self {
-			Select::Address {page, line, column}
-				=> write!(f, "{}:{}:{}", page, line, column),
-
-			Select::Line {page, line}
-				=> write!(f, "{}:{}:*", page, line),
-
-			Select::Page {page}
-				=> write!(f, "{}:*:*", page),
-
-			Select::All
-				=> write!(f, "*:*:*", ),
+			Select::Address(addr) => write!(f, "{}", addr),
+			Select::Line {page, line} => write!(f, "{}:{}:*", page, line),
+			Select::Page {page} => write!(f, "{}:*:*", page),
+			Select::All => write!(f, "*:*:*", ),
 		}
 	}
 }

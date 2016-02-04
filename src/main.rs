@@ -36,7 +36,5 @@ fn main() {
 	pal.add_color(c3);
 	pal.add_ramp_between(1, 2, 12);
 	
-	for color in pal.iter() {
-		println!("{:?}", color);
-	}
+	println!("{}", &pal);
 }

@@ -31,17 +31,19 @@ use std::fmt;
 use std::collections::BTreeMap;
 use std::collections::btree_map::{Iter, Keys};
 
+
 const DEFAULT_COLUMN_WRAP: u8 = 16;
 const DEFAULT_LINE_WRAP: u8 = 16;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Palette
 ////////////////////////////////////////////////////////////////////////////////
 /// Encapsulates a single palette.
 #[derive(Debug)]
-pub struct Palette<'p> {
+pub struct Palette {
 	// The contents of the palette.
-	elements: Vec<PaletteElement<'p>>,
+	elements: Vec<PaletteElement>,
 	// A map associating addresses to indices into the elements vector.
 	address_map: BTreeMap<Address, usize>,
 	// The internal address cursor that is used to track the next available 
@@ -53,7 +55,7 @@ pub struct Palette<'p> {
 }
 
 
-impl<'p> Palette<'p> {
+impl Palette {
 	
 	/// Constructs a new, empty Palette.
 	pub fn new() -> Self {
@@ -141,22 +143,22 @@ impl<'p> Palette<'p> {
 	}
 
 	/// Returns an iterator over the (Address, Color) entries of the palette.
-	pub fn iter(&'p self) -> PaletteIterator<'p> {
+	pub fn iter(&self) -> PaletteIterator {
 		PaletteIterator::new(self)
 	}
 
 	/// Returns and iterator over the colors of the palette in address order.
-	pub fn colors(&'p self) -> ColorIterator<'p> {
+	pub fn colors(&self) -> ColorIterator {
 		ColorIterator::new(self)
 	}
 
 	/// Returns and iterator over the addresses of the palette in order.
-	pub fn addresses(&'p self) -> AddressIterator<'p> {
+	pub fn addresses(&self) -> AddressIterator {
 		AddressIterator::new(self)
 	}
 
 	/// Adds a new element to the palette.
-	fn add_element(&mut self, element: ColorElement<'p>) {
+	fn add_element(&mut self, element: ColorElement) {
 		// Add element to the vector.
 		self.elements.push(Rc::new(RefCell::new(element)));
 		// Find next free address.
@@ -174,7 +176,7 @@ impl<'p> Palette<'p> {
 	}
 
 	/// Returns the element stored at the given index.
-	fn get_element(&self, index: usize) -> PaletteElement<'p> {
+	fn get_element(&self, index: usize) -> PaletteElement {
 		self.elements[index].clone()
 	}
 
@@ -192,23 +194,30 @@ impl<'p> Palette<'p> {
 }
 
 
-// impl<'p> fmt::Display for Palette<'p> {
-// 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-// 		try!(write!(f, "Palette [wrap {}:{}] [select {}]",
-// 			self.line_wrap,
-// 			self.column_wrap,
-// 			self.address_cursor
-// 		));
+impl fmt::Display for Palette {
+	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+		try!(write!(f, "Palette [wrap {}:{}] [select {}]\n",
+			self.line_wrap,
+			self.column_wrap,
+			self.address_cursor
+		));
 
-// 		for address in self.addresses() {
-// 			try!(write!(f, "\t{}\t{:?}",
-// 				address,
-// 				self.get_color(address)
-// 			));
-// 		}
-// 		Ok(())
-// 	}
-// }
+		for address in self.addresses() {
+			let index = *self.address_map.get(&address).unwrap();
+			try!(write!(f, "\t{}\t{:?}\t\n",
+				address,
+				self.get_color(address)
+					.expect("address iterator color lookup"),
+				// match self.get_element(index) {
+				// 	ColorElement::ZerothOrder {color} => "0",
+				// 	ColorElement::FirstOrder {build, parent} => "1",
+				// 	ColorElement::SecondOrder {build, parents} => "2"
+				// }
+			));
+		}
+		Ok(())
+	}
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // PaletteIterator
@@ -216,13 +225,13 @@ impl<'p> Palette<'p> {
 /// An iterator over the (Address, Color) entries of a palette. The entries are 
 /// returned in address order.
 pub struct PaletteIterator<'p> {
-	palette: &'p Palette<'p>,
+	palette: &'p Palette,
 	inner: Iter<'p, Address, usize>
 }
 
 
 impl<'p> PaletteIterator<'p> {
-	fn new(palette: &'p Palette<'p>) -> Self {
+	fn new(palette: &'p Palette) -> Self {
 		PaletteIterator {
 			palette: palette,
 			inner: palette.address_map.iter()
@@ -253,7 +262,7 @@ pub struct ColorIterator<'p> {
 
 
 impl<'p> ColorIterator<'p> {
-	fn new(palette: &'p Palette<'p>) -> Self {
+	fn new(palette: &'p Palette) -> Self {
 		ColorIterator {inner: PaletteIterator::new(palette)}
 	}
 }
@@ -279,7 +288,7 @@ pub struct AddressIterator<'p> {
 
 
 impl<'p> AddressIterator<'p> {
-	fn new(palette: &'p Palette<'p>) -> Self {
+	fn new(palette: &'p Palette) -> Self {
 		AddressIterator {inner: palette.address_map.keys()}
 	}
 }
