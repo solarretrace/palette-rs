@@ -37,7 +37,10 @@ use std::u8;
 const DEFAULT_MAX_PAGE_COUNT: u8 = 32;
 const DEFAULT_COLUMN_WRAP: u8 = 16;
 const DEFAULT_LINE_WRAP: u8 = 16;
-const MAX_PALETTE_ELEMENT_COUNT: usize = (u8::MAX as usize * u8::MAX as usize * u8::MAX as usize);
+
+const MAX_PALETTE_ELEMENT_COUNT: usize = (
+	u8::MAX as usize * u8::MAX as usize * u8::MAX as usize
+);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Palette
@@ -61,8 +64,8 @@ pub struct Palette {
 impl Palette {
 	
 	/// Constructs a new, empty Palette.
-	pub fn new() -> Self { 
-		Default::default() 
+	pub fn new() -> Palette {
+		Default::default()
 	}
 
 
@@ -141,39 +144,40 @@ impl Palette {
 
 	/// Returns the next available address after the cursor.
 	fn next_free_address(&self) -> Result<Address, Error> {
-		let mut next_address = self.address_cursor.base_address();
-		while self.address_map.contains_key(&next_address) {
-			let res = next_address.wrapped_next(
+		let mut address = self.address_cursor.base_address();
+		while self.address_map.contains_key(&address) {
+			let res = address.wrapped_next(
 				self.line_wrap, 
 				self.column_wrap
 			);
+			// Check for addressing errors.
 			if res.is_err() {
-				return Err(self.get_wrap_error_type())
+				if self.address_map.len() < MAX_PALETTE_ELEMENT_COUNT {
+					return Err(Error::SetElementLimitExceeded);
+				} else {
+					return Err(Error::MaxElementLimitExceeded);
+				}
 			}
-			next_address = res.ok().unwrap();
+			address = res.ok().unwrap();
+			// Check for page limit errors.
+			if address.page > self.max_page_count {
+				return Err(Error::SetElementLimitExceeded)
+			}
 		}
-		Ok(next_address)
+		Ok(address)
 	}
 
 	/// Returns the next available address after the cursor, and also advances
 	/// the cursor to the next (wrapped) address.
 	fn next_free_address_advance_cursor(&mut self) -> Result<Address, Error> {
-		let next_address = try!(self.next_free_address());
+		let address = try!(self.next_free_address());
 		
 		// Update the cursor.
-		self.address_cursor = next_address.wrapped_next(
+		self.address_cursor = address.wrapped_next(
 			self.line_wrap, 
 			self.column_wrap
 		).unwrap_or(Default::default()).into();
-		Ok(next_address)
-	}
-
-	fn get_wrap_error_type(&self) -> Error {
-		if self.address_map.len() < MAX_PALETTE_ELEMENT_COUNT {
-			Error::SetElementLimitExceeded
-		} else {
-			Error::MaxElementLimitExceeded
-		}
+		Ok(address)
 	}
 }
 
@@ -327,4 +331,79 @@ impl error::Error for Error {
 		}
 	}
 	// fn cause(&self) -> Option<&Error> {None}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// PaletteBuilder
+////////////////////////////////////////////////////////////////////////////////
+/// Encapsulates the state of the palette during builder pattern construction.
+pub struct PaletteBuilder {
+	// The internal address cursor that is used to track the next available 
+	// address.
+	address_cursor: address::Select,
+	// The maximum page count allowed by the palette.
+	max_page_count: u8,
+	// The line and column wrapping to use when generating new addresses.
+	line_wrap: u8,
+	column_wrap: u8,
+}
+
+
+impl PaletteBuilder {
+	/// Starts building the palette with the default settings.
+	pub fn new() -> PaletteBuilder {
+		Default::default()
+	}
+
+	/// Sets the max page count.
+	pub fn with_max_page_count(mut self, max_page_count: u8) -> PaletteBuilder {
+		self.max_page_count = max_page_count;
+		self
+	}
+
+	/// Sets the line wrap for new elements.
+	pub fn with_line_wrap(mut self, line_wrap: u8) -> PaletteBuilder {
+		self.line_wrap = line_wrap;
+		self
+	}
+	
+	/// Sets the max page count.
+	pub fn with_column_wrap(mut self, column_wrap: u8) -> PaletteBuilder {
+		self.column_wrap = column_wrap;
+		self
+	}
+
+	/// Sets the starting address cursor.
+	pub fn with_starting_address_cursor(
+		mut self, 
+		address_cursor: address::Select) 
+		-> PaletteBuilder
+	{
+		self.address_cursor = address_cursor;
+		self
+	}
+	
+
+	/// Builds the palette and returns it.
+	pub fn build(self) -> Palette {
+		Palette {
+			address_cursor: self.address_cursor,
+			max_page_count: self.max_page_count,
+			line_wrap: self.line_wrap,
+			column_wrap: self.column_wrap,
+			address_map: BTreeMap::new(),
+		}
+	}
+}
+
+impl Default for PaletteBuilder {
+	fn default() -> Self {
+		PaletteBuilder {
+			address_cursor: address::Select::All,
+			max_page_count: DEFAULT_MAX_PAGE_COUNT,
+			line_wrap: DEFAULT_LINE_WRAP,
+			column_wrap: DEFAULT_COLUMN_WRAP,
+		}
+	}
 }
