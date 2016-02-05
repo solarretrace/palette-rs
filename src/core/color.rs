@@ -23,6 +23,7 @@
 //! Defines the color space that the Palette is compatable with.
 use super::utilities::lerp;
 
+use std::fmt;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Color
@@ -31,6 +32,23 @@ use super::utilities::lerp;
 #[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Copy, Clone)]
 pub struct Color(pub u8, pub u8, pub u8);
 
+impl fmt::Display for Color {
+	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+		write!(f, "{:?}", self)
+	}
+}
+
+impl fmt::UpperHex for Color {
+	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+		write!(f, "#{:02X}{:02X}{:02X}", self.0, self.1, self.2)
+	}
+}
+
+impl fmt::LowerHex for Color {
+	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+		write!(f, "#{:02x}{:02x}{:02x}", self.0, self.1, self.2)
+	}
+}
 
 /// Performs an rgb component-wise linear interpolation between the colors 
 /// `start` and `end`, returning the color located at the ratio given by 

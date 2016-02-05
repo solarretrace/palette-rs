@@ -199,14 +199,15 @@ impl Palette {
 
 impl fmt::Display for Palette {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		try!(write!(f, "Palette [wrap {}:{}] [select {}]\n",
+		try!(write!(f, "Palette [wrap {}:{}] [select {}]\n\
+			            \tAddress   Color    Order\n",
 			self.line_wrap,
 			self.column_wrap,
 			self.address_cursor
 		));
 
 		for (&address, ref element) in self.address_map.iter() {
-			try!(write!(f, "\t{}\t{:?}\t{}\n",
+			try!(write!(f, "\t{:X}  {:X}  {}\n",
 				address,
 				element.borrow().get_color(),
 				match &*element.borrow() {

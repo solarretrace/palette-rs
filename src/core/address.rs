@@ -94,6 +94,18 @@ impl fmt::Display for Address {
 }
 
 
+impl fmt::UpperHex for Address {
+	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+		write!(f, "{:02X}:{:02X}:{:02X}", self.page, self.line, self.column)
+	}
+}
+
+impl fmt::LowerHex for Address {
+	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+		write!(f, "{:02x}:{:02x}:{:02x}", self.page, self.line, self.column)
+	}
+}
+
 impl Into<Select> for Address {
 	fn into(self) -> Select {
 		Select::Address(self)
