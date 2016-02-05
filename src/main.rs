@@ -31,10 +31,10 @@ fn main() {
 	let c2 = Color(188, 35, 123);
 	let c3 = Color(0, 0, 0);
 	let mut pal = Palette::new();
-	let a1 = pal.add_color(c1);
-	pal.add_color(c2);
-	let a2 = pal.add_color(c3);
-	pal.add_ramp_between(a1, a2, 12);
+	let a1 = pal.add_color(c1).ok().expect("Add color failed.");
+	pal.add_color(c2).ok().expect("Add color failed.");
+	let a2 = pal.add_color(c3).ok().expect("Add color failed.");
+	pal.add_ramp_between(a1, a2, 12).expect("Add ramp failed.");
 	
 	println!("{}", &pal);
 }

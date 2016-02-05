@@ -100,3 +100,9 @@ impl fmt::Debug for ColorElement {
 		}
 	}
 }
+
+impl Default for ColorElement {
+	fn default() -> Self {
+		ColorElement::ZerothOrder {color: Default::default()}
+	}
+}

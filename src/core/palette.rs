@@ -32,11 +32,12 @@ use std::collections::BTreeMap;
 use std::collections::btree_map::{Iter, Keys, Values};
 use std::fmt;
 use std::error;
+use std::u8;
 
-const DEFAULT_MAX_PAGE_COUNT: u8 = 16;
+const DEFAULT_MAX_PAGE_COUNT: u8 = 32;
 const DEFAULT_COLUMN_WRAP: u8 = 16;
 const DEFAULT_LINE_WRAP: u8 = 16;
-
+const MAX_PALETTE_ELEMENT_COUNT: usize = (u8::MAX as usize * u8::MAX as usize * u8::MAX as usize);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Palette
@@ -60,44 +61,8 @@ pub struct Palette {
 impl Palette {
 	
 	/// Constructs a new, empty Palette.
-	pub fn new() -> Self {
-		Palette::with_wrapping(
-			DEFAULT_LINE_WRAP,
-			DEFAULT_COLUMN_WRAP
-		)
-	}
-
-	/// Constructs a new, empty Palette with the given values for line and 
-	/// column wrapping settings.
-	///
-    /// # Example
-    /// ```rust
-    /// # use rampeditor::core::palette::Palette;
-    /// # use rampeditor::core::color::Color;
-    /// # use rampeditor::core::address::Address;
-    /// // Create a palette that wraps at line 10 and column 4:
-    /// let mut pal = Palette::with_wrapping(10, 4);
-    ///
-    /// // Add many colors to the palette:
-    /// for i in 0..100 {
-    ///    pal.add_color(Color(i+1, 0, 0));
-    /// }	
-    ///
-    /// // The colors are placed in the appropriate places:
-    /// let a100 = Address::new(2, 4, 3); // 100th color halfway down 3rd page.
-    /// assert_eq!(pal.get_color(a100).unwrap(), Color(100, 0, 0));
-    ///
-    /// let a41 = Address::new(1, 0, 0); // 41st color on new page.
-    /// assert_eq!(pal.get_color(a41).unwrap(), Color(41, 0, 0));
-    /// ```
-	pub fn with_wrapping(line_wrap: u8, column_wrap: u8) -> Self {
-		Palette {
-			address_cursor: address::Select::All,
-			max_page_count: DEFAULT_MAX_PAGE_COUNT,
-			line_wrap: line_wrap,
-			column_wrap: column_wrap,
-			address_map: BTreeMap::new(),
-		}
+	pub fn new() -> Self { 
+		Default::default() 
 	}
 
 
@@ -115,20 +80,13 @@ impl Palette {
 
 	/// Adds the given color to the palette and returns the address of its 
 	/// location.
-	pub fn add_color(&mut self, color: Color) -> Address {
-		let address = self.next_free_address_advance_cursor();
+	pub fn add_color(&mut self, color: Color) -> Result<Address, Error> {
+		let address = try!(self.next_free_address_advance_cursor());
 		let element = Rc::new(RefCell::new(ColorElement::ZerothOrder {
 			color: color
 		}));
 		self.address_map.insert(address, element);
-
-		// Update the cursor.
-		self.address_cursor = address.wrapped_next(
-			self.line_wrap, 
-			self.column_wrap
-		).into();
-
-		address
+		Ok(address)
 	}
 
 	/// Adds to the Palette a linearly interpolated RGB color ramp of the given 
@@ -137,10 +95,14 @@ impl Palette {
 		&mut self, 
 		start_address: Address, 
 		end_address: Address, 
-		length: u8)
+		length: u8) 
+		-> Result<Address, Error>
 	{
 		// Return if ramp would have no colors.
-		if length == 0 || start_address == end_address {return;}
+		if length == 0 || start_address == end_address {
+			return Ok(end_address);
+		}
+		let mut address = start_address;
 		for i in 0..length {
 			let p1 = self.address_map.get(&start_address).unwrap().clone();
 			let p2 = self.address_map.get(&end_address).unwrap().clone();
@@ -148,7 +110,7 @@ impl Palette {
 			// Compute distance between points for this element.
 			let factor = (i + 1) as f32 * (1.0 / (length + 1) as f32);
 
-			let address = self.next_free_address_advance_cursor();
+			address = try!(self.next_free_address_advance_cursor());
 			let element = Rc::new(RefCell::new(ColorElement::SecondOrder{
 				build: Box::new(move |a, b| {
 					// Build color by doing lerp with computed factor.
@@ -158,6 +120,7 @@ impl Palette {
 			}));
 			self.address_map.insert(address, element);
 		}
+		Ok(address)
 	}
 
 	/// Returns an iterator over the (Address, Color) entries of the palette.
@@ -177,27 +140,40 @@ impl Palette {
 
 
 	/// Returns the next available address after the cursor.
-	fn next_free_address(&self) -> Address {
+	fn next_free_address(&self) -> Result<Address, Error> {
 		let mut next_address = self.address_cursor.base_address();
 		while self.address_map.contains_key(&next_address) {
-			next_address = next_address.wrapped_next(
+			let res = next_address.wrapped_next(
 				self.line_wrap, 
 				self.column_wrap
 			);
+			if res.is_err() {
+				return Err(self.get_wrap_error_type())
+			}
+			next_address = res.ok().unwrap();
 		}
-		next_address
+		Ok(next_address)
 	}
 
 	/// Returns the next available address after the cursor, and also advances
 	/// the cursor to the next (wrapped) address.
-	fn next_free_address_advance_cursor(&mut self) -> Address {
-		let next_address = self.next_free_address();
+	fn next_free_address_advance_cursor(&mut self) -> Result<Address, Error> {
+		let next_address = try!(self.next_free_address());
+		
 		// Update the cursor.
 		self.address_cursor = next_address.wrapped_next(
 			self.line_wrap, 
 			self.column_wrap
-		).into();
-		next_address
+		).unwrap_or(Default::default()).into();
+		Ok(next_address)
+	}
+
+	fn get_wrap_error_type(&self) -> Error {
+		if self.address_map.len() < MAX_PALETTE_ELEMENT_COUNT {
+			Error::SetElementLimitExceeded
+		} else {
+			Error::MaxElementLimitExceeded
+		}
 	}
 }
 
@@ -223,6 +199,18 @@ impl fmt::Display for Palette {
 			));
 		}
 		Ok(())
+	}
+}
+
+impl Default for Palette {
+	fn default() -> Self {
+		Palette {
+			address_cursor: address::Select::All,
+			max_page_count: DEFAULT_MAX_PAGE_COUNT,
+			line_wrap: DEFAULT_LINE_WRAP,
+			column_wrap: DEFAULT_COLUMN_WRAP,
+			address_map: BTreeMap::new(),
+		}
 	}
 }
 
@@ -339,13 +327,4 @@ impl error::Error for Error {
 		}
 	}
 	// fn cause(&self) -> Option<&Error> {None}
-}
-
-impl From<address::Error> for Error {
-	fn from(address_error: address::Error) -> Self {
-		match address_error {
-			address::Error::NoNextAddress 
-				=> Error::MaxElementLimitExceeded
-		}
-	}
 }

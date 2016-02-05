@@ -28,7 +28,7 @@ use std::error;
 // Address
 ////////////////////////////////////////////////////////////////////////////////
 /// Encapsulates a single address name.
-#[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone, Copy)]
+#[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone, Copy, Default)]
 pub struct Address {
 	/// The page of the Address.
 	pub page: u8,
@@ -62,7 +62,7 @@ impl Address {
 		&self, 
 		lines_per_page: u8, 
 		columns_per_line: u8) 
-		-> Address 
+		-> Result<Address, Error>
 	{
 		let mut next = Address::new(
 			self.page,
@@ -79,11 +79,11 @@ impl Address {
 				next.page = next.page.wrapping_add(1);
 				// Check for page wrap.
 				if next.page == 0 {
-					panic!("Address.next called on maximum Address.");
+					return Err(Error::NoNextAddress);
 				}
 			}
 		}
-		next
+		Ok(next)
 	}
 }
 

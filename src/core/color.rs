@@ -29,7 +29,7 @@ use std::fmt;
 // Color
 ////////////////////////////////////////////////////////////////////////////////
 /// Encapsulates a single RGB color.
-#[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Copy, Clone)]
+#[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Copy, Clone, Default)]
 pub struct Color(pub u8, pub u8, pub u8);
 
 impl fmt::Display for Color {
