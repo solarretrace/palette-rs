@@ -23,15 +23,17 @@
 //! Defines a structured Palette object for storing and generating colors.
 use super::element::{ColorElement, PaletteElement};
 use super::color::{Color, lerp_rgb};
-use super::address::{Address, Select};
+use super::address::Address;
+use super::address;
 
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::fmt;
 use std::collections::BTreeMap;
 use std::collections::btree_map::{Iter, Keys, Values};
+use std::fmt;
+use std::error;
 
-
+const DEFAULT_MAX_PAGE_COUNT: u8 = 16;
 const DEFAULT_COLUMN_WRAP: u8 = 16;
 const DEFAULT_LINE_WRAP: u8 = 16;
 
@@ -46,7 +48,9 @@ pub struct Palette {
 	address_map: BTreeMap<Address, PaletteElement>,
 	// The internal address cursor that is used to track the next available 
 	// address.
-	address_cursor: Select,
+	address_cursor: address::Select,
+	// The maximum page count allowed by the palette.
+	max_page_count: u8,
 	// The line and column wrapping to use when generating new addresses.
 	line_wrap: u8,
 	column_wrap: u8,
@@ -88,7 +92,8 @@ impl Palette {
     /// ```
 	pub fn with_wrapping(line_wrap: u8, column_wrap: u8) -> Self {
 		Palette {
-			address_cursor: Select::All,
+			address_cursor: address::Select::All,
+			max_page_count: DEFAULT_MAX_PAGE_COUNT,
 			line_wrap: line_wrap,
 			column_wrap: column_wrap,
 			address_map: BTreeMap::new(),
@@ -199,7 +204,7 @@ impl Palette {
 
 impl fmt::Display for Palette {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		try!(write!(f, "Palette [wrap {}:{}] [select {}]\n\
+		try!(write!(f, "Palette [wrap {}:{}] [address::select {}]\n\
 			            \tAddress   Color    Order\n",
 			self.line_wrap,
 			self.column_wrap,
@@ -297,5 +302,50 @@ impl<'p> Iterator for AddressIterator<'p> {
 
 	fn next(&mut self) -> Option<Self::Item> {
 		self.inner.next().map(|&address| address)
+	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Error
+////////////////////////////////////////////////////////////////////////////////
+/// Encapsulates errors associated with mutating palette operations.
+#[derive(Debug)]
+pub enum Error {
+	/// User attempted to add a color to the palette, but the current wrapping 
+	/// settings prevent adding the color within the defined ranges. (Overflow
+	/// is possible.)	
+	SetElementLimitExceeded,
+	/// User attempted to add a color to the palette, but the palette contains
+	/// the maximum number of elements already. (Overflow not possible.)
+	MaxElementLimitExceeded,
+}
+
+impl fmt::Display for Error {
+	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+		write!(f, "{}", error::Error::description(self))
+	}
+}
+
+impl error::Error for Error {
+	fn description(&self) -> &str {
+		match *self {
+			Error::SetElementLimitExceeded 
+				=> "maximum number of color elements for wrapping settings \
+					exceeded",
+
+			Error::MaxElementLimitExceeded
+				=> "maximum number of color elements for palette exceeded",
+		}
+	}
+	// fn cause(&self) -> Option<&Error> {None}
+}
+
+impl From<address::Error> for Error {
+	fn from(address_error: address::Error) -> Self {
+		match address_error {
+			address::Error::NoNextAddress 
+				=> Error::MaxElementLimitExceeded
+		}
 	}
 }

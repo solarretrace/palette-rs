@@ -22,6 +22,7 @@
 
 //! Provides a Page:Line:Column addressing object for organizing the palette.
 use std::fmt;
+use std::error;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Address
@@ -164,6 +165,32 @@ impl fmt::Display for Select {
 			Select::Line {page, line} => write!(f, "{}:{}:*", page, line),
 			Select::Page {page} => write!(f, "{}:*:*", page),
 			Select::All => write!(f, "*:*:*", ),
+		}
+	}
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Error
+////////////////////////////////////////////////////////////////////////////////
+/// Encapsulates address errors.
+#[derive(Debug)]
+pub enum Error {
+	/// User attempted to generate the next address at the maximum address.	
+	NoNextAddress
+}
+
+impl fmt::Display for Error {
+	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+		write!(f, "{}", error::Error::description(self))
+	}
+}
+
+impl error::Error for Error {
+	fn description(&self) -> &str {
+		match *self {
+			Error::NoNextAddress => "no next address",
 		}
 	}
 }
