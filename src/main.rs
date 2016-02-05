@@ -32,7 +32,7 @@ fn main() {
 	let c2 = Color(188, 35, 123);
 	let c3 = Color(0, 0, 0);
 	let mut pal = PaletteBuilder::new()
-		.with_column_wrap(6)
+		.with_column_count(6)
 		.build();
 
 

@@ -22,7 +22,6 @@
 
 //! Provides a Page:Line:Column addressing object for organizing the palette.
 use std::fmt;
-use std::error;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Address
@@ -60,9 +59,10 @@ impl Address {
 	/// ```
 	pub fn wrapped_next(
 		&self, 
-		lines_per_page: u8, 
-		columns_per_line: u8) 
-		-> Result<Address, Error>
+		pages: u8,
+		lines: u8, 
+		columns: u8) 
+		-> Address
 	{
 		let mut next = Address::new(
 			self.page,
@@ -70,20 +70,17 @@ impl Address {
 			self.column.wrapping_add(1)
 		);
 		// Check for column wrap.
-		if next.column % columns_per_line == 0 { 
+		if next.column % columns == 0 { 
 			next.column = 0;
 			next.line = next.line.wrapping_add(1);
 			// Check for line wrap.
-			if next.line % lines_per_page == 0 {
+			if next.line % lines == 0 {
 				next.line = 0;
 				next.page = next.page.wrapping_add(1);
-				// Check for page wrap.
-				if next.page == 0 {
-					return Err(Error::NoNextAddress);
-				}
+				if next.page >= pages {next.page = 0;}
 			}
 		}
-		Ok(next)
+		next
 	}
 }
 
@@ -165,32 +162,6 @@ impl fmt::Display for Select {
 			Select::Line {page, line} => write!(f, "{}:{}:*", page, line),
 			Select::Page {page} => write!(f, "{}:*:*", page),
 			Select::All => write!(f, "*:*:*", ),
-		}
-	}
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Error
-////////////////////////////////////////////////////////////////////////////////
-/// Encapsulates address errors.
-#[derive(Debug)]
-pub enum Error {
-	/// User attempted to generate the next address at the maximum address.	
-	NoNextAddress
-}
-
-impl fmt::Display for Error {
-	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		write!(f, "{}", error::Error::description(self))
-	}
-}
-
-impl error::Error for Error {
-	fn description(&self) -> &str {
-		match *self {
-			Error::NoNextAddress => "no next address",
 		}
 	}
 }
