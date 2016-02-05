@@ -27,7 +27,7 @@ use std::fmt;
 // Address
 ////////////////////////////////////////////////////////////////////////////////
 /// Encapsulates a single address name.
-#[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Copy, Clone)]
+#[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone, Copy)]
 pub struct Address {
 	/// The page of the Address.
 	pub page: u8,
@@ -104,7 +104,7 @@ impl Into<Select> for Address {
 // Select
 ////////////////////////////////////////////////////////////////////////////////
 /// Encapsulates the selection of a single address, line, page, or palette.
-#[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Copy, Clone)]
+#[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone, Copy)]
 pub enum Select {
 	/// A single address selection.
 	Address(Address),

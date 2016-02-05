@@ -86,13 +86,13 @@ impl fmt::Debug for ColorElement {
 					"ColorElement::ZerothOrder {{ color: {:?} }}", 
 					color),
 
-			ColorElement::FirstOrder {build: ref _b, ref parent} 
+			ColorElement::FirstOrder {ref parent, ..} 
 				=> write!(f, 
 					"ColorElement::FirstOrder {{ parent: {:?}, build: {:?} }}", 
 					parent, 
 					self.get_color()),
 
-			ColorElement::SecondOrder {build: ref _b, ref parents} 	
+			ColorElement::SecondOrder {ref parents, ..} 	
 				=> write!(f, 
 					"ColorElement::SecondOrder {{ parents: {:?}, build: {:?} }}", 
 					parents, 

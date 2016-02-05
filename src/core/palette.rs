@@ -209,11 +209,10 @@ impl fmt::Display for Palette {
 			try!(write!(f, "\t{}\t{:?}\t{}\n",
 				address,
 				element.borrow().get_color(),
-
-				match element.borrow() {
-					ColorElement::ZerothOrder {color} => "0",
-					ColorElement::FirstOrder {build, parent} => "1",
-					ColorElement::SecondOrder {build, parents} => "2"
+				match &*element.borrow() {
+					&ColorElement::ZerothOrder {..} => "0",
+					&ColorElement::FirstOrder {..} => "1",
+					&ColorElement::SecondOrder {..} => "2"
 				}
 			));
 		}
