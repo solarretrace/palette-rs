@@ -25,7 +25,7 @@ extern crate rampeditor;
 use rampeditor::Color;
 use rampeditor::PaletteBuilder;
 use rampeditor::Address;
-use rampeditor::palette::DefaultFormat;
+use rampeditor::palette;
 
 fn main() {
 	
@@ -33,7 +33,7 @@ fn main() {
 	let c2 = Color(188, 35, 123);
 	let c3 = Color(0, 0, 0);
 	let mut pal = PaletteBuilder::new()
-		.using_format(DefaultFormat::new())
+		.using_format(palette::SMALL_PALETTE)
 		.named("Test")
 		.create();
 	println!("{}", pal);
@@ -41,7 +41,7 @@ fn main() {
 	let a0 = pal.add_color(c1).ok().expect("add color");
 	let a1 = pal.add_color(c2).ok().expect("add color");
 	let a2 = pal.add_color(c3).ok().expect("add color");
-	pal.add_ramp_between(a0, a2, 2).expect("add ramp");
+	pal.add_ramp_between(a0, a2, 3).expect("add ramp");
 	pal.add_ramp_between(a1, Address::new(0,0,3), 2).expect("add ramp");
 	
 	println!("{}", pal);

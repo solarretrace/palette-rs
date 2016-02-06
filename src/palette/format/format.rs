@@ -23,11 +23,13 @@
 //! Provides common definitions for format specifiers.
 use palette::PaletteBuilder;
 
+use std::fmt;
+
 ////////////////////////////////////////////////////////////////////////////////
 // PaletteFormat
 ////////////////////////////////////////////////////////////////////////////////
 /// Specifies the interface for using a specific palette format.
-pub trait PaletteFormat {
+pub trait PaletteFormat : fmt::Debug {
 	/// Returns the name of the palette format.
 	fn get_name(&self) -> &'static str;
 
@@ -43,34 +45,32 @@ pub trait PaletteFormat {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// DefaultFormat
+// SmallPalette
 ////////////////////////////////////////////////////////////////////////////////
 /// The default palette format with no special configuration.
-pub struct DefaultFormat;
+pub struct SmallPalette;
+
+/// A reference to a small pallete PaletteFormat for configuring palettes.
+pub const SMALL_PALETTE: &'static SmallPalette = &SMALL_PALETTE_INSTANCE;
+const SMALL_PALETTE_INSTANCE: SmallPalette = SmallPalette;
 
 
-impl DefaultFormat {
-	/// Returns a new default palette format.
-	pub fn new() -> Self {
-		DefaultFormat
-	}
-}
-
-
-impl Default for DefaultFormat {
-	fn default() -> Self {
-		DefaultFormat
-	}
-}
-
-
-impl PaletteFormat for DefaultFormat {
-	fn get_name(&self) -> &'static str {"Default"}
+impl PaletteFormat for SmallPalette {
+	fn get_name(&self) -> &'static str {"SmallPalette"}
 	fn get_version(&self) -> (u8, u8, u8) {(0, 1, 0)}
 	fn configure(&self, builder: PaletteBuilder) -> PaletteBuilder {
 		builder
-			.with_page_count(32)
+			.with_page_count(8)
 			.with_line_count(16)
 			.with_column_count(16)
+	}
+}
+
+impl fmt::Debug for SmallPalette {
+	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+		write!(f, 
+			"SmallPalette{{ name: {:?}, version: {:?} }}", 
+			self.get_name(),
+			self.get_version())
 	}
 }

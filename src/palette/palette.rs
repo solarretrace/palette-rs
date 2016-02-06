@@ -49,6 +49,10 @@ pub const MAX_PALETTE_SIZE: usize = (
 /// Encapsulates a single palette.
 #[derive(Debug)]
 pub struct Palette {
+	/// The PaletteFormat used to configure the palette.
+	format_type: Option<&'static PaletteFormat>,
+	/// The version of the PaletteFormat used to configure the palette.
+	format_version: Option<(u8, u8, u8)>,
 	/// A map assigning addresses to palette slots.
 	data: BTreeMap<Address, PaletteSlot>,
 	/// Provided metadata for various parts of the palette.
@@ -296,29 +300,36 @@ impl Palette {
 
 impl fmt::Display for Palette {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		try!(write!(f, "Palette "));
+		try!(write!(f, "Palette"));
 		if let Some(data) = self.metadata.get(&address::Select::All) {
-			try!(write!(f, "{} ", data));
+			try!(write!(f, " {}\n", data));
 		}
-		try!(write!(f, "[{} pages] [wrap {}:{}] [address::select {}] \
-						[{} slots free]\n\
-			            \tAddress   Color    Order  Name\n",
+		if let Some(format) = self.format_type {
+			let version = format.get_version();
+			try!(write!(f, 
+				"[{} {}.{}.{}]", 
+				format.get_name(),
+				version.0,
+				version.1,
+				version.2));
+		}
+		try!(write!(f, 
+			" [{} pages] [wrap {}:{}] [address::select {}] \
+			[{} slots free]",
 			self.page_count,
 			self.line_count,
 			self.column_count,
 			self.address_cursor,
 			self.space_remaining()
 		));
+		
 
+		try!(write!(f, "\n\tAddress   Color    Order  Name\n"));
 		for (&address, ref slot) in self.data.iter() {
-			try!(write!(f, "\t{:X}  {:X}  {}      ",
+			try!(write!(f, "\t{:X}  {:X}  {:<5}  ",
 				address,
 				slot.borrow().get_color(),
-				match &*slot.borrow() {
-					&ColorElement::ZerothOrder {..} => "0",
-					&ColorElement::FirstOrder {..} => "1",
-					&ColorElement::SecondOrder {..} => "2",
-				}
+				slot.borrow().get_order()
 			));
 			if let Some(data) = self.metadata.get(&address.clone().into()) {
 				try!(write!(f, "{}\n", data));
@@ -335,15 +346,19 @@ impl fmt::Display for Palette {
 impl Default for Palette {
 	fn default() -> Self {
 		Palette {
+			format_type: None,
+			format_version: None,
+			data: BTreeMap::new(),
+			metadata: BTreeMap::new(),
 			address_cursor: address::Select::All,
 			page_count: u8::MAX,
 			line_count: u8::MAX,
 			column_count: u8::MAX,
-			data: BTreeMap::new(),
-			metadata: BTreeMap::new(),
 		}
 	}
 }
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // PaletteIterator
@@ -425,6 +440,126 @@ impl<'p> Iterator for AddressIterator<'p> {
 }
 
 
+
+////////////////////////////////////////////////////////////////////////////////
+// PaletteBuilder
+////////////////////////////////////////////////////////////////////////////////
+/// Encapsulates the state of the palette during builder pattern construction.
+pub struct PaletteBuilder {
+	/// The PaletteFormat used to configure the palette.
+	format_type: Option<&'static PaletteFormat>,
+	/// The version of the PaletteFormat used to configure the palette.
+	format_version: Option<(u8, u8, u8)>,
+	/// The internal address cursor that is used to track the next available 
+	/// address.
+	address_cursor: address::Select,
+	/// The number of pages in the palette.
+	page_count: u8,
+	/// The number of lines in each page.
+	line_count: u8,
+	/// The number of columns in each line.
+	column_count: u8,
+	/// The name of the palette.
+	palette_name: Option<String>,
+}
+
+
+impl PaletteBuilder {
+
+	/// Starts building the palette with the default settings.
+	pub fn new() -> PaletteBuilder {
+		Default::default()
+	}
+
+
+	/// Allows the given palette format specification to set the palette's 
+	/// properties.
+	pub fn using_format<T>(mut self, format: &'static T) -> PaletteBuilder 
+		where T: PaletteFormat 
+	{
+		self.format_type = Some(format);
+		self.format_version = Some(format.get_version());
+		format.configure(self)
+	}
+
+
+	/// Sets the palette name.
+	pub fn named<S>(mut self, palette_name: S) -> PaletteBuilder 
+		where S: Into<String>
+	{
+		self.palette_name = Some(palette_name.into());
+		self
+	}
+
+
+	/// Sets the max page count.
+	pub fn with_page_count(mut self, page_count: u8) -> PaletteBuilder {
+		self.page_count = page_count;
+		self
+	}
+
+
+	/// Sets the line wrap for new slots.
+	pub fn with_line_count(mut self, line_count: u8) -> PaletteBuilder {
+		self.line_count = line_count;
+		self
+	}
+	
+
+	/// Sets the max page count.
+	pub fn with_column_count(mut self, column_count: u8) -> PaletteBuilder {
+		self.column_count = column_count;
+		self
+	}
+
+
+	/// Sets the starting address cursor.
+	pub fn with_starting_address_cursor(
+		mut self, 
+		address_cursor: address::Select) 
+		-> PaletteBuilder
+	{
+		self.address_cursor = address_cursor;
+		self
+	}
+
+	
+	/// Builds the palette and returns it.
+	pub fn create(self) -> Palette {
+		let mut pal = Palette {
+			format_type: self.format_type,
+			format_version: self.format_version,
+			address_cursor: self.address_cursor,
+			page_count: self.page_count,
+			line_count: self.line_count,
+			column_count: self.column_count,
+			.. Default::default()
+		};
+
+		if let Some(name) = self.palette_name {
+			pal.metadata.insert(address::Select::All, Metadata::Name(name));
+		}
+		pal
+	}
+}
+
+
+impl Default for PaletteBuilder {
+	fn default() -> Self {
+		PaletteBuilder {
+			format_type: None,
+			format_version: None,
+			address_cursor: address::Select::All,
+			page_count: u8::MAX,
+			line_count: u8::MAX,
+			column_count: u8::MAX,
+			palette_name: None,
+		}
+	}
+}
+
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Error
 ////////////////////////////////////////////////////////////////////////////////
@@ -477,114 +612,6 @@ impl error::Error for Error {
 				=> "address provided is outside allowed range for palette",
 			Error::EmptyAddress(..)
 				=> "empty address provided to an operation requiring a color"
-		}
-	}
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-// PaletteBuilder
-////////////////////////////////////////////////////////////////////////////////
-/// Encapsulates the state of the palette during builder pattern construction.
-pub struct PaletteBuilder {
-	/// The internal address cursor that is used to track the next available 
-	/// address.
-	address_cursor: address::Select,
-	/// The number of pages in the palette.
-	page_count: u8,
-	/// The number of lines in each page.
-	line_count: u8,
-	/// The number of columns in each line.
-	column_count: u8,
-	/// The name of the palette.
-	palette_name: Option<String>,
-}
-
-
-impl PaletteBuilder {
-	/// Starts building the palette with the default settings.
-	pub fn new() -> PaletteBuilder {
-		Default::default()
-	}
-
-
-	/// Allows the given palette format specification to set the palette's 
-	/// properties.
-	pub fn using_format<T>(self, format: T) -> PaletteBuilder 
-		where T: PaletteFormat 
-	{
-		format.configure(self)
-	}
-
-
-	/// Sets the palette name.
-	pub fn named<S>(mut self, palette_name: S) -> PaletteBuilder 
-		where S: Into<String>
-	{
-		self.palette_name = Some(palette_name.into());
-		self
-	}
-
-
-	/// Sets the max page count.
-	pub fn with_page_count(mut self, page_count: u8) -> PaletteBuilder {
-		self.page_count = page_count;
-		self
-	}
-
-
-	/// Sets the line wrap for new slots.
-	pub fn with_line_count(mut self, line_count: u8) -> PaletteBuilder {
-		self.line_count = line_count;
-		self
-	}
-	
-
-	/// Sets the max page count.
-	pub fn with_column_count(mut self, column_count: u8) -> PaletteBuilder {
-		self.column_count = column_count;
-		self
-	}
-
-
-	/// Sets the starting address cursor.
-	pub fn with_starting_address_cursor(
-		mut self, 
-		address_cursor: address::Select) 
-		-> PaletteBuilder
-	{
-		self.address_cursor = address_cursor;
-		self
-	}
-
-	
-	/// Builds the palette and returns it.
-	pub fn create(self) -> Palette {
-		let mut pal = Palette {
-			address_cursor: self.address_cursor,
-			page_count: self.page_count,
-			line_count: self.line_count,
-			column_count: self.column_count,
-			.. Default::default()
-		};
-
-		if let Some(name) = self.palette_name {
-			pal.metadata.insert(address::Select::All, Metadata::Name(name));
-		}
-		pal
-	}
-}
-
-
-impl Default for PaletteBuilder {
-	fn default() -> Self {
-		PaletteBuilder {
-			address_cursor: address::Select::All,
-			page_count: u8::MAX,
-			line_count: u8::MAX,
-			column_count: u8::MAX,
-			palette_name: None,
 		}
 	}
 }
