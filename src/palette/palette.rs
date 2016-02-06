@@ -23,6 +23,7 @@
 //! Defines a structured Palette object for storing and generating colors.
 use super::element::{ColorElement, PaletteSlot};
 use super::metadata::Metadata;
+use super::format::{PaletteFormat};
 use color::{Color, lerp_rgb};
 use address::Address;
 use address;
@@ -35,13 +36,6 @@ use std::fmt;
 use std::error;
 use std::u8;
 use std::mem;
-
-/// Default page count for a new palette.
-pub const DEFAULT_PAGE_COUNT: u8 = 32;
-/// Default line count for a new palette.
-pub const DEFAULT_LINE_COUNT: u8 = 16;
-/// Default column count for a new palette.
-pub const DEFAULT_COLUMN_COUNT: u8 = 16;
 
 
 /// The upper limit on the number of colors that can be in a single palette.
@@ -342,9 +336,9 @@ impl Default for Palette {
 	fn default() -> Self {
 		Palette {
 			address_cursor: address::Select::All,
-			page_count: DEFAULT_PAGE_COUNT,
-			line_count: DEFAULT_LINE_COUNT,
-			column_count: DEFAULT_COLUMN_COUNT,
+			page_count: u8::MAX,
+			line_count: u8::MAX,
+			column_count: u8::MAX,
 			data: BTreeMap::new(),
 			metadata: BTreeMap::new(),
 		}
@@ -515,6 +509,15 @@ impl PaletteBuilder {
 	}
 
 
+	/// Allows the given palette format specification to set the palette's 
+	/// properties.
+	pub fn using_format<T>(self, format: T) -> PaletteBuilder 
+		where T: PaletteFormat 
+	{
+		format.configure(self)
+	}
+
+
 	/// Sets the palette name.
 	pub fn named<S>(mut self, palette_name: S) -> PaletteBuilder 
 		where S: Into<String>
@@ -578,9 +581,9 @@ impl Default for PaletteBuilder {
 	fn default() -> Self {
 		PaletteBuilder {
 			address_cursor: address::Select::All,
-			page_count: DEFAULT_PAGE_COUNT,
-			line_count: DEFAULT_LINE_COUNT,
-			column_count: DEFAULT_COLUMN_COUNT,
+			page_count: u8::MAX,
+			line_count: u8::MAX,
+			column_count: u8::MAX,
 			palette_name: None,
 		}
 	}

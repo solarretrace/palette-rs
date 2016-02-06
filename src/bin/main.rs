@@ -25,6 +25,7 @@ extern crate rampeditor;
 use rampeditor::Color;
 use rampeditor::PaletteBuilder;
 use rampeditor::Address;
+use rampeditor::palette::DefaultFormat;
 
 fn main() {
 	
@@ -32,6 +33,7 @@ fn main() {
 	let c2 = Color(188, 35, 123);
 	let c3 = Color(0, 0, 0);
 	let mut pal = PaletteBuilder::new()
+		.using_format(DefaultFormat::new())
 		.named("Test")
 		.create();
 	println!("{}", pal);
