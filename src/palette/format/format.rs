@@ -45,18 +45,18 @@ pub trait PaletteFormat : fmt::Debug {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// SmallPalette
+// SmallFormat
 ////////////////////////////////////////////////////////////////////////////////
 /// The default palette format with no special configuration.
-pub struct SmallPalette;
+pub struct SmallFormat;
 
 /// A reference to a small pallete PaletteFormat for configuring palettes.
-pub const SMALL_PALETTE: &'static SmallPalette = &SMALL_PALETTE_INSTANCE;
-const SMALL_PALETTE_INSTANCE: SmallPalette = SmallPalette;
+pub const SMALL_FORMAT: &'static SmallFormat = &SMALL_FORMAT_INSTANCE;
+const SMALL_FORMAT_INSTANCE: SmallFormat = SmallFormat;
 
 
-impl PaletteFormat for SmallPalette {
-	fn get_name(&self) -> &'static str {"SmallPalette"}
+impl PaletteFormat for SmallFormat {
+	fn get_name(&self) -> &'static str {"SmallFormat"}
 	fn get_version(&self) -> (u8, u8, u8) {(0, 1, 0)}
 	fn configure(&self, builder: PaletteBuilder) -> PaletteBuilder {
 		builder
@@ -66,10 +66,10 @@ impl PaletteFormat for SmallPalette {
 	}
 }
 
-impl fmt::Debug for SmallPalette {
+impl fmt::Debug for SmallFormat {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
 		write!(f, 
-			"SmallPalette{{ name: {:?}, version: {:?} }}", 
+			"SmallFormat{{ name: {:?}, version: {:?} }}", 
 			self.get_name(),
 			self.get_version())
 	}

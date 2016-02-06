@@ -29,26 +29,19 @@ use rampeditor::palette;
 
 fn main() {
 	
-	let c1 = Color(34, 68, 122);
-	let c2 = Color(188, 35, 123);
-	let c3 = Color(0, 0, 0);
 	let mut pal = PaletteBuilder::new()
-		.using_format(palette::SMALL_PALETTE)
-		.named("Test")
+		.using_format(palette::SMALL_FORMAT)
+		.named("Super Duper Palette")
 		.create();
-	println!("{}", pal);
-
-	let a0 = pal.add_color(c1).ok().expect("add color");
-	let a1 = pal.add_color(c2).ok().expect("add color");
-	let a2 = pal.add_color(c3).ok().expect("add color");
-	pal.add_ramp_between(a0, a2, 3).expect("add ramp");
-	pal.add_ramp_between(a1, Address::new(0,0,3), 2).expect("add ramp");
 	
+	let a1 = Address::new(1, 2, 3);
+	let a2 = Address::new(0, 1, 1);
+	pal.set_color(a1, Color(0, 0, 0)).ok().expect("add color to pal");
+	pal.set_color(a2, Color(123, 32, 200)).ok().expect("add color to pal");
+	pal.add_ramp_between(a1, a2, 14).ok().expect("add ramp to pal");
 	println!("{}", pal);
 
-	pal.fix_color(Address::new(0,0,4));
-	pal.set_color(a2, Color(45, 45, 0)).ok();
-
+	pal.set_color(a2, Color(255, 0, 255)).ok().expect("add color to pal");
 	println!("{}", pal);
 
 }

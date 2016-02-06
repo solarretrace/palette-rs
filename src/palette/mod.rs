@@ -14,4 +14,5 @@ pub mod format;
 
 pub use palette::palette::Palette;
 pub use palette::palette::PaletteBuilder;
-pub use palette::format::SMALL_PALETTE;
+pub use palette::format::SMALL_FORMAT;
+pub use palette::format::ZPL_FORMAT;

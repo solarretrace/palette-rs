@@ -9,3 +9,4 @@ pub mod format;
 pub mod zpl;
 
 pub use palette::format::format::*;
+pub use palette::format::zpl::*;

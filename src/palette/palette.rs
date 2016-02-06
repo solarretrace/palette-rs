@@ -81,8 +81,8 @@ impl Palette {
 		self.data.len()
 	}
 
-	/// Returns the Color associated with the given index, or None if there is 
-	/// no slot at the given address or the address is invalid.
+	/// Returns the color located at the given address, or None if there is no 
+	/// slot at the given address or the address is invalid.
 	pub fn get_color(&self, address: Address) -> Option<Color> {
 		self.data
 			.get(&address)
@@ -135,7 +135,7 @@ impl Palette {
 			if slot.borrow().get_order() != 0 {
 				let color = slot.borrow().get_color();
 				let new = ColorElement::ZerothOrder {color: color};
-				mem::replace(&mut *slot.borrow_mut(), new);
+				mem::replace(&mut*slot.borrow_mut(), new);
 				// TODO: Consider not discarding the old value here.
 			} 
 		} 
@@ -314,7 +314,7 @@ impl fmt::Display for Palette {
 				version.2));
 		}
 		try!(write!(f, 
-			" [{} pages] [wrap {}:{}] [address::select {}] \
+			" [{} pages] [wrap {}:{}] [cursor {}] \
 			[{} slots free]",
 			self.page_count,
 			self.line_count,
