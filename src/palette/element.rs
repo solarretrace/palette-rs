@@ -22,7 +22,7 @@
 
 //! Defines elements, which encapsulates the component of a Palette that is
 //! needed to provide a single color.
-use super::color::Color;
+use color::Color;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -73,6 +73,15 @@ impl ColorElement {
 
 			ColorElement::SecondOrder {ref build, ref parents}
 				=> build(&*parents.0.borrow(), &*parents.1.borrow())
+		}
+	}
+
+	/// Returns the element's dependency order.
+	pub fn get_order(&self) -> u8 {
+		match self {
+			&ColorElement::ZerothOrder {..} => 0,
+			&ColorElement::FirstOrder {..} => 1,
+			&ColorElement::SecondOrder {..} => 2
 		}
 	}
 }

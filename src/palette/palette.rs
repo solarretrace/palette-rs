@@ -22,9 +22,9 @@
 
 //! Defines a structured Palette object for storing and generating colors.
 use super::element::{ColorElement, PaletteElement};
-use super::color::{Color, lerp_rgb};
-use super::address::Address;
-use super::address;
+use color::{Color, lerp_rgb};
+use address::Address;
+use address;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -33,13 +33,18 @@ use std::collections::btree_map::{Iter, Keys, Values};
 use std::fmt;
 use std::error;
 use std::u8;
+use std::mem;
 
-const DEFAULT_PAGE_COUNT: u8 = 32;
-const DEFAULT_COLUMN_COUNT: u8 = 16;
-const DEFAULT_LINE_COUNT: u8 = 16;
+/// Default page count for a new palette.
+pub const DEFAULT_PAGE_COUNT: u8 = 32;
+/// Default line count for a new palette.
+pub const DEFAULT_LINE_COUNT: u8 = 16;
+/// Default column count for a new palette.
+pub const DEFAULT_COLUMN_COUNT: u8 = 16;
+
 
 /// The upper limit on the number of colors that can be in a single palette.
-pub const MAX_PALETTE_ELEMENT_COUNT: usize = (
+pub const MAX_PALETTE_SIZE: usize = (
 	u8::MAX as usize * u8::MAX as usize * u8::MAX as usize
 );
 
@@ -49,15 +54,16 @@ pub const MAX_PALETTE_ELEMENT_COUNT: usize = (
 /// Encapsulates a single palette.
 #[derive(Debug)]
 pub struct Palette {
-	// A map associating addresses to elements of the palette.
+	/// A map associating addresses to elements of the palette.
 	address_map: BTreeMap<Address, PaletteElement>,
-	// The internal address cursor that is used to track the next available 
-	// address.
+	/// The internal address cursor that is used to track the next available 
+	/// address.
 	address_cursor: address::Select,
-	// The maximum page count allowed by the palette.
+	/// The number of pages in the palette.
 	page_count: u8,
-	// The line and column wrapping to use when generating new addresses.
+	/// The number of lines in each page.
 	line_count: u8,
+	/// The number of columns in each line.
 	column_count: u8,
 }
 
@@ -86,11 +92,6 @@ impl Palette {
 	/// Adds the given color to the palette and returns the address of its 
 	/// location.
 	pub fn add_color(&mut self, color: Color) -> Result<Address, Error> {
-		// Check if there's enough space.
-		if self.space_remaining() == 0 {
-			return Err(self.get_overflow_error());
-		}
-
 		let address = try!(self.next_free_address_advance_cursor());
 		let element = Rc::new(RefCell::new(ColorElement::ZerothOrder {
 			color: color
@@ -105,22 +106,33 @@ impl Palette {
 	/// defined by the palette settings, an error will be returned. Otherwise, 
 	/// the replaced color will be returned, or None if a new element was 
 	/// created.
-	// pub fn set_color(
-	// 	&mut self, 
-	// 	address: Address, 
-	// 	color: Color) 
-	// 	-> Result<Option<Color>, Error>
-	// {
-	// 	if self.address_map.contains_key(&address) {
+	pub fn set_color(
+		&mut self, 
+		address: Address, 
+		color: Color) 
+		-> Result<Option<Color>, Error>
+	{
+		if let Some(element) = self.address_map.get(&address) {
+			if element.borrow().get_order() == 0 {
+				let new = ColorElement::ZerothOrder {color: color};
+				let old = mem::replace(&mut *element.borrow_mut(), new);
+				return Ok(Some(old.get_color()));
+			} 
+			return Err(Error::CannotSetDerivedColor);
+		} 
 
-	// 	}
-	// }
+		let element = Rc::new(RefCell::new(ColorElement::ZerothOrder {
+			color: color
+		}));
+		self.address_map.insert(address, element);
+		Ok(None)
+	}
 
 	/// Adds to the Palette a linearly interpolated RGB color ramp of the given 
 	/// length between the colors given by their indices in the palette. Returns
-	/// the end address if the length is 0 or  if the start and and addresses 
-	/// are the same. Returns an error if there is not enough space for the ramp
-	/// or if an invalid address is given.
+	/// the end address if the length is 0 or if the start and and addresses are
+	/// the same. Returns an error if there is not enough space for the ramp or
+	/// if an invalid address is given.
 	pub fn add_ramp_between(
 		&mut self, 
 		start_address: Address, 
@@ -134,8 +146,8 @@ impl Palette {
 		}
 
 		// Error if invalid addresses given.
-		if !self.address_is_valid(start_address) || 
-			!self.address_is_valid(end_address) 
+		if !self.valid_address(start_address) || 
+			!self.valid_address(end_address) 
 		{
 			return Err(Error::InvalidAddress);
 		}
@@ -147,8 +159,12 @@ impl Palette {
 
 		let mut address = start_address;
 		for i in 0..length {
-			let p1 = self.address_map.get(&start_address).unwrap().clone();
-			let p2 = self.address_map.get(&end_address).unwrap().clone();
+			let p1 = try!(self.address_map
+				.get(&start_address)
+				.ok_or(Error::EmptyAddress(start_address))).clone();
+			let p2 = try!(self.address_map
+				.get(&end_address)
+				.ok_or(Error::EmptyAddress(end_address))).clone();
 			
 			// Compute distance between points for this element.
 			let factor = (i + 1) as f32 * (1.0 / (length + 1) as f32);
@@ -218,20 +234,23 @@ impl Palette {
 
 	/// Returns whether the give address lies within the bounds defined by the 
 	/// wrapping and max page settings for the palette.
-	fn address_is_valid(&self, address: Address) -> bool {
+	fn valid_address(&self, address: Address) -> bool {
 		address.page <= self.page_count &&
 		address.line < self.line_count &&
 		address.column < self.column_count
 	}
 
+	/// Returns the upper bound on the number of elements storable in the 
+	/// palette.
+	fn size_bound(&self) -> usize {
+		self.page_count as usize * 
+		self.line_count as usize * 
+		self.column_count as usize
+	}
+
 	/// Returns the amount of room left in the palette.
 	fn space_remaining(&self) -> usize {
-		let palette_max =
-			self.page_count as usize * 
-			self.line_count as usize *
-			self.column_count as usize;
-
-		palette_max - self.address_map.len()
+		self.size_bound() - self.address_map.len()
 	}
 
 	/// Returns whether there are addresses that the palette considers invalid.
@@ -241,6 +260,7 @@ impl Palette {
 		self.page_count < u8::MAX
 	}
 
+	/// Returns the approprate error for an overflow condition.
 	fn get_overflow_error(&self) -> Error {
 		if self.overflow_possible() {
 			return Error::SetElementLimitExceeded;
@@ -253,11 +273,15 @@ impl Palette {
 
 impl fmt::Display for Palette {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		try!(write!(f, "Palette [wrap {}:{}] [address::select {}]\n\
+		try!(write!(f, "Palette [{} pages] [wrap {}:{}] [address::select {}] \
+						[{} slots free]\n\
 			            \tAddress   Color    Order\n",
+			self.page_count,
 			self.line_count,
 			self.column_count,
-			self.address_cursor
+			self.address_cursor,
+			self.space_remaining()
+
 		));
 
 		for (&address, ref element) in self.address_map.iter() {
@@ -385,11 +409,20 @@ pub enum Error {
 	/// An address was provided that lies outside of the range defined for the 
 	/// palette.
 	InvalidAddress,
+	/// An empty address was provided for an operation that requires a color.
+	EmptyAddress(Address)
 }
 
 impl fmt::Display for Error {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		write!(f, "{}", error::Error::description(self))
+		match *self {
+			Error::EmptyAddress(address) => write!(f, "{}: {}", 
+				error::Error::description(self), 
+				address
+			),
+
+			_ => write!(f, "{}", error::Error::description(self))
+		}
 	}
 }
 
@@ -405,10 +438,11 @@ impl error::Error for Error {
 				=> "cannot assign color to a location containing a derived \
 				    color value",
 			Error::InvalidAddress
-				=> "address provided is outside allowed range for palette"
+				=> "address provided is outside allowed range for palette",
+			Error::EmptyAddress(..)
+				=> "empty address provided to an operation requiring a color"
 		}
 	}
-	// fn cause(&self) -> Option<&Error> {None}
 }
 
 
@@ -418,13 +452,14 @@ impl error::Error for Error {
 ////////////////////////////////////////////////////////////////////////////////
 /// Encapsulates the state of the palette during builder pattern construction.
 pub struct PaletteBuilder {
-	// The internal address cursor that is used to track the next available 
-	// address.
+	/// The internal address cursor that is used to track the next available 
+	/// address.
 	address_cursor: address::Select,
-	// The maximum page count allowed by the palette.
+	/// The number of pages in the palette.
 	page_count: u8,
-	// The line and column wrapping to use when generating new addresses.
+	/// The number of lines in each page.
 	line_count: u8,
+	/// The number of columns in each line.
 	column_count: u8,
 }
 

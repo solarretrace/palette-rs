@@ -4,40 +4,152 @@
 		"selected_items":
 		[
 			[
-				"Palette",
-				"PaletteElement"
+				"page",
+				"page_count"
+			],
+			[
+				"ov",
+				"overflow_possible"
+			],
+			[
+				"spa",
+				"space_remaining"
+			],
+			[
+				"ad",
+				"address_is_valid"
+			],
+			[
+				"addre",
+				"address_map"
+			],
+			[
+				"wit",
+				"with_column_wrap	(palette.rs)"
+			],
+			[
+				"ra",
+				"rampeditor::core::address::Address	(address.rs)"
+			],
+			[
+				"address",
+				"address_cursor"
+			],
+			[
+				"Pale",
+				"PaletteBuilder"
+			],
+			[
+				"DEF",
+				"DEFAULT_COLUMN_WRAP"
+			],
+			[
+				"start",
+				"start_address"
+			],
+			[
+				"end",
+				"end_address"
+			],
+			[
+				"get",
+				"get_wrap_error_type"
+			],
+			[
+				"MAX",
+				"MAX_PALETTE_ELEMENT_COUNT"
+			],
+			[
+				"Se",
+				"SetElementLimitExceeded"
+			],
+			[
+				"No",
+				"NoNextAddress	(address.rs)"
+			],
+			[
+				"Addre",
+				"AddressError"
+			],
+			[
+				"de",
+				"description"
+			],
+			[
+				"max",
+				"max_page_count"
+			],
+			[
+				"Pal",
+				"PaletteOperationError"
+			],
+			[
+				"nex",
+				"next_free_address"
+			],
+			[
+				"ColorElement",
+				"ColorElement::ZerothOrder"
 			],
 			[
 				"ramp",
-				"rampeditor::core::utilities::{clamped	(utilities.rs)"
+				"rampeditor::core::address::Address	(address.rs)"
+			],
+			[
+				"LIN",
+				"DEFAULT_LINE_WRAP"
+			],
+			[
+				"new",
+				"new_with_wrapping"
+			],
+			[
+				"column",
+				"column_wrap"
+			],
+			[
+				"add",
+				"address_map"
+			],
+			[
+				"Palette",
+				"PaletteIterator"
+			],
+			[
+				"next",
+				"next_free_address"
+			],
+			[
+				"col",
+				"column_wrap"
+			],
+			[
+				"line",
+				"line_wrap"
+			],
+			[
+				"Address",
+				"Address::new(1"
+			],
+			[
+				"Color",
+				"ColorElement::ZerothOrder{color"
+			],
+			[
+				"COlor",
+				"ColorElement::ZerothOrder	(element.rs)"
 			],
 			[
 				"lo",
 				"lower_bound"
 			],
 			[
-				"column",
-				"columns_per_line"
-			],
-			[
-				"get",
-				"get_element"
-			],
-			[
 				"borrow",
 				"borrow_mut"
 			],
 			[
-				"start",
-				"startElem"
-			],
-			[
 				"con",
 				"contains_key"
-			],
-			[
-				"add",
-				"add_elements"
 			],
 			[
 				"error",
@@ -62,10 +174,6 @@
 			[
 				"strea",
 				"stream_position"
-			],
-			[
-				"line",
-				"line_advance_regex"
 			],
 			[
 				"cu",
@@ -172,16 +280,8 @@
 				"OpenParenthesis"
 			],
 			[
-				"next",
-				"next_op"
-			],
-			[
 				"lexem",
 				"lexeme_token"
-			],
-			[
-				"nex",
-				"next_token"
 			],
 			[
 				"parse",
@@ -282,10 +382,6 @@
 			[
 				"Ca",
 				"CalculatorTokens"
-			],
-			[
-				"new",
-				"newline	(span.rs)"
 			],
 			[
 				"shi",
@@ -408,10 +504,6 @@
 				"ExtraTokens	(parser.rs)"
 			],
 			[
-				"No",
-				"NothingToParse	(parser.rs)"
-			],
-			[
 				"Pare",
 				"ParseError"
 			],
@@ -422,138 +514,40 @@
 			[
 				"Pro",
 				"PromotedWarning"
-			],
-			[
-				"To",
-				"Token"
-			],
-			[
-				"St",
-				"String"
-			],
-			[
-				"Unre",
-				"UnrecognizedToken"
-			],
-			[
-				"STr",
-				"String"
-			],
-			[
-				"T",
-				"TokenTree"
-			],
-			[
-				"lef",
-				"left_denotations"
-			],
-			[
-				"Pea",
-				"PeekableTokenStream"
-			],
-			[
-				"Loo",
-				"LookaheadTokenStream	(lexer.rs)"
-			],
-			[
-				"tre",
-				"tree_print	(calculator.rs)"
-			],
-			[
-				"Ex",
-				"Expression"
-			],
-			[
-				"su",
-				"sub_expressions"
-			],
-			[
-				"Expression",
-				"ExpressionTree"
-			],
-			[
-				"unwrap",
-				"unwrap_or	(lexer.rs)"
-			],
-			[
-				"Integer",
-				"IntergerLiteral"
-			],
-			[
-				"Express",
-				"ExpressionTree"
-			],
-			[
-				"Expre",
-				"ExpressionTree"
-			],
-			[
-				"Tree",
-				"TreeDisplay"
-			],
-			[
-				"_in",
-				"_indent_to"
-			],
-			[
-				"fmt",
-				"fmt::Display	(calculator.rs)"
-			],
-			[
-				"Tre",
-				"TreeDisplay"
-			],
-			[
-				"no",
-				"node_string"
-			],
-			[
-				"Liter",
-				"LiteralExpression"
-			],
-			[
-				"lexer",
-				"lexer_flags"
 			]
 		]
 	},
 	"buffers":
 	[
 		{
-			"contents": "// The MIT License (MIT)\n// \n// Copyright (c) 2016 Skylor R. Schermer\n// \n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n// \n// The above copyright notice and this permission notice shall be included in \n// all copies or substantial portions of the Software.\n// \n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n// SOFTWARE.\n\nextern crate rampeditor;\n\nuse rampeditor::core::color::Color;\nuse rampeditor::core::palette::Palette;\nuse rampeditor::core::element::{ColorElement};\n\nfn main() {\n	\n	let c1 = Color(34, 68, 122);\n	let c2 = Color(188, 35, 123);\n	let c3 = Color(0, 0, 0);\n	let mut pal = Palette::new();\n	\n	println!(\"{:?}\", pal);\n}\n",
 			"file": "src/main.rs",
-			"file_size": 1819,
-			"file_write_time": 130989433990000000,
 			"settings":
 			{
-				"buffer_size": 1460,
+				"buffer_size": 1857,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "src/core/element.rs",
-			"settings":
-			{
-				"buffer_size": 3228,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/core/address.rs",
-			"settings":
-			{
-				"buffer_size": 2906,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"contents": "// The MIT License (MIT)\n// \n// Copyright (c) 2016 Skylor R. Schermer\n// \n// Permission is hereby granted, free of charge, to any person obtaining a copy\n// of this software and associated documentation files (the \"Software\"), to deal\n// in the Software without restriction, including without limitation the rights\n// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n// copies of the Software, and to permit persons to whom the Software is\n// furnished to do so, subject to the following conditions:\n// \n// The above copyright notice and this permission notice shall be included in \n// all copies or substantial portions of the Software.\n// \n// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n// SOFTWARE.\n\n//! Defines a structured Palette object for storing and generating colors.\nuse super::element::{ColorElement, PaletteElement};\nuse super::color::Color;\n\nuse std::cell::RefCell;\nuse std::rc::Rc;\nuse std::fmt;\n\n// use std::collections::BTreeMap;\n\n/// Encapsulates a single palette.\npub struct Palette<'p> {\n	elements: Vec<PaletteElement<'p>>\n}\n\n\nimpl<'p> Palette<'p> {\n	/// Constructs a new, empty Palette.\n	pub fn new() -> Palette<'p> {\n		Palette {elements: Vec::new()}\n	}\n\n	pub fn from_colors(colors)\n\n	/// Returns the Color associated with the given index.\n	pub fn get_color(&self, index: usize) -> Color {\n		self.elements[index].borrow().get_color()\n	}\n\n	/// Adds a new element to the palette.\n	fn add_element(&mut self, element: ColorElement<'p>) {\n		self.elements.push(Rc::new(RefCell::new(element)));\n	}\n\n	/// Returns the element stored at the given index.\n	fn get_element(&self, index: usize) -> PaletteElement<'p> {\n		self.elements[index].clone()\n	}\n\n\n\n}\n\nimpl<'p> fmt::Debug for Palette<'p> {\n	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {\n		try!(write!(f, \"Palette:\\n\"));\n		for ref elem in &self.elements {\n			try!(write!(f, \"\\t{:?} Color = {:?}\\n\", elem, elem.borrow().get_color()))\n		}\n		Ok(())\n	}\n}",
 			"file": "src/core/palette.rs",
-			"file_size": 2359,
-			"file_write_time": 130989444810000000,
 			"settings":
 			{
-				"buffer_size": 2380,
+				"buffer_size": 13423,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/core/operations.rs",
+			"settings":
+			{
+				"buffer_size": 218,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/core/builder.rs",
+			"settings":
+			{
+				"buffer_size": 3503,
 				"line_ending": "Unix"
 			}
 		},
@@ -561,7 +555,7 @@
 			"file": "src/core/mod.rs",
 			"settings":
 			{
-				"buffer_size": 199,
+				"buffer_size": 239,
 				"line_ending": "Unix"
 			}
 		},
@@ -829,8 +823,11 @@
 	],
 	"file_history":
 	[
+		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/core/element.rs",
 		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/core/color.rs",
 		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/core/address.rs",
+		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/core/palette/mod.rs",
+		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/core/builder",
 		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/core/utilities.rs",
 		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/.gitignore",
 		"/Users/skyschermer/Documents/development/repo/rampeditor-rs/src/core/palette.rs",
@@ -953,14 +950,11 @@
 		"/Users/skyschermer/Documents/research/Wolter (Summer 2015)/quote_extract.py",
 		"/Users/skyschermer/Documents/research/Wolter (Summer 2015)/uweclang/tools/docx.py",
 		"/Users/skyschermer/Documents/personal/gs_w_notes",
-		"/Volumes/archive$/WOLTERLK/tagAllFiles.py",
-		"/Volumes/archive$/WOLTERLK/PilotCorpus2014/tagged/T-114-F12-6173569.txt",
-		"/Volumes/archive$/WOLTERLK/PilotCorpus2014/tagged/T-114-F12-5228517.txt",
-		"/Users/skyschermer/Documents/research/Wolter (Summer 2015)/test/T-114-F12-5898459.txt"
+		"/Volumes/archive$/WOLTERLK/tagAllFiles.py"
 	],
 	"find":
 	{
-		"height": 25.0
+		"height": 37.0
 	},
 	"find_in_files":
 	{
@@ -977,6 +971,69 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			" failed",
+			"max_size",
+			"MAX_PALETTE_ELEMENT_COUNT",
+			"address_is_valid",
+			"columns_per_line",
+			"lines_per_page",
+			"column_wrap",
+			"wrap",
+			"line_wrap",
+			"max_page_count",
+			"column_wrap",
+			"max_page_count",
+			"next_address",
+			"res",
+			"Error",
+			"error",
+			"Error",
+			"error",
+			"Error",
+			"error",
+			"Error",
+			"error",
+			"Error",
+			"PaletteOperationError",
+			"AddressError",
+			"Select",
+			"AddressError",
+			"ColorLimitExceeded",
+			"index",
+			"elements",
+			"address",
+			"Address",
+			"RefCell",
+			"impl",
+			"ColorIterator",
+			"&'p",
+			"<'p>",
+			"'p",
+			"p",
+			"a",
+			"values",
+			"ColorIterator",
+			"PaletteIterator",
+			"=>",
+			"Select",
+			"{",
+			",",
+			"},",
+			"select",
+			"Select",
+			"select",
+			"Select",
+			"select",
+			"Select",
+			"SelectAddress",
+			"Select",
+			"select",
+			"Select",
+			"SelectAddress",
+			"select",
+			"Select",
+			"SelectAddress",
+			"Selector",
 			"Element",
 			"element",
 			"Element",
@@ -1041,70 +1098,7 @@
 			".token_type",
 			"after",
 			"G",
-			"Output = StreamPosition",
-			"StreamPosition",
-			"DocumentPosition) ->",
-			"Output = DocumentPosition;",
-			"StreamPosition) -> ",
-			"StreamPosition> for",
-			"utput = StreamPosition",
-			"to_string",
-			"nud",
-			"null",
-			"token_stream",
-			"LATS123",
-			"TokenStream<'a, G>",
-			"LookAheadTokenStream<'a, G>",
-			" TokenStream<'a, G>",
-			"TokenStream<'a, G>",
-			"self.iter.",
-			"LookAhead<I>",
-			"TokenStream<'a, G>::Item",
-			"TokenStream<'a, G>",
-			"TokenStream::Item",
-			"I::Item",
-			"iter",
-			"iter: I",
-			"T",
-			"t",
-			"ParseError<'a, G>",
-			"Lexeme<'a, G>",
-			"ParseError<'a, G>",
-			"<'a, G>",
-			"LexTree<'a, ",
-			"<'a, G>",
-			"G: TokenType",
-			"\";",
-			"];",
-			", r\"",
-			", \"",
-			", r",
-			"=> \"",
-			"<O>",
-			"Denotation",
-			"Rc::new(Token::new(",
-			"denotation",
-			"Denotation",
-			", None, None",
-			"impl<G>",
-			"Token<G>",
-			"G>",
-			"Lexeme<'a, G>",
-			"ption<Denotation>",
-			"Token<G>",
-			"CalculatorTokens",
-			"G",
-			"NEWLINE",
-			"document_pos",
-			"after",
-			"lin",
-			"col",
-			").saturating_add(",
-			" + ",
-			" + l",
-			" - _",
-			" + _",
-			"G: fmt::Debug + fmt::Display{"
+			"Output = StreamPosition"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1153,15 +1147,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1460,
+						"buffer_size": 1857,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1431,
-								1431
+								1243,
+								1243
 							]
 						],
 						"settings":
@@ -1172,88 +1166,27 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 248.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "src/core/element.rs",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 3228,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2024,
-								2024
-							]
-						],
-						"settings":
-						{
-							"WordCountShouldRun": true,
-							"WordCountSyntax": "rust",
-							"syntax": "Packages/Rust/Rust.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 136.0,
+						"translation.y": 170.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 2,
 					"type": "text"
 				},
 				{
-					"buffer": 2,
-					"file": "src/core/address.rs",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2906,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2868,
-								2868
-							]
-						],
-						"settings":
-						{
-							"WordCountSyntax": "rust",
-							"syntax": "Packages/Rust/Rust.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 232.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 5,
-					"type": "text"
-				},
-				{
-					"buffer": 3,
+					"buffer": 1,
 					"file": "src/core/palette.rs",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2380,
+						"buffer_size": 13423,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1649,
-								1649
+								1546,
+								1546
 							]
 						],
 						"settings":
@@ -1264,7 +1197,68 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 366.0,
+						"translation.y": 313.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "src/core/operations.rs",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 218,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								216,
+								216
+							]
+						],
+						"settings":
+						{
+							"WordCountShouldRun": true,
+							"WordCountSyntax": "rust",
+							"open_with_edit": true,
+							"syntax": "Packages/Rust/Rust.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "src/core/builder.rs",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3503,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1592,
+								1592
+							]
+						],
+						"settings":
+						{
+							"WordCountShouldRun": true,
+							"WordCountSyntax": "ruby on rails",
+							"syntax": "Packages/Rust/Rust.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 69.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -1273,7 +1267,7 @@
 			]
 		},
 		{
-			"selected": 2,
+			"selected": 0,
 			"sheets":
 			[
 				{
@@ -1282,27 +1276,28 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 199,
+						"buffer_size": 239,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								121,
-								121
+								198,
+								198
 							]
 						],
 						"settings":
 						{
+							"WordCountShouldRun": true,
 							"WordCountSyntax": "rust",
 							"syntax": "Packages/Rust/Rust.tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 1.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 6,
+					"stack_index": 3,
 					"type": "text"
 				},
 				{
@@ -1324,6 +1319,7 @@
 						],
 						"settings":
 						{
+							"WordCountShouldRun": true,
 							"WordCountSyntax": "rust",
 							"syntax": "Packages/Rust/Rust.tmLanguage"
 						},
@@ -1331,7 +1327,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 4,
+					"stack_index": 5,
 					"type": "text"
 				},
 				{
@@ -1353,6 +1349,7 @@
 						],
 						"settings":
 						{
+							"WordCountShouldRun": true,
 							"WordCountSyntax": "toml",
 							"syntax": "Packages/TOML/TOML.tmLanguage"
 						},
@@ -1360,7 +1357,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
+					"stack_index": 6,
 					"type": "text"
 				}
 			]

@@ -22,9 +22,9 @@
 
 extern crate rampeditor;
 
-use rampeditor::core::color::Color;
-use rampeditor::core::palette::PaletteBuilder;
-use rampeditor::core::address::Address;
+use rampeditor::Color;
+use rampeditor::PaletteBuilder;
+use rampeditor::Address;
 
 fn main() {
 	
@@ -36,12 +36,16 @@ fn main() {
 		.build();
 
 
-	let a0 = pal.add_color(c1).ok().expect("Add color failed.");
-	let a1 = pal.add_color(c2).ok().expect("Add color failed.");
-	let a2 = pal.add_color(c3).ok().expect("Add color failed.");
-	pal.add_ramp_between(a0, a2, 6).expect("Add ramp failed.");
-	pal.add_ramp_between(a1, Address::new(0,0,5), 6).expect("Add ramp failed.");
-	
+	let a0 = pal.add_color(c1).ok().expect("add color");
+	let a1 = pal.add_color(c2).ok().expect("add color");
+	let a2 = pal.add_color(c3).ok().expect("add color");
+	pal.add_ramp_between(a0, a2, 2).expect("add ramp");
+	pal.add_ramp_between(a1, Address::new(0,0,3), 2).expect("add ramp");
+
+	println!("{}", &pal);
+
+	pal.set_color(a2, Color(45, 45, 0)).ok();
+
 	println!("{}", &pal);
 
 
