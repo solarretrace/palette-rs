@@ -29,8 +29,8 @@ use std::rc::Rc;
 use std::fmt;
 
 /// A wrapper for ColorElement to enable building them into mutable tree 
-/// structures.
-pub type PaletteElement = Rc<RefCell<ColorElement>>;
+/// structures. Acts as a slot for a color element in the palette.
+pub type PaletteSlot = Rc<RefCell<ColorElement>>;
 
 
 
@@ -47,16 +47,16 @@ pub enum ColorElement {
 	FirstOrder {
 		/// The function that builds the color from its dependencies.
 		build: Box<Fn(&ColorElement) -> Color>,
-		/// The PaletteElement to use for building a color.
-		parent: PaletteElement,
+		/// The PaletteSlot to use for building a color.
+		parent: PaletteSlot,
 	},
 
 	/// An element with two dependencies. Generates a color from two others.
 	SecondOrder {
 		/// The function that builds the color from its dependencies.
 		build: Box<Fn(&ColorElement, &ColorElement) -> Color>,
-		/// The PaletteElements to use for building a color.
-		parents: (PaletteElement, PaletteElement),
+		/// The PaletteSlots to use for building a color.
+		parents: (PaletteSlot, PaletteSlot),
 	},
 }
 

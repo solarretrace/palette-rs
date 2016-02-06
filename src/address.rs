@@ -51,9 +51,9 @@ impl Address {
 	///
 	/// # Example
 	/// ```rust
-	/// # use rampeditor::core::address::Address;
+	/// # use rampeditor::Address;
 	/// let a = Address::new(0, 9, 9);
-	/// let b = a.wrapped_next(10, 10);
+	/// let b = a.wrapped_next(10, 10, 10);
 	/// 
 	/// assert_eq!(b, Address::new(1, 0, 0));
 	/// ```
@@ -98,17 +98,26 @@ impl fmt::UpperHex for Address {
 	}
 }
 
+
 impl fmt::LowerHex for Address {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
 		write!(f, "{:02x}:{:02x}:{:02x}", self.page, self.line, self.column)
 	}
 }
 
+
 impl Into<Select> for Address {
 	fn into(self) -> Select {
 		Select::Address(self)
 	}
 }
+
+impl<'a> Into<Select> for &'a Address {
+	fn into(self) -> Select {
+		Select::Address(*self)
+	}
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Select

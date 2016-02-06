@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 //! Defines the color space that the Palette is compatable with.
-use super::utilities::lerp;
+use utilities::lerp;
 
 use std::fmt;
 
@@ -57,7 +57,7 @@ impl fmt::LowerHex for Color {
 /// # Examples
 ///
 /// ```rust
-/// # use rampeditor::core::color::{Color, lerp_rgb};
+/// # use rampeditor::color::{Color, lerp_rgb};
 /// let c1 = Color(0, 10, 20);
 /// let c2 = Color(100, 0, 80);
 ///
@@ -66,7 +66,7 @@ impl fmt::LowerHex for Color {
 /// ```
 ///
 /// ```rust
-/// # use rampeditor::core::color::{Color, lerp_rgb};
+/// # use rampeditor::color::{Color, lerp_rgb};
 /// let c1 = Color(189, 44, 23);
 /// let c2 = Color(35, 255, 180);
 ///

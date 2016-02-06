@@ -48,7 +48,7 @@ pub fn nearly_equal(a: f32, b: f32) -> bool {
 /// # Examples
 ///
 /// ```rust
-/// # use rampeditor::core::utilities::{clamped, nearly_equal};
+/// # use rampeditor::utilities::{clamped, nearly_equal};
 /// let a = clamped(7.6, 4.3, 7.4);
 ///
 /// assert!(nearly_equal(a, 7.4));
@@ -72,14 +72,14 @@ pub fn clamped(value: f32, lower_bound: f32, upper_bound: f32) -> f32 {
 /// # Examples
 ///
 /// ```rust
-/// # use rampeditor::core::utilities::lerp;
+/// # use rampeditor::utilities::lerp;
 /// let a = lerp(50, 100, 0.5);
 ///
 /// assert_eq!(a, 75); // a is 50% between 50 and 100.
 /// ```
 ///
 /// ```rust
-/// # use rampeditor::core::utilities::lerp;
+/// # use rampeditor::utilities::lerp;
 /// let a = lerp(15, 5, 0.2);
 /// let b = lerp(5, 15, 0.8);
 ///

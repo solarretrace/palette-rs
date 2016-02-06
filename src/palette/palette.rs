@@ -21,7 +21,8 @@
 // SOFTWARE.
 
 //! Defines a structured Palette object for storing and generating colors.
-use super::element::{ColorElement, PaletteElement};
+use super::element::{ColorElement, PaletteSlot};
+use super::metadata::Metadata;
 use color::{Color, lerp_rgb};
 use address::Address;
 use address;
@@ -54,8 +55,10 @@ pub const MAX_PALETTE_SIZE: usize = (
 /// Encapsulates a single palette.
 #[derive(Debug)]
 pub struct Palette {
-	/// A map associating addresses to elements of the palette.
-	address_map: BTreeMap<Address, PaletteElement>,
+	/// A map assigning addresses to palette slots.
+	data: BTreeMap<Address, PaletteSlot>,
+	/// Provided metadata for various parts of the palette.
+	metadata: BTreeMap<address::Select, Metadata>,
 	/// The internal address cursor that is used to track the next available 
 	/// address.
 	address_cursor: address::Select,
@@ -75,57 +78,69 @@ impl Palette {
 		Default::default()
 	}
 
-
 	/// Returns the number of colors in the Palette.
 	pub fn len(&self) -> usize {
-		self.address_map.len()
+		self.data.len()
 	}
 
 	/// Returns the Color associated with the given index, or None if there is 
-	/// not element at the given address or the address is invalid.
+	/// no slot at the given address or the address is invalid.
 	pub fn get_color(&self, address: Address) -> Option<Color> {
-		self.address_map
+		self.data
 			.get(&address)
-		    .map(|ref element| element.borrow().get_color())
+		    .map(|ref slot| slot.borrow().get_color())
 	}
 
 	/// Adds the given color to the palette and returns the address of its 
 	/// location.
 	pub fn add_color(&mut self, color: Color) -> Result<Address, Error> {
 		let address = try!(self.next_free_address_advance_cursor());
-		let element = Rc::new(RefCell::new(ColorElement::ZerothOrder {
+		let slot = Rc::new(RefCell::new(ColorElement::ZerothOrder {
 			color: color
 		}));
-		self.address_map.insert(address, element);
+		self.data.insert(address, slot);
 		Ok(address)
 	}
 
-	/// Sets the element at the given address to the given color. If the address
-	/// is empty, a new element is created to hold it. If the target address 
+	/// Assigns the given color to the slot at the given address. If the address
+	/// is empty, a new slot is created to hold it. If the target address 
 	/// contains a derived color, or the given address lies outside the range 
 	/// defined by the palette settings, an error will be returned. Otherwise, 
-	/// the replaced color will be returned, or None if a new element was 
-	/// created.
+	/// the replaced color will be returned, or None if a new slot was created.
 	pub fn set_color(
 		&mut self, 
 		address: Address, 
 		color: Color) 
 		-> Result<Option<Color>, Error>
 	{
-		if let Some(element) = self.address_map.get(&address) {
-			if element.borrow().get_order() == 0 {
+		if let Some(slot) = self.data.get(&address) {
+			if slot.borrow().get_order() == 0 {
 				let new = ColorElement::ZerothOrder {color: color};
-				let old = mem::replace(&mut *element.borrow_mut(), new);
+				let old = mem::replace(&mut *slot.borrow_mut(), new);
 				return Ok(Some(old.get_color()));
 			} 
 			return Err(Error::CannotSetDerivedColor);
 		} 
 
-		let element = Rc::new(RefCell::new(ColorElement::ZerothOrder {
+		let slot = Rc::new(RefCell::new(ColorElement::ZerothOrder {
 			color: color
 		}));
-		self.address_map.insert(address, element);
+		self.data.insert(address, slot);
 		Ok(None)
+	}
+
+	/// Fixes a color so that it is not dependent on any other colors in the 
+	/// palette. This will allow the color to be set directly, but prevent it
+	/// from being updated by palette changes.
+	pub fn fix_color(&mut self, address: Address) {
+		if let Some(slot) = self.data.get(&address) {
+			if slot.borrow().get_order() != 0 {
+				let color = slot.borrow().get_color();
+				let new = ColorElement::ZerothOrder {color: color};
+				mem::replace(&mut *slot.borrow_mut(), new);
+				// TODO: Consider not discarding the old value here.
+			} 
+		} 
 	}
 
 	/// Adds to the Palette a linearly interpolated RGB color ramp of the given 
@@ -157,46 +172,55 @@ impl Palette {
 			return Ok(end_address);
 		}
 
+		// Get reference to the start slot.
+		let p1 = try!(self.get_slot(&start_address)).clone();
+		// Get reference to the end slot.
+		let p2 = try!(self.get_slot(&end_address)).clone();
+
 		let mut address = start_address;
 		for i in 0..length {
-			let p1 = try!(self.address_map
-				.get(&start_address)
-				.ok_or(Error::EmptyAddress(start_address))).clone();
-			let p2 = try!(self.address_map
-				.get(&end_address)
-				.ok_or(Error::EmptyAddress(end_address))).clone();
-			
-			// Compute distance between points for this element.
+			// Compute distance between points for this slot.
 			let factor = (i + 1) as f32 * (1.0 / (length + 1) as f32);
 
 			address = self.next_free_address_advance_cursor()
-				.expect("computing addresses for ramp");
+				.expect("compute next free address for ramp");
 
-			let element = Rc::new(RefCell::new(ColorElement::SecondOrder{
+			let slot = Rc::new(RefCell::new(ColorElement::SecondOrder{
 				build: Box::new(move |a, b| {
 					// Build color by doing lerp with computed factor.
 					lerp_rgb(a.get_color(), b.get_color(), factor)
 				}),
-				parents: (p1, p2)
+				parents: (p1.clone(), p2.clone())
 			}));
-			self.address_map.insert(address, element);
+			self.data.insert(address, slot);
 		}
 		Ok(address)
 	}
 
+	
 	/// Returns an iterator over the (Address, Color) entries of the palette.
 	pub fn iter(&self) -> PaletteIterator {
 		PaletteIterator::new(self)
 	}
+
 
 	/// Returns and iterator over the colors of the palette in address order.
 	pub fn colors(&self) -> ColorIterator {
 		ColorIterator::new(self)
 	}
 
+
 	/// Returns and iterator over the addresses of the palette in order.
 	pub fn addresses(&self) -> AddressIterator {
 		AddressIterator::new(self)
+	}
+
+
+	/// Returns the PaletteSlot associated with the given address.
+	fn get_slot(&self, address: &Address) -> Result<&PaletteSlot, Error> {
+		self.data
+			.get(&address)
+			.ok_or(Error::EmptyAddress(address.clone()))
 	}
 
 
@@ -208,7 +232,7 @@ impl Palette {
 		}
 
 		let mut address = self.address_cursor.base_address();
-		while self.address_map.contains_key(&address) {
+		while self.data.contains_key(&address) {
 			address = address.wrapped_next(
 				self.page_count,
 				self.line_count, 
@@ -217,6 +241,7 @@ impl Palette {
 		}
 		Ok(address)
 	}
+
 
 	/// Returns the next available address after the cursor, and also advances
 	/// the cursor to the next (wrapped) address. Returns an error and fails to 
@@ -232,6 +257,7 @@ impl Palette {
 		Ok(address)
 	}
 
+
 	/// Returns whether the give address lies within the bounds defined by the 
 	/// wrapping and max page settings for the palette.
 	fn valid_address(&self, address: Address) -> bool {
@@ -240,18 +266,20 @@ impl Palette {
 		address.column < self.column_count
 	}
 
-	/// Returns the upper bound on the number of elements storable in the 
-	/// palette.
+
+	/// Returns the upper bound on the number of slots storable in the palette.
 	fn size_bound(&self) -> usize {
 		self.page_count as usize * 
 		self.line_count as usize * 
 		self.column_count as usize
 	}
 
+
 	/// Returns the amount of room left in the palette.
 	fn space_remaining(&self) -> usize {
-		self.size_bound() - self.address_map.len()
+		self.size_bound() - self.data.len()
 	}
+
 
 	/// Returns whether there are addresses that the palette considers invalid.
 	fn overflow_possible(&self) -> bool {
@@ -260,12 +288,13 @@ impl Palette {
 		self.page_count < u8::MAX
 	}
 
+
 	/// Returns the approprate error for an overflow condition.
 	fn get_overflow_error(&self) -> Error {
 		if self.overflow_possible() {
-			return Error::SetElementLimitExceeded;
+			return Error::SetSlotLimitExceeded;
 		} else {
-			return Error::MaxElementLimitExceeded;
+			return Error::MaxSlotLimitExceeded;
 		}
 	}
 }
@@ -273,31 +302,41 @@ impl Palette {
 
 impl fmt::Display for Palette {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		try!(write!(f, "Palette [{} pages] [wrap {}:{}] [address::select {}] \
+		try!(write!(f, "Palette "));
+		if let Some(data) = self.metadata.get(&address::Select::All) {
+			try!(write!(f, "{} ", data));
+		}
+		try!(write!(f, "[{} pages] [wrap {}:{}] [address::select {}] \
 						[{} slots free]\n\
-			            \tAddress   Color    Order\n",
+			            \tAddress   Color    Order  Name\n",
 			self.page_count,
 			self.line_count,
 			self.column_count,
 			self.address_cursor,
 			self.space_remaining()
-
 		));
 
-		for (&address, ref element) in self.address_map.iter() {
-			try!(write!(f, "\t{:X}  {:X}  {}\n",
+		for (&address, ref slot) in self.data.iter() {
+			try!(write!(f, "\t{:X}  {:X}  {}      ",
 				address,
-				element.borrow().get_color(),
-				match &*element.borrow() {
+				slot.borrow().get_color(),
+				match &*slot.borrow() {
 					&ColorElement::ZerothOrder {..} => "0",
 					&ColorElement::FirstOrder {..} => "1",
-					&ColorElement::SecondOrder {..} => "2"
+					&ColorElement::SecondOrder {..} => "2",
 				}
 			));
+			if let Some(data) = self.metadata.get(&address.clone().into()) {
+				try!(write!(f, "{}\n", data));
+			} else {
+				try!(write!(f, "-\n"));
+			}
+
 		}
 		Ok(())
 	}
 }
+
 
 impl Default for Palette {
 	fn default() -> Self {
@@ -306,7 +345,8 @@ impl Default for Palette {
 			page_count: DEFAULT_PAGE_COUNT,
 			line_count: DEFAULT_LINE_COUNT,
 			column_count: DEFAULT_COLUMN_COUNT,
-			address_map: BTreeMap::new(),
+			data: BTreeMap::new(),
+			metadata: BTreeMap::new(),
 		}
 	}
 }
@@ -317,13 +357,13 @@ impl Default for Palette {
 /// An iterator over the (Address, Color) entries of a palette. The entries are 
 /// returned in address order.
 pub struct PaletteIterator<'p> {
-	inner: Iter<'p, Address, PaletteElement>
+	inner: Iter<'p, Address, PaletteSlot>
 }
 
 
 impl<'p> PaletteIterator<'p> {
 	fn new(palette: &'p Palette) -> Self {
-		PaletteIterator {inner: palette.address_map.iter()}
+		PaletteIterator {inner: palette.data.iter()}
 	}
 }
 
@@ -332,8 +372,8 @@ impl<'p> Iterator for PaletteIterator<'p> {
 	type Item = (Address, Color);
 
 	fn next(&mut self) -> Option<Self::Item> {
-		self.inner.next().map(|(&address, ref element)| 
-			(address, element.borrow().get_color())
+		self.inner.next().map(|(&address, ref slot)| 
+			(address, slot.borrow().get_color())
 		)
 	}
 }
@@ -345,13 +385,13 @@ impl<'p> Iterator for PaletteIterator<'p> {
 /// An iterator over the colors of a palette. The colors are returned in address 
 /// order.
 pub struct ColorIterator<'p> {
-	inner: Values<'p, Address, PaletteElement>
+	inner: Values<'p, Address, PaletteSlot>
 }
 
 
 impl<'p> ColorIterator<'p> {
 	fn new(palette: &'p Palette) -> Self {
-		ColorIterator {inner: palette.address_map.values()}
+		ColorIterator {inner: palette.data.values()}
 	}
 }
 
@@ -360,7 +400,7 @@ impl<'p> Iterator for ColorIterator<'p> {
 	type Item = Color;
 
 	fn next(&mut self) -> Option<Self::Item> {
-		self.inner.next().map(|ref element| element.borrow().get_color())
+		self.inner.next().map(|ref slot| slot.borrow().get_color())
 	}
 }
 
@@ -371,13 +411,13 @@ impl<'p> Iterator for ColorIterator<'p> {
 /// An iterator over the colors of a palette. The colors are returned in address 
 /// order.
 pub struct AddressIterator<'p> {
-	inner: Keys<'p, Address, PaletteElement>
+	inner: Keys<'p, Address, PaletteSlot>
 }
 
 
 impl<'p> AddressIterator<'p> {
 	fn new(palette: &'p Palette) -> Self {
-		AddressIterator {inner: palette.address_map.keys()}
+		AddressIterator {inner: palette.data.keys()}
 	}
 }
 
@@ -400,11 +440,11 @@ pub enum Error {
 	/// Attempted to add a color to the palette, but the current wrapping 
 	/// settings prevent adding the color within the defined ranges. (Overflow
 	/// is possible.)	
-	SetElementLimitExceeded,
+	SetSlotLimitExceeded,
 	/// Attempted to add a color to the palette, but the palette contains the 
-	/// maximum number of elements already. (Overflow not possible.)
-	MaxElementLimitExceeded,
-	/// Attempted to set a color to a non-zeroth-order element.
+	/// maximum number of slots already. (Overflow not possible.)
+	MaxSlotLimitExceeded,
+	/// Attempted to set a color to a non-zeroth-order slot.
 	CannotSetDerivedColor,
 	/// An address was provided that lies outside of the range defined for the 
 	/// palette.
@@ -412,6 +452,7 @@ pub enum Error {
 	/// An empty address was provided for an operation that requires a color.
 	EmptyAddress(Address)
 }
+
 
 impl fmt::Display for Error {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
@@ -426,14 +467,15 @@ impl fmt::Display for Error {
 	}
 }
 
+
 impl error::Error for Error {
 	fn description(&self) -> &str {
 		match *self {
-			Error::SetElementLimitExceeded 
-				=> "maximum number of color elements for wrapping settings \
+			Error::SetSlotLimitExceeded 
+				=> "maximum number of color slots for wrapping settings \
 					exceeded",
-			Error::MaxElementLimitExceeded
-				=> "maximum number of color elements for palette exceeded",
+			Error::MaxSlotLimitExceeded
+				=> "maximum number of color slots for palette exceeded",
 			Error::CannotSetDerivedColor
 				=> "cannot assign color to a location containing a derived \
 				    color value",
@@ -461,6 +503,8 @@ pub struct PaletteBuilder {
 	line_count: u8,
 	/// The number of columns in each line.
 	column_count: u8,
+	/// The name of the palette.
+	palette_name: Option<String>,
 }
 
 
@@ -470,23 +514,36 @@ impl PaletteBuilder {
 		Default::default()
 	}
 
+
+	/// Sets the palette name.
+	pub fn named<S>(mut self, palette_name: S) -> PaletteBuilder 
+		where S: Into<String>
+	{
+		self.palette_name = Some(palette_name.into());
+		self
+	}
+
+
 	/// Sets the max page count.
 	pub fn with_page_count(mut self, page_count: u8) -> PaletteBuilder {
 		self.page_count = page_count;
 		self
 	}
 
-	/// Sets the line wrap for new elements.
+
+	/// Sets the line wrap for new slots.
 	pub fn with_line_count(mut self, line_count: u8) -> PaletteBuilder {
 		self.line_count = line_count;
 		self
 	}
 	
+
 	/// Sets the max page count.
 	pub fn with_column_count(mut self, column_count: u8) -> PaletteBuilder {
 		self.column_count = column_count;
 		self
 	}
+
 
 	/// Sets the starting address cursor.
 	pub fn with_starting_address_cursor(
@@ -497,18 +554,25 @@ impl PaletteBuilder {
 		self.address_cursor = address_cursor;
 		self
 	}
+
 	
 	/// Builds the palette and returns it.
-	pub fn build(self) -> Palette {
-		Palette {
+	pub fn create(self) -> Palette {
+		let mut pal = Palette {
 			address_cursor: self.address_cursor,
 			page_count: self.page_count,
 			line_count: self.line_count,
 			column_count: self.column_count,
-			address_map: BTreeMap::new(),
+			.. Default::default()
+		};
+
+		if let Some(name) = self.palette_name {
+			pal.metadata.insert(address::Select::All, Metadata::Name(name));
 		}
+		pal
 	}
 }
+
 
 impl Default for PaletteBuilder {
 	fn default() -> Self {
@@ -517,6 +581,7 @@ impl Default for PaletteBuilder {
 			page_count: DEFAULT_PAGE_COUNT,
 			line_count: DEFAULT_LINE_COUNT,
 			column_count: DEFAULT_COLUMN_COUNT,
+			palette_name: None,
 		}
 	}
 }
