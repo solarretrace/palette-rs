@@ -30,7 +30,7 @@ use rampeditor::palette;
 fn main() {
 	
 	let mut pal = PaletteBuilder::new()
-		.using_format(palette::SMALL_FORMAT)
+		.using_format(palette::ZPL_FORMAT)
 		.named("Super Duper Palette")
 		.create();
 	

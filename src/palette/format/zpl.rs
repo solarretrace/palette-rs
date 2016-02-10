@@ -29,41 +29,6 @@ use std::fmt;
 
 // The ZPL format was built for version 2.50 build 24 of Zelda Classic, and may
 // not work on versions 1.92 or older.
-
-////////////////////////////////////////////////////////////////////////////////
-// ZplFormat
-////////////////////////////////////////////////////////////////////////////////
-/// The default palette format with no special configuration.
-pub struct ZplFormat;
-
-
-
-
-/// A reference to a small pallete PaletteFormat for configuring palettes.
-pub const ZPL_FORMAT: &'static ZplFormat = &ZPL_FORMAT_INSTANCE;
-const ZPL_FORMAT_INSTANCE: ZplFormat = ZplFormat;
-
-
-impl PaletteFormat for ZplFormat {
-	fn get_name(&self) -> &'static str {"ZplFormat"}
-	fn get_version(&self) -> (u8, u8, u8) {(0, 1, 0)}
-	fn configure(&self, builder: PaletteBuilder) -> PaletteBuilder {
-		builder
-			.with_page_count(8)
-			.with_line_count(16)
-			.with_column_count(16)
-	}
-}
-
-impl fmt::Debug for ZplFormat {
-	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		write!(f, 
-			"ZplFormat{{ name: {:?}, version: {:?} }}", 
-			self.get_name(),
-			self.get_version())
-	}
-}
-
 const ZPL_HEADER : [u8;12] = [
 	0x43, 0x53, 0x45, 0x54, 
 	0x04, 0x00, 0x01, 0x00, 
@@ -101,3 +66,38 @@ const ZPL_FOOTER_E : [u8;36] = [
 	0x30, 0x40, 0x3f, 0x3f, 
 	0x3f, 0x07, 0x07, 0x07
 ];
+
+////////////////////////////////////////////////////////////////////////////////
+// ZplFormat
+////////////////////////////////////////////////////////////////////////////////
+/// The default palette format with no special configuration.
+pub struct ZplFormat;
+
+
+
+
+/// A reference to a small pallete PaletteFormat for configuring palettes.
+pub const ZPL_FORMAT: &'static ZplFormat = &ZPL_FORMAT_INSTANCE;
+const ZPL_FORMAT_INSTANCE: ZplFormat = ZplFormat;
+
+
+impl PaletteFormat for ZplFormat {
+	fn get_name(&self) -> &'static str {"ZplFormat"}
+	fn get_version(&self) -> (u8, u8, u8) {(2, 5, 0)}
+	fn configure(&self, builder: PaletteBuilder) -> PaletteBuilder {
+		builder
+			.with_page_count(8)
+			.with_line_count(16)
+			.with_column_count(16)
+	}
+}
+
+impl fmt::Debug for ZplFormat {
+	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+		write!(f, 
+			"ZplFormat{{ name: {:?}, version: {:?} }}", 
+			self.get_name(),
+			self.get_version())
+	}
+}
+
