@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 //! Defines a structured Palette object for storing and generating colors.
-use super::element::{ColorElement, PaletteSlot};
+use super::element::{ColorElement, PaletteElement, PaletteSlot};
 use super::metadata::Metadata;
 use super::format::{PaletteFormat};
 use color::{Color, lerp_rgb};
@@ -72,11 +72,13 @@ pub struct Palette {
 impl Palette {
 	
 	/// Constructs a new, empty Palette.
+	#[inline]
 	pub fn new() -> Palette {
 		Default::default()
 	}
 
 	/// Returns the number of colors in the Palette.
+	#[inline]
 	pub fn len(&self) -> usize {
 		self.data.len()
 	}
@@ -93,7 +95,7 @@ impl Palette {
 	/// location.
 	pub fn add_color(&mut self, color: Color) -> Result<Address, Error> {
 		let address = try!(self.next_free_address_advance_cursor());
-		let slot = Rc::new(RefCell::new(ColorElement::ZerothOrder {
+		let slot = Rc::new(PaletteElement::new(ColorElement::ZerothOrder {
 			color: color
 		}));
 		self.data.insert(address, slot);
@@ -120,7 +122,7 @@ impl Palette {
 			return Err(Error::CannotSetDerivedColor);
 		} 
 
-		let slot = Rc::new(RefCell::new(ColorElement::ZerothOrder {
+		let slot = Rc::new(PaletteElement::new(ColorElement::ZerothOrder {
 			color: color
 		}));
 		self.data.insert(address, slot);
@@ -140,6 +142,7 @@ impl Palette {
 			} 
 		} 
 	}
+
 
 	/// Adds to the Palette a linearly interpolated RGB color ramp of the given 
 	/// length between the colors given by their indices in the palette. Returns
@@ -183,7 +186,7 @@ impl Palette {
 			address = self.next_free_address_advance_cursor()
 				.expect("compute next free address for ramp");
 
-			let slot = Rc::new(RefCell::new(ColorElement::SecondOrder{
+			let slot = Rc::new(PaletteElement::new(ColorElement::SecondOrder{
 				build: Box::new(move |a, b| {
 					// Build color by doing lerp with computed factor.
 					lerp_rgb(a.get_color(), b.get_color(), factor)
@@ -197,24 +200,28 @@ impl Palette {
 
 	
 	/// Returns an iterator over the (Address, Color) entries of the palette.
+	#[inline]
 	pub fn iter(&self) -> PaletteIterator {
 		PaletteIterator::new(self)
 	}
 
 
 	/// Returns and iterator over the colors of the palette in address order.
+	#[inline]
 	pub fn colors(&self) -> ColorIterator {
 		ColorIterator::new(self)
 	}
 
 
 	/// Returns and iterator over the addresses of the palette in order.
+	#[inline]
 	pub fn addresses(&self) -> AddressIterator {
 		AddressIterator::new(self)
 	}
 
 
 	/// Returns the PaletteSlot associated with the given address.
+	#[inline]
 	fn get_slot(&self, address: &Address) -> Result<&PaletteSlot, Error> {
 		self.data
 			.get(&address)
@@ -224,6 +231,7 @@ impl Palette {
 
 	/// Returns the next available address after the cursor. Returns an error if
 	/// there are no free addresses.
+	#[inline]
 	fn next_free_address(&self) -> Result<Address, Error> {
 		if self.space_remaining() == 0 {
 			return Err(self.get_overflow_error());
@@ -244,6 +252,7 @@ impl Palette {
 	/// Returns the next available address after the cursor, and also advances
 	/// the cursor to the next (wrapped) address. Returns an error and fails to 
 	/// advance the cursor if there are no free addresses.
+	#[inline]
 	fn next_free_address_advance_cursor(&mut self) -> Result<Address, Error> {
 		let address = try!(self.next_free_address());
 		// Update the cursor.
@@ -258,6 +267,7 @@ impl Palette {
 
 	/// Returns whether the give address lies within the bounds defined by the 
 	/// wrapping and max page settings for the palette.
+	#[inline]
 	fn valid_address(&self, address: Address) -> bool {
 		address.page <= self.page_count &&
 		address.line < self.line_count &&
@@ -266,6 +276,7 @@ impl Palette {
 
 
 	/// Returns the upper bound on the number of slots storable in the palette.
+	#[inline]
 	fn size_bound(&self) -> usize {
 		self.page_count as usize * 
 		self.line_count as usize * 
@@ -274,12 +285,14 @@ impl Palette {
 
 
 	/// Returns the amount of room left in the palette.
+	#[inline]
 	fn space_remaining(&self) -> usize {
 		self.size_bound() - self.data.len()
 	}
 
 
 	/// Returns whether there are addresses that the palette considers invalid.
+	#[inline]
 	fn overflow_possible(&self) -> bool {
 		self.column_count < u8::MAX ||
 		self.line_count < u8::MAX ||
@@ -288,6 +301,7 @@ impl Palette {
 
 
 	/// Returns the approprate error for an overflow condition.
+	#[inline]
 	fn get_overflow_error(&self) -> Error {
 		if self.overflow_possible() {
 			return Error::SetSlotLimitExceeded;
@@ -336,7 +350,6 @@ impl fmt::Display for Palette {
 			} else {
 				try!(write!(f, "-\n"));
 			}
-
 		}
 		Ok(())
 	}

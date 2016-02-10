@@ -24,15 +24,73 @@
 //! needed to provide a single color.
 use color::Color;
 
-use std::cell::RefCell;
+use std::cell::{RefCell, Cell};
+use std::ops::{Deref, DerefMut};
 use std::rc::Rc;
 use std::fmt;
 
+
 /// A wrapper for ColorElement to enable building them into mutable tree 
 /// structures. Acts as a slot for a color element in the palette.
-pub type PaletteSlot = Rc<RefCell<ColorElement>>;
+pub type PaletteSlot = Rc<PaletteElement>;
 
+#[derive(Debug)]
+pub struct PaletteElement {
+	color_element: RefCell<ColorElement>,
+	valid: Cell<bool>,
+}
 
+impl PaletteElement {
+	pub fn new(element: ColorElement) -> Self {
+		PaletteElement {
+			color_element: RefCell::new(element),
+			valid: Cell::new(false),
+		}
+	}
+
+	pub fn get_color(&self) -> Option<Color> {
+		if self.is_valid() {
+			Some(self.color_element.borrow().get_color())
+		} else {
+			None
+		}
+	}
+
+	pub fn restore(&mut self) {
+		self.valid.set(true);
+	}
+
+	pub fn invalidate(&mut self) {
+		self.valid.set(false);
+	}
+
+	pub fn is_valid(&self) -> bool {
+		match &*self.color_element.borrow() {
+			&ColorElement::FirstOrder {ref parent, ..} => {
+					self.valid.set(parent.is_valid());
+				},
+
+			&ColorElement::SecondOrder {ref parents, ..} => {
+					self.valid.set(parents.0.is_valid() && parents.1.is_valid());
+				},
+			_ => ()
+		};
+		self.valid.get()
+	}
+}
+
+impl Deref for PaletteElement {
+	type Target = RefCell<ColorElement>;
+	fn deref(&self) -> &Self::Target {
+		&self.color_element
+	}
+}
+
+impl DerefMut for PaletteElement {
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		&mut self.color_element
+	}
+}
 
 
 /// Encapsulates a Palette component for generating a single color.
