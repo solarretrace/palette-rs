@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 //! Defines a structured Palette object for storing and generating colors.
-use super::element::{ColorElement, PaletteElement, PaletteSlot};
+use super::element::{ColorElement, Slot};
 use super::metadata::Metadata;
 use super::format::{PaletteFormat};
 use color::{Color, lerp_rgb};
@@ -53,7 +53,7 @@ pub struct Palette {
 	/// The version of the PaletteFormat used to configure the palette.
 	format_version: Option<(u8, u8, u8)>,
 	/// A map assigning addresses to palette slots.
-	data: BTreeMap<Address, PaletteSlot>,
+	data: BTreeMap<Address, Rc<Slot>>,
 	/// Provided metadata for various parts of the palette.
 	metadata: BTreeMap<address::Select, Metadata>,
 	/// The internal address cursor that is used to track the next available 
@@ -83,7 +83,7 @@ impl Palette {
 	}
 
 	/// Removes the element located at the given address.
-	pub fn remove_slot(&mut self, address: Address) {
+	pub fn delete_slot(&mut self, address: Address) {
 		if let Some(ref slot) = self.data.get(&address) {
 			slot.invalidate();
 		}
@@ -101,7 +101,7 @@ impl Palette {
 	/// location.
 	pub fn add_color(&mut self, color: Color) -> Result<Address, Error> {
 		let address = try!(self.next_free_address_advance_cursor());
-		let slot = Rc::new(PaletteElement::new(ColorElement::ZerothOrder {
+		let slot = Rc::new(Slot::new(ColorElement::ZerothOrder {
 			color: color
 		}));
 		self.data.insert(address, slot);
@@ -128,7 +128,7 @@ impl Palette {
 			return Err(Error::CannotSetDerivedColor);
 		} 
 
-		let slot = Rc::new(PaletteElement::new(ColorElement::ZerothOrder {
+		let slot = Rc::new(Slot::new(ColorElement::ZerothOrder {
 			color: color
 		}));
 		self.data.insert(address, slot);
@@ -192,7 +192,7 @@ impl Palette {
 			address = self.next_free_address_advance_cursor()
 				.expect("compute next free address for ramp");
 
-			let slot = Rc::new(PaletteElement::new(ColorElement::SecondOrder{
+			let slot = Rc::new(Slot::new(ColorElement::SecondOrder{
 				build: Box::new(move |a, b| {
 					// Build color by doing lerp with computed factor.
 					lerp_rgb(a.get_color(), b.get_color(), factor)
@@ -212,7 +212,7 @@ impl Palette {
 	}
 
 
-	/// Returns and iterator over the colors of the palette in address order.
+	/// Returns an iterator over the colors of the palette in address order.
 	#[inline]
 	pub fn colors(&self) -> ColorIterator {
 		ColorIterator::new(self)
@@ -226,9 +226,9 @@ impl Palette {
 	}
 
 
-	/// Returns the PaletteSlot associated with the given address.
+	/// Returns the Rc<Slot> associated with the given address.
 	#[inline]
-	fn get_slot(&self, address: &Address) -> Result<&PaletteSlot, Error> {
+	fn get_slot(&self, address: &Address) -> Result<&Rc<Slot>, Error> {
 		self.data
 			.get(&address)
 			.ok_or(Error::EmptyAddress(*address))
@@ -386,7 +386,7 @@ impl Default for Palette {
 /// An iterator over the (Address, Color) entries of a palette. The entries are 
 /// returned in address order.
 pub struct PaletteIterator<'p> {
-	inner: Iter<'p, Address, PaletteSlot>
+	inner: Iter<'p, Address, Rc<Slot>>
 }
 
 
@@ -450,7 +450,7 @@ impl<'p> Iterator for ColorIterator<'p> {
 /// An iterator over the colors of a palette. The colors are returned in address 
 /// order.
 pub struct AddressIterator<'p> {
-	inner: Keys<'p, Address, PaletteSlot>
+	inner: Keys<'p, Address, Rc<Slot>>
 }
 
 

@@ -30,28 +30,23 @@ use std::rc::Rc;
 use std::fmt;
 
 
-/// A 'slot' in the `Palette` in which to insert colors and related data. 
-/// Enables tree structured arrangements of `ColorElement`s.
-pub type PaletteSlot = Rc<PaletteElement>;
-
-
 /// A wrapper around a `ColorElement` for tracking its status and enabling 
 /// interior mutability.
 #[derive(Debug)]
-pub struct PaletteElement {
+pub struct Slot {
 	/// The `ColorElement` being wrapped.
 	color_element: RefCell<ColorElement>,
 	/// The status of the `ColorElement`. An invalid status means that the 
-	/// `ColorElement` refers to something that is also invalid or not in the 
-	/// `Palette`.
+	/// `ColorElement` is itself not in the palette or refers to something that 
+	///  is also invalid or not in the `Palette`.
 	valid: Cell<bool>,
 }
 
 
-impl PaletteElement {
-	/// Creates a new `PaletteElement` wrapping the given `ColorElement`.
+impl Slot {
+	/// Creates a new `Slot` wrapping the given `ColorElement`.
 	pub fn new(element: ColorElement) -> Self {
-		PaletteElement {
+		Slot {
 			color_element: RefCell::new(element),
 			valid: Cell::new(true),
 		}
@@ -75,13 +70,14 @@ impl PaletteElement {
 	}
 
 	/// Makes the internal `ColorElement` invalid. This will always persist, but
-	/// it will not remove the `PaletteSlot` from the `Palette`.
+	/// it will not remove the `Rc<Slot>` from the `Palette`.
 	pub fn invalidate(&self) {
 		self.valid.set(false);
 	}
 
-	/// Returns whether the internal `ColorElement` is valid. This function will
-	/// check on and update the status of any of its referants. 
+	/// Returns whether the internal `ColorElement` is valid. If it is, this 
+	/// function will check on and update the status of any of its referants 
+	/// which may invalidate it or them.
 	pub fn is_valid(&self) -> bool {
 		if !self.valid.get() {
 			false
@@ -94,6 +90,7 @@ impl PaletteElement {
 				&ColorElement::SecondOrder {ref parents, ..} => {
 						self.valid.set(parents.0.is_valid() && parents.1.is_valid());
 					},
+
 				_ => ()
 			};
 			self.valid.get()
@@ -102,7 +99,7 @@ impl PaletteElement {
 }
 
 
-impl Deref for PaletteElement {
+impl Deref for Slot {
 	type Target = RefCell<ColorElement>;
 	fn deref(&self) -> &Self::Target {
 		&self.color_element
@@ -110,7 +107,7 @@ impl Deref for PaletteElement {
 }
 
 
-impl DerefMut for PaletteElement {
+impl DerefMut for Slot {
 	fn deref_mut(&mut self) -> &mut Self::Target {
 		&mut self.color_element
 	}
@@ -129,16 +126,16 @@ pub enum ColorElement {
 	FirstOrder {
 		/// The function that builds the color from its dependencies.
 		build: Box<Fn(&ColorElement) -> Color>,
-		/// The PaletteSlot to use for building a color.
-		parent: PaletteSlot,
+		/// The Rc<Slot> to use for building a color.
+		parent: Rc<Slot>,
 	},
 
 	/// An element with two dependencies. Generates a color from two others.
 	SecondOrder {
 		/// The function that builds the color from its dependencies.
 		build: Box<Fn(&ColorElement, &ColorElement) -> Color>,
-		/// The PaletteSlots to use for building a color.
-		parents: (PaletteSlot, PaletteSlot),
+		/// The Rc<Slot>s to use for building a color.
+		parents: (Rc<Slot>, Rc<Slot>),
 	},
 }
 

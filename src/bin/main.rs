@@ -44,7 +44,7 @@ fn main() {
 	pal.set_color(a2, Color(255, 0, 255)).ok().expect("add color to pal");
 	println!("{}", pal);
 
-	pal.remove_slot(a1);
+	pal.delete_slot(Address::new(0,0,2));
 	println!("{}", pal);	
 
 }
