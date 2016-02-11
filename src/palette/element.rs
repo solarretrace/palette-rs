@@ -149,8 +149,11 @@ impl ColorElement {
 			ColorElement::FirstOrder {ref build, ref parent} 
 				=> build(&*parent.borrow()),
 
-			ColorElement::SecondOrder {ref build, ref parents}
-				=> build(&*parents.0.borrow(), &*parents.1.borrow())
+			ColorElement::SecondOrder {ref build, ref parents} 
+				=> build(
+					&*parents.0.borrow(), 
+					&*parents.1.borrow()
+				)
 		}
 	}
 
@@ -187,6 +190,7 @@ impl fmt::Debug for ColorElement {
 		}
 	}
 }
+
 
 impl Default for ColorElement {
 	fn default() -> Self {

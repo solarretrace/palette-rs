@@ -120,6 +120,7 @@ impl<'a> Into<Select> for &'a Address {
 }
 
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // Select
 ////////////////////////////////////////////////////////////////////////////////
@@ -169,6 +170,7 @@ impl<'a> Into<Address> for &'a Select {
 		self.base_address()
 	}
 }
+
 
 impl fmt::Display for Select {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {

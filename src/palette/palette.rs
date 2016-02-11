@@ -28,10 +28,9 @@ use color::{Color, lerp_rgb};
 use address::Address;
 use address;
 
-use std::cell::RefCell;
 use std::rc::Rc;
 use std::collections::BTreeMap;
-use std::collections::btree_map::{Iter, Keys, Values};
+use std::collections::btree_map::{Iter, Keys};
 use std::fmt;
 use std::error;
 use std::u8;
@@ -394,9 +393,17 @@ impl<'p> Iterator for PaletteIterator<'p> {
 	type Item = (Address, Color);
 
 	fn next(&mut self) -> Option<Self::Item> {
-		self.inner.next().map(|(&address, ref slot)| 
-			(address, slot.borrow().get_color())
-		)
+		if let Some((&address, ref slot)) = self.inner.next() {
+			if slot.is_valid() {
+				Some((address, 
+					slot.get_color()
+						.expect("iterator unwrapped valid slot")))
+			} else {
+				self.next()
+			}
+		} else {
+			None
+		}
 	}
 }
 
@@ -407,13 +414,13 @@ impl<'p> Iterator for PaletteIterator<'p> {
 /// An iterator over the colors of a palette. The colors are returned in address 
 /// order.
 pub struct ColorIterator<'p> {
-	inner: Values<'p, Address, PaletteSlot>
+	inner: PaletteIterator<'p>
 }
 
 
 impl<'p> ColorIterator<'p> {
 	fn new(palette: &'p Palette) -> Self {
-		ColorIterator {inner: palette.data.values()}
+		ColorIterator {inner: palette.iter()}
 	}
 }
 
@@ -422,7 +429,7 @@ impl<'p> Iterator for ColorIterator<'p> {
 	type Item = Color;
 
 	fn next(&mut self) -> Option<Self::Item> {
-		self.inner.next().map(|ref slot| slot.borrow().get_color())
+		self.inner.next().map(|item| item.1)
 	}
 }
 
