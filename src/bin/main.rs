@@ -38,10 +38,13 @@ fn main() {
 	let a2 = Address::new(0, 1, 1);
 	pal.set_color(a1, Color(0, 0, 0)).ok().expect("add color to pal");
 	pal.set_color(a2, Color(123, 32, 200)).ok().expect("add color to pal");
-	pal.add_ramp_between(a1, a2, 14).ok().expect("add ramp to pal");
+	pal.add_ramp_between(a1, a2, 3).ok().expect("add ramp to pal");
 	println!("{}", pal);
 
 	pal.set_color(a2, Color(255, 0, 255)).ok().expect("add color to pal");
 	println!("{}", pal);
+
+	pal.remove_slot(a1);
+	println!("{}", pal);	
 
 }

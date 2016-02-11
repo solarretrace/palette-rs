@@ -53,7 +53,7 @@ impl PaletteElement {
 	pub fn new(element: ColorElement) -> Self {
 		PaletteElement {
 			color_element: RefCell::new(element),
-			valid: Cell::new(false),
+			valid: Cell::new(true),
 		}
 	}
 
@@ -70,30 +70,34 @@ impl PaletteElement {
 	/// Makes the internal `ColorElement` valid. This will only persist if all 
 	/// of this `ColorElement`'s referants are also valid and present in the 
 	/// `Palette`.
-	pub fn restore(&mut self) {
+	pub fn restore(&self) {
 		self.valid.set(true);
 	}
 
 	/// Makes the internal `ColorElement` invalid. This will always persist, but
 	/// it will not remove the `PaletteSlot` from the `Palette`.
-	pub fn invalidate(&mut self) {
+	pub fn invalidate(&self) {
 		self.valid.set(false);
 	}
 
 	/// Returns whether the internal `ColorElement` is valid. This function will
 	/// check on and update the status of any of its referants. 
 	pub fn is_valid(&self) -> bool {
-		match &*self.color_element.borrow() {
-			&ColorElement::FirstOrder {ref parent, ..} => {
-					self.valid.set(parent.is_valid());
-				},
+		if !self.valid.get() {
+			false
+		} else {
+			match &*self.color_element.borrow() {
+				&ColorElement::FirstOrder {ref parent, ..} => {
+						self.valid.set(parent.is_valid());
+					},
 
-			&ColorElement::SecondOrder {ref parents, ..} => {
-					self.valid.set(parents.0.is_valid() && parents.1.is_valid());
-				},
-			_ => ()
-		};
-		self.valid.get()
+				&ColorElement::SecondOrder {ref parents, ..} => {
+						self.valid.set(parents.0.is_valid() && parents.1.is_valid());
+					},
+				_ => ()
+			};
+			self.valid.get()
+		}
 	}
 }
 

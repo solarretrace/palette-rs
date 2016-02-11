@@ -82,6 +82,13 @@ impl Palette {
 		self.data.len()
 	}
 
+	/// Removes the element located at the given address.
+	pub fn remove_slot(&mut self, address: Address) {
+		if let Some(ref slot) = self.data.get(&address) {
+			slot.invalidate();
+		}
+	}
+
 	/// Returns the color located at the given address, or None if there is no 
 	/// slot at the given address or the address is invalid.
 	pub fn get_color(&self, address: Address) -> Option<Color> {
@@ -224,7 +231,7 @@ impl Palette {
 	fn get_slot(&self, address: &Address) -> Result<&PaletteSlot, Error> {
 		self.data
 			.get(&address)
-			.ok_or(Error::EmptyAddress(address.clone()))
+			.ok_or(Error::EmptyAddress(*address))
 	}
 
 
@@ -337,9 +344,10 @@ impl fmt::Display for Palette {
 		));
 		
 
-		try!(write!(f, "\n\tAddress   Color    Order  Name\n"));
+		try!(write!(f, "\n\t  Address   Color    Order  Name\n"));
 		for (&address, ref slot) in self.data.iter() {
-			try!(write!(f, "\t{:X}  {:X}  {:<5}  ",
+			try!(write!(f, "\t{} {:X}  {:X}  {:<5}  ",
+				if slot.is_valid() {'-'} else {'X'},
 				address,
 				slot.borrow().get_color(),
 				slot.borrow().get_order()
@@ -384,7 +392,9 @@ pub struct PaletteIterator<'p> {
 
 impl<'p> PaletteIterator<'p> {
 	fn new(palette: &'p Palette) -> Self {
-		PaletteIterator {inner: palette.data.iter()}
+		PaletteIterator {
+			inner: palette.data.iter()
+		}
 	}
 }
 
