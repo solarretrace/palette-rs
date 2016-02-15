@@ -37,11 +37,6 @@ use std::u8;
 use std::mem;
 
 
-/// The upper limit on the number of colors that can be in a single palette.
-pub const MAX_PALETTE_SIZE: usize = (
-	u8::MAX as usize * u8::MAX as usize * u8::MAX as usize
-);
-
 ////////////////////////////////////////////////////////////////////////////////
 // Palette
 ////////////////////////////////////////////////////////////////////////////////
@@ -120,7 +115,7 @@ impl Palette {
 	#[inline]
 	fn next_free_address(&self) -> Result<Address, Error> {
 		if self.space_remaining() == 0 {
-			return Err(self.get_overflow_error());
+			return Err(Error::MaxSlotLimitExceeded);
 		}
 
 		let mut address = self.address_cursor.base_address();
@@ -155,24 +150,6 @@ impl Palette {
 	#[inline]
 	fn space_remaining(&self) -> usize {
 		self.size_bound() - self.data.len()
-	}
-
-	/// Returns whether there are addresses that the palette considers invalid.
-	#[inline]
-	fn overflow_possible(&self) -> bool {
-		self.column_count < u8::MAX ||
-		self.line_count < u8::MAX ||
-		self.page_count < u8::MAX
-	}
-
-	/// Returns the approprate error for an overflow condition.
-	#[inline]
-	fn get_overflow_error(&self) -> Error {
-		if self.overflow_possible() {
-			return Error::SetSlotLimitExceeded;
-		} else {
-			return Error::MaxSlotLimitExceeded;
-		}
 	}
 }
 
@@ -450,12 +427,8 @@ impl Default for PaletteBuilder {
 /// Encapsulates errors associated with mutating palette operations.
 #[derive(Debug)]
 pub enum Error {
-	/// Attempted to add a color to the palette, but the current wrapping 
-	/// settings prevent adding the color within the defined ranges. (Overflow
-	/// is possible.)	
-	SetSlotLimitExceeded,
 	/// Attempted to add a color to the palette, but the palette contains the 
-	/// maximum number of slots already. (Overflow not possible.)
+	/// maximum number of slots already.
 	MaxSlotLimitExceeded,
 	/// Attempted to set a color to a non-zeroth-order slot.
 	CannotSetDerivedColor,
@@ -484,9 +457,6 @@ impl fmt::Display for Error {
 impl error::Error for Error {
 	fn description(&self) -> &str {
 		match *self {
-			Error::SetSlotLimitExceeded 
-				=> "maximum number of color slots for wrapping settings \
-					exceeded",
 			Error::MaxSlotLimitExceeded
 				=> "maximum number of color slots for palette exceeded",
 			Error::CannotSetDerivedColor
