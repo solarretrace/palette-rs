@@ -21,10 +21,11 @@
 // SOFTWARE.
 
 //! Defines a structured Palette object for storing and generating colors.
-use super::element::{ColorElement, Slot};
+use super::element::Slot;
 use super::metadata::Metadata;
+use super::operations::PaletteOperation;
 use super::format::{PaletteFormat};
-use color::{Color, lerp_rgb};
+use color::Color;
 use address::Address;
 use address;
 
@@ -34,7 +35,6 @@ use std::collections::btree_map::{Iter, Keys};
 use std::fmt;
 use std::error;
 use std::u8;
-use std::mem;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -75,6 +75,55 @@ impl Palette {
 	#[inline]
 	pub fn len(&self) -> usize {
 		self.data.len()
+	}
+
+	/// Returns the palette's current selection cursor.
+	pub fn get_cursor(&self) -> address::Select {
+		self.address_cursor
+	}
+
+	/// Sets the palette's selection cursor.
+	pub fn set_cursor(&mut self, new_selection: address::Select) {
+		if self.check_address(new_selection.base_address()) {
+			self.address_cursor = new_selection;
+		}
+	}
+
+	pub fn execute(&mut self, op: &PaletteOperation) -> Result<(), Error> {
+		Ok(())
+	}
+
+	/// Adds a new slot to the palette in the nearest valid location after the 
+	/// selection cursor and returns its address. Returns an error if the 
+	/// palette is full.
+	pub fn add_slot(&mut self, slot: Slot) -> Result<Address, Error> {
+		let address = try!(self.next_free_address_advance_cursor());
+		self.data.insert(address, Rc::new(slot));
+		Ok(address)
+	}
+
+	/// Returns the slot located at the given address, or `None` if the address
+	/// is invalid or empty.
+	pub fn get_slot(&self, address: Address) -> Option<&Rc<Slot>> {
+		self.data.get(&address)
+	}
+
+	/// Assigns the given slot to the given address. Returns the slot previously
+	/// located at that position, or `None` if it was empty. Returns an error if
+	/// the address is invalid.
+	pub fn set_slot(
+		&mut self, 
+		address: Address, 
+		slot: Slot) 
+		-> Result<Option<Rc<Slot>>, Error> 
+	{
+		if self.check_address(address) {
+			Ok(self.data
+				.insert(address, Rc::new(slot))
+			)
+		} else {
+			Err(Error::InvalidAddress)
+		}
 	}
 	
 	/// Returns an iterator over the (Address, Color) entries of the palette.
@@ -132,7 +181,7 @@ impl Palette {
 	/// Returns whether the give address lies within the bounds defined by the 
 	/// wrapping and max page settings for the palette.
 	#[inline]
-	fn valid_address(&self, address: Address) -> bool {
+	fn check_address(&self, address: Address) -> bool {
 		address.page <= self.page_count &&
 		address.line < self.line_count &&
 		address.column < self.column_count

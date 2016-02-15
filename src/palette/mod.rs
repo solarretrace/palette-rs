@@ -10,6 +10,9 @@ pub mod palette;
 pub mod metadata;
 
 #[warn(missing_docs)]
+pub mod operations;
+
+#[warn(missing_docs)]
 pub mod format;
 
 pub use palette::palette::Palette;

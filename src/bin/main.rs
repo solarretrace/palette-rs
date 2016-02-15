@@ -26,6 +26,7 @@ use rampeditor::Color;
 use rampeditor::PaletteBuilder;
 use rampeditor::Address;
 use rampeditor::palette;
+use rampeditor::palette::element::ColorElement;
 
 fn main() {
 	
@@ -34,7 +35,6 @@ fn main() {
 		.named("Super Duper Palette")
 		.create();
 	
-	let a1 = Address::new(1, 2, 3);
-	let a2 = Address::new(0, 1, 1);
 
+	println!("{}", pal);
 }
