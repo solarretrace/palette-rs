@@ -81,129 +81,6 @@ impl Palette {
 	pub fn len(&self) -> usize {
 		self.data.len()
 	}
-
-	/// Removes the element located at the given address.
-	pub fn delete_slot(&mut self, address: Address) {
-		if let Some(ref slot) = self.data.get(&address) {
-			slot.invalidate();
-		}
-	}
-
-	/// Returns the color located at the given address, or None if there is no 
-	/// slot at the given address or the address is invalid.
-	pub fn get_color(&self, address: Address) -> Option<Color> {
-		self.data
-			.get(&address)
-		    .map(|ref slot| slot.borrow().get_color())
-	}
-
-	/// Adds the given color to the palette and returns the address of its 
-	/// location.
-	pub fn add_color(&mut self, color: Color) -> Result<Address, Error> {
-		let address = try!(self.next_free_address_advance_cursor());
-		let slot = Rc::new(Slot::new(ColorElement::ZerothOrder {
-			color: color
-		}));
-		self.data.insert(address, slot);
-		Ok(address)
-	}
-
-	/// Assigns the given color to the slot at the given address. If the address
-	/// is empty, a new slot is created to hold it. If the target address 
-	/// contains a derived color, or the given address lies outside the range 
-	/// defined by the palette settings, an error will be returned. Otherwise, 
-	/// the replaced color will be returned, or None if a new slot was created.
-	pub fn set_color(
-		&mut self, 
-		address: Address, 
-		color: Color) 
-		-> Result<Option<Color>, Error>
-	{
-		if let Some(slot) = self.data.get(&address) {
-			if slot.borrow().get_order() == 0 {
-				let new = ColorElement::ZerothOrder {color: color};
-				let old = mem::replace(&mut *slot.borrow_mut(), new);
-				return Ok(Some(old.get_color()));
-			} 
-			return Err(Error::CannotSetDerivedColor);
-		} 
-
-		let slot = Rc::new(Slot::new(ColorElement::ZerothOrder {
-			color: color
-		}));
-		self.data.insert(address, slot);
-		Ok(None)
-	}
-
-	/// Fixes a color so that it is not dependent on any other colors in the 
-	/// palette. This will allow the color to be set directly, but prevent it
-	/// from being updated by palette changes.
-	pub fn fix_color(&mut self, address: Address) {
-		if let Some(slot) = self.data.get(&address) {
-			if slot.borrow().get_order() != 0 {
-				let color = slot.borrow().get_color();
-				let new = ColorElement::ZerothOrder {color: color};
-				mem::replace(&mut*slot.borrow_mut(), new);
-				// TODO: Consider not discarding the old value here.
-			} 
-		} 
-	}
-
-
-	/// Adds to the Palette a linearly interpolated RGB color ramp of the given 
-	/// length between the colors given by their indices in the palette. Returns
-	/// the end address if the length is 0 or if the start and and addresses are
-	/// the same. Returns an error if there is not enough space for the ramp or
-	/// if an invalid address is given.
-	pub fn add_ramp_between(
-		&mut self, 
-		start_address: Address, 
-		end_address: Address, 
-		length: u8) 
-		-> Result<Address, Error>
-	{	
-		// Check if there's enough space.
-		if self.space_remaining() < length as usize {
-			return Err(self.get_overflow_error());
-		}
-
-		// Error if invalid addresses given.
-		if !self.valid_address(start_address) || 
-			!self.valid_address(end_address) 
-		{
-			return Err(Error::InvalidAddress);
-		}
-
-		// Return if ramp would have no colors.
-		if length == 0 || start_address == end_address {
-			return Ok(end_address);
-		}
-
-		// Get reference to the start slot.
-		let p1 = try!(self.get_slot(&start_address)).clone();
-		// Get reference to the end slot.
-		let p2 = try!(self.get_slot(&end_address)).clone();
-
-		let mut address = start_address;
-		for i in 0..length {
-			// Compute distance between points for this slot.
-			let factor = (i + 1) as f32 * (1.0 / (length + 1) as f32);
-
-			address = self.next_free_address_advance_cursor()
-				.expect("compute next free address for ramp");
-
-			let slot = Rc::new(Slot::new(ColorElement::SecondOrder{
-				build: Box::new(move |a, b| {
-					// Build color by doing lerp with computed factor.
-					lerp_rgb(a.get_color(), b.get_color(), factor)
-				}),
-				parents: (p1.clone(), p2.clone())
-			}));
-			self.data.insert(address, slot);
-		}
-		Ok(address)
-	}
-
 	
 	/// Returns an iterator over the (Address, Color) entries of the palette.
 	#[inline]
@@ -211,49 +88,17 @@ impl Palette {
 		PaletteIterator::new(self)
 	}
 
-
 	/// Returns an iterator over the colors of the palette in address order.
 	#[inline]
 	pub fn colors(&self) -> ColorIterator {
 		ColorIterator::new(self)
 	}
 
-
 	/// Returns and iterator over the addresses of the palette in order.
 	#[inline]
 	pub fn addresses(&self) -> AddressIterator {
 		AddressIterator::new(self)
 	}
-
-
-	/// Returns the Rc<Slot> associated with the given address.
-	#[inline]
-	fn get_slot(&self, address: &Address) -> Result<&Rc<Slot>, Error> {
-		self.data
-			.get(&address)
-			.ok_or(Error::EmptyAddress(*address))
-	}
-
-
-	/// Returns the next available address after the cursor. Returns an error if
-	/// there are no free addresses.
-	#[inline]
-	fn next_free_address(&self) -> Result<Address, Error> {
-		if self.space_remaining() == 0 {
-			return Err(self.get_overflow_error());
-		}
-
-		let mut address = self.address_cursor.base_address();
-		while self.data.contains_key(&address) {
-			address = address.wrapped_next(
-				self.page_count,
-				self.line_count, 
-				self.column_count
-			);
-		}
-		Ok(address)
-	}
-
 
 	/// Returns the next available address after the cursor, and also advances
 	/// the cursor to the next (wrapped) address. Returns an error and fails to 
@@ -270,6 +115,24 @@ impl Palette {
 		Ok(address)
 	}
 
+	/// Returns the next available address after the cursor. Returns an error if
+	/// there are no free addresses.
+	#[inline]
+	fn next_free_address(&self) -> Result<Address, Error> {
+		if self.space_remaining() == 0 {
+			return Err(self.get_overflow_error());
+		}
+
+		let mut address = self.address_cursor.base_address();
+		while self.data.get(&address).and_then(|s| s.get_color()).is_some() {
+			address = address.wrapped_next(
+				self.page_count,
+				self.line_count, 
+				self.column_count
+			);
+		}
+		Ok(address)
+	}
 
 	/// Returns whether the give address lies within the bounds defined by the 
 	/// wrapping and max page settings for the palette.
@@ -280,7 +143,6 @@ impl Palette {
 		address.column < self.column_count
 	}
 
-
 	/// Returns the upper bound on the number of slots storable in the palette.
 	#[inline]
 	fn size_bound(&self) -> usize {
@@ -289,13 +151,11 @@ impl Palette {
 		self.column_count as usize
 	}
 
-
 	/// Returns the amount of room left in the palette.
 	#[inline]
 	fn space_remaining(&self) -> usize {
 		self.size_bound() - self.data.len()
 	}
-
 
 	/// Returns whether there are addresses that the palette considers invalid.
 	#[inline]
@@ -304,7 +164,6 @@ impl Palette {
 		self.line_count < u8::MAX ||
 		self.page_count < u8::MAX
 	}
-
 
 	/// Returns the approprate error for an overflow condition.
 	#[inline]
@@ -344,12 +203,11 @@ impl fmt::Display for Palette {
 		));
 		
 
-		try!(write!(f, "\n\t  Address   Color    Order  Name\n"));
+		try!(write!(f, "\n\tAddress   Color    Order  Name\n"));
 		for (&address, ref slot) in self.data.iter() {
-			try!(write!(f, "\t{} {:X}  {:X}  {:<5}  ",
-				if slot.is_valid() {'-'} else {'X'},
+			try!(write!(f, "\t{:X}  {:X}  {:<5}  ",
 				address,
-				slot.borrow().get_color(),
+				slot.borrow().get_color().unwrap_or(Color(0,0,0)),
 				slot.borrow().get_order()
 			));
 			if let Some(data) = self.metadata.get(&address.clone().into()) {
@@ -404,13 +262,9 @@ impl<'p> Iterator for PaletteIterator<'p> {
 
 	fn next(&mut self) -> Option<Self::Item> {
 		if let Some((&address, ref slot)) = self.inner.next() {
-			if slot.is_valid() {
-				Some((address, 
-					slot.get_color()
-						.expect("iterator unwrapped valid slot")))
-			} else {
-				self.next()
-			}
+			Some((address, 
+				slot.get_color()
+					.expect("iterator unwrapped valid slot")))
 		} else {
 			None
 		}
