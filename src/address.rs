@@ -156,6 +156,17 @@ impl Select {
 			Select::All => Address::new(0, 0, 0),
 		}
 	}
+
+	/// Returns whether the address is contained within the selection.
+	pub fn contains(&self, address: Address) -> bool {
+		match *self {
+			Select::Address(addr) => address == addr,
+			Select::Line {page, line} 
+				=> address.page == page && address.line == line,
+			Select::Page {page} => address.page == page,
+			Select::All => true,
+		}
+	}
 }
 
 

@@ -118,14 +118,17 @@ impl Palette {
 		-> Result<Option<Rc<Slot>>, Error> 
 	{
 		if self.check_address(address) {
-			Ok(self.data
-				.insert(address, Rc::new(slot))
-			)
+			Ok(self.data.insert(address, Rc::new(slot)))
 		} else {
 			Err(Error::InvalidAddress)
 		}
 	}
-	
+
+	/// Returns an iterator over the palette slots contained in given selection.
+	pub fn select_iter(&self, selection: address::Select) -> SelectIterator {
+		SelectIterator::new(self, selection)
+	}
+
 	/// Returns an iterator over the (Address, Color) entries of the palette.
 	#[inline]
 	pub fn iter(&self) -> PaletteIterator {
@@ -349,6 +352,38 @@ impl<'p> Iterator for AddressIterator<'p> {
 	}
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// SelectIterator
+////////////////////////////////////////////////////////////////////////////////
+/// An iterator over the selected slots of a palette.
+pub struct SelectIterator<'p> {
+	inner: Iter<'p, Address, Rc<Slot>>,
+	selection: address::Select,
+}
+
+
+impl<'p> SelectIterator<'p> {
+	fn new(palette: &'p Palette, selection: address::Select) -> Self {
+		SelectIterator {
+			inner: palette.data.iter(),
+			selection: selection,
+		}
+	}
+}
+
+
+impl<'p> Iterator for SelectIterator<'p> {
+	type Item = Rc<Slot>;
+
+	fn next(&mut self) -> Option<Self::Item> {
+		while let Some((&key, value)) = self.inner.next() {
+			if self.selection.contains(key) {
+				return Some(value.clone());
+			}
+		}
+		None
+	}
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////

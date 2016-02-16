@@ -22,11 +22,11 @@
 
 extern crate rampeditor;
 
-use rampeditor::Color;
+// use rampeditor::Color;
 use rampeditor::PaletteBuilder;
-use rampeditor::Address;
+// use rampeditor::Address;
 use rampeditor::palette;
-use rampeditor::palette::element::ColorElement;
+// use rampeditor::palette::element::ColorElement;
 
 fn main() {
 	
