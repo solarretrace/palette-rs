@@ -24,7 +24,7 @@ extern crate rampeditor;
 
 use rampeditor::Color;
 use rampeditor::PaletteBuilder;
-// use rampeditor::Address;
+use rampeditor::Address;
 use rampeditor::palette;
 // use rampeditor::palette::element::ColorElement;
 
@@ -36,6 +36,9 @@ fn main() {
 		.create();
 	
 	pal.add_color(Color(1, 2, 3)).ok().unwrap();
+	println!("{}", pal);
+	
+	pal.remove_slot(Address::new(0,0,0));
 	println!("{}", pal);
 	
 }

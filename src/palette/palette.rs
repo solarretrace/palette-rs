@@ -37,7 +37,6 @@
 
 use super::element::{Slot, ColorElement};
 use super::metadata::Metadata;
-use super::operations::PaletteOperation;
 use super::format::{PaletteFormat};
 use super::error::{Error, Result};
 use color::Color;
@@ -272,7 +271,14 @@ impl Palette {
 		self.data.insert(address, Rc::new(new_slot));
 		Ok(address)
 	}
-	
+
+	/// Removes a slot from the palette and returns it. Returns None if the slot
+	/// doesn't exist in the palette.
+	#[inline]
+	pub fn remove_slot(&mut self, address: Address) -> Option<Rc<Slot>> {
+		self.data.remove(&address)
+	}
+
 	/// Returns the slot located at the given address, or `None` if the address
 	/// is invalid or empty.
 	#[inline]
