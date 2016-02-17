@@ -19,9 +19,12 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-
+//
+////////////////////////////////////////////////////////////////////////////////
+//!
 //! Defines a return results for error-producing palette operations.
-
+//!
+////////////////////////////////////////////////////////////////////////////////
 use address::Address;
 
 use std::fmt;

@@ -19,6 +19,9 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+//
+////////////////////////////////////////////////////////////////////////////////
+//!
 //! Defines a structured Palette object for storing and generating colors.
 //!
 //! The palette acts as a tree-like structure that acts as a collection of 
@@ -34,7 +37,8 @@
 //! generate a color. For example, a second order element is dependent upon two
 //! other colors, while a zeroth order color element is simply a color. These
 //! dependencies are expressed through references to other slots in the palette.
-
+//!
+////////////////////////////////////////////////////////////////////////////////
 use super::element::{Slot, ColorElement};
 use super::metadata::Metadata;
 use super::format::{PaletteFormat};
