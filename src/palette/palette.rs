@@ -19,12 +19,27 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-
 //! Defines a structured Palette object for storing and generating colors.
-use super::element::Slot;
+//!
+//! The palette acts as a tree-like structure that acts as a collection of 
+//! 'Slots' into which color elements are placed. Color elements will then 
+//! lazily generate a color when queried. This allows for the construction of 
+//! dynamic palette structures that can generate related colors based off of a 
+//! small subset of 'control' colors.
+//!
+//! More practically, `Slot`s are identified by `Address`, and each slot 
+//! contains a single `ColorElement`, which will generate a `Color` when either
+//! the Slot's or ColorElement's `get_color` method is called. ColorElements are
+//! categorized by 'order', which denotes the number of dependencies needed to
+//! generate a color. For example, a second order element is dependent upon two
+//! other colors, while a zeroth order color element is simply a color. These
+//! dependencies are expressed through references to other slots in the palette.
+
+use super::element::{Slot, ColorElement};
 use super::metadata::Metadata;
 use super::operations::PaletteOperation;
 use super::format::{PaletteFormat};
+use super::error::{Error, Result};
 use color::Color;
 use address::Address;
 use address;
@@ -32,9 +47,11 @@ use address;
 use std::rc::Rc;
 use std::collections::BTreeMap;
 use std::collections::btree_map::{Iter, Keys};
-use std::fmt;
-use std::error;
 use std::u8;
+use std::fmt;
+use std::result;
+use std::mem;
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -66,65 +83,247 @@ pub struct Palette {
 impl Palette {
 	
 	/// Constructs a new, empty Palette.
+	/// # Example
+	/// ```rust
+	/// # use rampeditor::palette::Palette;
+	/// let pal = Palette::new();
+	/// ```
 	#[inline]
 	pub fn new() -> Palette {
 		Default::default()
 	}
 
 	/// Returns the number of colors in the Palette.
+	///
+	/// # Example
+	/// ```rust
+	/// # use rampeditor::palette::Palette;
+	/// # use rampeditor::Color;
+	/// let mut pal = Palette::new();
+	/// assert_eq!(pal.len(), 0);
+	///
+	/// pal.add_color(Color(1, 2, 3));
+	/// assert_eq!(pal.len(), 1);
+	/// ```
 	#[inline]
 	pub fn len(&self) -> usize {
 		self.data.len()
 	}
 
+	/// Returns the number of addresses still available in the palette.
+	/// # Example
+	/// ```rust
+	/// # use rampeditor::palette::Palette;
+	/// # use rampeditor::Color;
+	/// let mut pal = Palette::new(); 
+	/// // Default palette is maximally sized:
+	/// assert_eq!(pal.free_addresses(), 16_581_375); 
+	///
+	/// pal.add_color(Color(1, 2, 3));
+	/// assert_eq!(pal.free_addresses(), 16_581_374);
+	/// ```
+	#[inline]
+	pub fn free_addresses(&self) -> usize {
+		self.size_bound() - self.data.len()
+	}
+
+	/// Adds a new color to the palette in the nearest valid location after 
+	/// the selection cursor and returns its address. Returns an error if the 
+	/// palette is full.
+	///
+	/// # Example
+	/// ```rust
+	/// # use rampeditor::palette::Palette;
+	/// # use rampeditor::Color;
+	/// let mut pal = Palette::new();
+	/// pal.add_color(Color(255, 0, 0));
+	/// pal.add_color(Color(0, 255, 0));
+	/// pal.add_color(Color(0, 0, 255));
+	///
+	/// assert_eq!(pal.len(), 3);
+	/// ```
+	///
+	/// # Example
+	/// ```rust
+	/// # use rampeditor::palette::{Palette, PaletteBuilder};
+	/// # use rampeditor::Color;
+	/// # let mut pal = PaletteBuilder::new()
+	/// # 	.with_page_count(1)
+	/// # 	.with_line_count(1)
+	/// # 	.with_column_count(1)	
+	/// # 	.create();
+	/// # pal.add_color(Color(255, 0, 0));
+	/// assert_eq!(pal.free_addresses(), 0);
+	/// let result = pal.add_color(Color(0, 0, 0)); // fails...
+	/// assert!(result.is_err()); 
+	/// ```
+	#[inline]
+	pub fn add_color(
+		&mut self, 
+		new_color: Color) 
+		-> Result<Address> 
+	{
+		self.add_element(ColorElement::ZerothOrder {color: new_color})
+	}
+
+	/// Returns the color located at the given address, or None if the address 
+	/// is invalid or empty.
+	///
+	/// # Examples
+	/// ```rust
+	/// # use rampeditor::palette::Palette;
+	/// # use rampeditor::Address;
+	/// # use rampeditor::Color;
+	/// let mut pal = Palette::new();
+	/// pal.add_color(Color(255, 0, 0));
+	/// pal.add_color(Color(0, 255, 0));
+	/// pal.add_color(Color(0, 0, 255));
+	///
+	/// let red = pal.get_color(Address::new(0, 0, 0)).unwrap();
+	/// let blue = pal.get_color(Address::new(0, 0, 1)).unwrap();
+	/// let green = pal.get_color(Address::new(0, 0, 2)).unwrap();
+	///
+	/// assert_eq!(red, Color(255, 0, 0));
+	/// assert_eq!(blue, Color(0, 255, 0));
+	/// assert_eq!(green, Color(0, 0, 255));
+	/// ```
+	///
+	/// Empty slots are empty:
+	/// ```rust
+	/// # use rampeditor::palette::Palette;
+	/// # use rampeditor::Address;
+	/// # use rampeditor::Color;
+	/// # let mut pal = Palette::new();
+	/// assert!(pal.get_color(Address::new(0, 2, 4)).is_none())
+	/// ```
+	#[inline]
+	pub fn get_color(&self, address: Address) -> Option<Color> {
+		self.get_slot(address).and_then(|slot| slot.get_color())
+	}
+
+	/// Sets the color at the located address. Returns the old color if it 
+	/// succeeds, or none if there was no color at the location. Returns an 
+	/// error if the address is invalid, or if the element at the address is a
+	/// derived color value.
+	pub fn set_color(
+		&mut self, 
+		address: Address,
+		new_color: Color) 
+		-> Result<Option<Color>>
+	{
+		if self.check_address(address) {
+			let new_element = ColorElement::ZerothOrder {color: new_color};
+			if self.data.contains_key(&address) {
+				if let Some(slot) = self.get_slot(address) {
+					if slot.get_order() != 0 {
+						return Err(Error::CannotSetDerivedColor)
+					}
+					let old_element = &mut*slot.borrow_mut();
+					let old = mem::replace(old_element, new_element);
+					return Ok(old.get_color())
+				} 
+			}
+		} 
+		Err(Error::InvalidAddress)
+	}
+
+
+	/// Adds a new element to the palette in the nearest valid location after 
+	/// the selection cursor and returns its address. Returns an error if the 
+	/// palette is full.
+	#[inline]
+	pub fn add_element(
+		&mut self, 
+		new_element: ColorElement) 
+		-> Result<Address> 
+	{
+		self.add_slot(Slot::new(new_element))
+	}
+
+	/// Sets the element at the located address. Returns the old element if it 
+	/// succeeds, or none if there was no element at the location. Returns an 
+	/// error if the address is invalid.
+	pub fn set_element(
+		&mut self, 
+		address: Address, 
+		new_element: ColorElement) 
+		-> Result<Option<ColorElement>> 
+	{
+		if self.check_address(address) {
+			if self.data.contains_key(&address) {
+				if let Some(slot) = self.get_slot(address) {
+					let old_element = &mut*slot.borrow_mut();
+					let old = mem::replace(old_element, new_element);
+					return Ok(Some(old));
+				}
+			}
+			self.data.insert(address, Rc::new(Slot::new(new_element)));
+			return Ok(None)
+		}
+		Err(Error::InvalidAddress)
+	}
+
+	/// Adds a new slot to the palette in the nearest valid location after the 
+	/// selection cursor and returns its address. Returns an error if the 
+	/// palette is full.
+	#[inline]
+	pub fn add_slot(&mut self, new_slot: Slot) -> Result<Address> {
+		let address = try!(self.next_free_address_advance_cursor());
+		self.data.insert(address, Rc::new(new_slot));
+		Ok(address)
+	}
+	
+	/// Returns the slot located at the given address, or `None` if the address
+	/// is invalid or empty.
+	#[inline]
+	pub fn get_slot(&self, address: Address) -> Option<&Rc<Slot>> {
+		self.data.get(&address)
+	}
+
 	/// Returns the palette's current selection cursor.
+	///
+	/// # Example
+	/// ```rust
+	/// # use rampeditor::palette::Palette;
+	/// # use rampeditor::{Select, Address};
+	/// # use rampeditor::Color;
+	/// let mut pal = Palette::new();
+	/// assert_eq!(pal.get_cursor(), Select::All);
+	///
+	/// pal.add_color(Color(1, 2, 3)).ok().unwrap();
+	/// assert_eq!(pal.get_cursor(), Select::Address(Address::new(0,0,1)));
+	/// ```
+	#[inline]
 	pub fn get_cursor(&self) -> address::Select {
 		self.address_cursor
 	}
 
-	/// Sets the palette's selection cursor.
+	/// Sets the palette's selection cursor to the given selection. Does nothing
+	/// if the selection is not valid for this palette.
+	///
+	/// # Example
+	/// ```rust
+	/// # use rampeditor::palette::Palette;
+	/// # use rampeditor::{Select, Address};
+	/// # use rampeditor::Color;
+	/// # let mut pal = Palette::new();
+	/// 
+	/// let s = Select::Line {page: 2, line: 3};
+	/// pal.set_cursor(s);
+	/// assert_eq!(pal.get_cursor(), s);
+	/// 
+	/// pal.set_cursor(Select::All);
+	/// assert_eq!(pal.get_cursor(), Select::All);
+	/// ```
+	#[inline]
 	pub fn set_cursor(&mut self, new_selection: address::Select) {
 		if self.check_address(new_selection.base_address()) {
 			self.address_cursor = new_selection;
 		}
 	}
 
-	pub fn execute(&mut self, op: &PaletteOperation) -> Result<(), Error> {
-		Ok(())
-	}
-
-	/// Adds a new slot to the palette in the nearest valid location after the 
-	/// selection cursor and returns its address. Returns an error if the 
-	/// palette is full.
-	pub fn add_slot(&mut self, slot: Slot) -> Result<Address, Error> {
-		let address = try!(self.next_free_address_advance_cursor());
-		self.data.insert(address, Rc::new(slot));
-		Ok(address)
-	}
-
-	/// Returns the slot located at the given address, or `None` if the address
-	/// is invalid or empty.
-	pub fn get_slot(&self, address: Address) -> Option<&Rc<Slot>> {
-		self.data.get(&address)
-	}
-
-	/// Assigns the given slot to the given address. Returns the slot previously
-	/// located at that position, or `None` if it was empty. Returns an error if
-	/// the address is invalid.
-	pub fn set_slot(
-		&mut self, 
-		address: Address, 
-		slot: Slot) 
-		-> Result<Option<Rc<Slot>>, Error> 
-	{
-		if self.check_address(address) {
-			Ok(self.data.insert(address, Rc::new(slot)))
-		} else {
-			Err(Error::InvalidAddress)
-		}
-	}
-
 	/// Returns an iterator over the palette slots contained in given selection.
+	#[inline]
 	pub fn select_iter(&self, selection: address::Select) -> SelectIterator {
 		SelectIterator::new(self, selection)
 	}
@@ -151,7 +350,7 @@ impl Palette {
 	/// the cursor to the next (wrapped) address. Returns an error and fails to 
 	/// advance the cursor if there are no free addresses.
 	#[inline]
-	fn next_free_address_advance_cursor(&mut self) -> Result<Address, Error> {
+	fn next_free_address_advance_cursor(&mut self) -> Result<Address> {
 		let address = try!(self.next_free_address());
 		// Update the cursor.
 		self.address_cursor = address.wrapped_next(
@@ -165,8 +364,8 @@ impl Palette {
 	/// Returns the next available address after the cursor. Returns an error if
 	/// there are no free addresses.
 	#[inline]
-	fn next_free_address(&self) -> Result<Address, Error> {
-		if self.space_remaining() == 0 {
+	fn next_free_address(&self) -> Result<Address> {
+		if self.free_addresses() == 0 {
 			return Err(Error::MaxSlotLimitExceeded);
 		}
 
@@ -185,7 +384,7 @@ impl Palette {
 	/// wrapping and max page settings for the palette.
 	#[inline]
 	fn check_address(&self, address: Address) -> bool {
-		address.page <= self.page_count &&
+		address.page < self.page_count &&
 		address.line < self.line_count &&
 		address.column < self.column_count
 	}
@@ -197,17 +396,11 @@ impl Palette {
 		self.line_count as usize * 
 		self.column_count as usize
 	}
-
-	/// Returns the amount of room left in the palette.
-	#[inline]
-	fn space_remaining(&self) -> usize {
-		self.size_bound() - self.data.len()
-	}
 }
 
 
 impl fmt::Display for Palette {
-	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
 		try!(write!(f, "Palette"));
 		if let Some(data) = self.metadata.get(&address::Select::All) {
 			try!(write!(f, " {}\n", data));
@@ -228,7 +421,7 @@ impl fmt::Display for Palette {
 			self.line_count,
 			self.column_count,
 			self.address_cursor,
-			self.space_remaining()
+			self.free_addresses()
 		));
 		
 
@@ -330,8 +523,8 @@ impl<'p> Iterator for ColorIterator<'p> {
 ////////////////////////////////////////////////////////////////////////////////
 // AddressIterator
 ////////////////////////////////////////////////////////////////////////////////
-/// An iterator over the colors of a palette. The colors are returned in address 
-/// order.
+/// An iterator over the occupied addresses of a palette. The addresses are 
+/// returned in order.
 pub struct AddressIterator<'p> {
 	inner: Keys<'p, Address, Rc<Slot>>
 }
@@ -504,52 +697,3 @@ impl Default for PaletteBuilder {
 }
 
 
-
-////////////////////////////////////////////////////////////////////////////////
-// Error
-////////////////////////////////////////////////////////////////////////////////
-/// Encapsulates errors associated with mutating palette operations.
-#[derive(Debug)]
-pub enum Error {
-	/// Attempted to add a color to the palette, but the palette contains the 
-	/// maximum number of slots already.
-	MaxSlotLimitExceeded,
-	/// Attempted to set a color to a non-zeroth-order slot.
-	CannotSetDerivedColor,
-	/// An address was provided that lies outside of the range defined for the 
-	/// palette.
-	InvalidAddress,
-	/// An empty address was provided for an operation that requires a color.
-	EmptyAddress(Address)
-}
-
-
-impl fmt::Display for Error {
-	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		match *self {
-			Error::EmptyAddress(address) => write!(f, "{}: {}", 
-				error::Error::description(self), 
-				address
-			),
-
-			_ => write!(f, "{}", error::Error::description(self))
-		}
-	}
-}
-
-
-impl error::Error for Error {
-	fn description(&self) -> &str {
-		match *self {
-			Error::MaxSlotLimitExceeded
-				=> "maximum number of color slots for palette exceeded",
-			Error::CannotSetDerivedColor
-				=> "cannot assign color to a location containing a derived \
-				    color value",
-			Error::InvalidAddress
-				=> "address provided is outside allowed range for palette",
-			Error::EmptyAddress(..)
-				=> "empty address provided to an operation requiring a color"
-		}
-	}
-}

@@ -22,7 +22,7 @@
 
 extern crate rampeditor;
 
-// use rampeditor::Color;
+use rampeditor::Color;
 use rampeditor::PaletteBuilder;
 // use rampeditor::Address;
 use rampeditor::palette;
@@ -35,6 +35,7 @@ fn main() {
 		.named("Super Duper Palette")
 		.create();
 	
-
+	pal.add_color(Color(1, 2, 3)).ok().unwrap();
 	println!("{}", pal);
+	
 }

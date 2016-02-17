@@ -9,4 +9,4 @@ pub mod utilities;
 pub use color::Color;
 pub use palette::Palette;
 pub use palette::PaletteBuilder;
-pub use address::Address;
+pub use address::{Address, Select};
