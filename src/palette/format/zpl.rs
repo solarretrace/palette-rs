@@ -77,17 +77,12 @@ const ZPL_FOOTER_E : [u8;36] = [
 /// The default palette format with no special configuration.
 pub struct ZplFormat;
 
-
-
-
 /// A reference to a small pallete PaletteFormat for configuring palettes.
 pub const ZPL_FORMAT: &'static ZplFormat = &ZPL_FORMAT_INSTANCE;
 const ZPL_FORMAT_INSTANCE: ZplFormat = ZplFormat;
 
 
 impl PaletteFormat for ZplFormat {
-	fn get_name(&self) -> &'static str {"ZplFormat"}
-	fn get_version(&self) -> (u8, u8, u8) {(2, 5, 0)}
 	fn configure(&self, builder: PaletteBuilder) -> PaletteBuilder {
 		builder
 			.with_page_count(8)
@@ -98,10 +93,7 @@ impl PaletteFormat for ZplFormat {
 
 impl fmt::Debug for ZplFormat {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		write!(f, 
-			"ZplFormat{{ name: {:?}, version: {:?} }}", 
-			self.get_name(),
-			self.get_version())
+		write!(f, "ZplFormat 1.0.0")
 	}
 }
 

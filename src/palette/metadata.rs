@@ -31,10 +31,14 @@
 // Metadata
 ////////////////////////////////////////////////////////////////////////////////
 /// Provides metadata about palette data.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Metadata {
 	/// A format-generated label for the item.
 	pub format_label: Option<String>,
 	/// A user-provided name for the item.
 	pub name: Option<String>,
+	/// Identifies whether the format's preparatory functions have been called 
+	/// for this item already.
+	pub initialized: bool,
 }
+

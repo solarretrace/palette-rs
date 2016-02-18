@@ -21,3 +21,4 @@ pub use palette::palette::Palette;
 pub use palette::palette::PaletteBuilder;
 pub use palette::format::SMALL_FORMAT;
 pub use palette::format::ZPL_FORMAT;
+pub use palette::error::{Error, Result};

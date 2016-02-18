@@ -25,7 +25,7 @@
 //! Provides common definitions for format specifiers.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use palette::PaletteBuilder;
+use palette::{Palette, PaletteBuilder};
 use address;
 use std::fmt;
 
@@ -33,37 +33,44 @@ use std::fmt;
 // PaletteFormat
 ////////////////////////////////////////////////////////////////////////////////
 /// Specifies the interface for using a specific palette format.
-pub trait PaletteFormat : fmt::Debug {
-	/// Returns the name of the palette format.
-	fn get_name(&self) -> &'static str;
-
-	/// Returns the version of the palette format in (major, minor, build) 
-	/// format.
-	fn get_version(&self) -> (u8, u8, u8);
-	
+pub trait PaletteFormat : fmt::Debug {	
 	/// Returns a configured palette builder that will create a valid palette 
 	/// for this format.
-	fn configure(&self, builder: PaletteBuilder) -> PaletteBuilder {
+	#[allow(unused_mut)]
+	fn configure(&self, mut builder: PaletteBuilder) -> PaletteBuilder {
 		builder
 	}
 
+	/// Called after the palette has been configured and created.
+	#[allow(unused_variables)]
+	fn prepare_new_palette(&self, palette: &mut Palette) {}
+
 	/// Called before an element is added to a new page in the palette. The 
 	/// expectation is that this will add the appropriate meta data to the 
-	/// palette. This will be called before the prepare_new_line and 
-	/// prepare_new_column functions are called.
+	/// palette. This will be called before the prepare_new_line function is 
+	/// called.
 	#[allow(unused_variables)]
-	fn prepare_new_page(&self, page: address::Select) {}
+	fn prepare_new_page(&self, palette: &mut Palette, page: address::Select) {}
 
 	/// Called before an element is added to a new line in the palette. The 
 	/// expectation is that this will add the appropriate meta data to the 
-	/// palette. This will be called before the prepare_new_column function is 
-	/// called.
-	#[allow(unused_variables)]
-	fn prepare_new_line(&self, line: address::Select) {}
-
-	/// Called before an element is added to the palette. The 
-	/// expectation is that this will add the appropriate meta data to the 
 	/// palette.
 	#[allow(unused_variables)]
-	fn prepare_new_column(&self, column: address::Select) {}
+	fn prepare_new_line(&self, palette: &mut Palette, line: address::Select) {}
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+// ZplFormat
+////////////////////////////////////////////////////////////////////////////////
+/// The default palette format with no special configuration.
+#[derive(Debug)]
+pub struct DefaultPaletteFormat;
+
+impl PaletteFormat for DefaultPaletteFormat {}
+
+/// A reference to a small pallete PaletteFormat for configuring palettes.
+pub const DEFAULT_FORMAT: &'static DefaultPaletteFormat 
+	= &DEFAULT_FORMAT_INSTANCE;
+
+const DEFAULT_FORMAT_INSTANCE: DefaultPaletteFormat = DefaultPaletteFormat;

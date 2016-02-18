@@ -41,7 +41,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use super::element::{Slot, ColorElement};
 use super::metadata::Metadata;
-use super::format::{PaletteFormat};
+use super::format::{PaletteFormat, DEFAULT_FORMAT};
 use super::error::{Error, Result};
 use color::Color;
 use address::Address;
@@ -332,6 +332,16 @@ impl Palette {
 		}
 	}
 
+	/// Sets the name for the given selection.
+	pub fn set_name<S>(&mut self, selection: address::Select, name: S) 
+		where S: Into<String> 
+	{
+		self.metadata
+			.entry(selection)
+			.or_insert(Default::default())
+			.name = Some(name.into());
+	}
+
 	/// Returns an iterator over the palette slots contained in given selection.
 	#[inline]
 	pub fn select_iter(&self, selection: address::Select) -> SelectIterator {
@@ -402,8 +412,8 @@ impl Palette {
 	/// Returns the upper bound on the number of slots storable in the palette.
 	#[inline]
 	fn size_bound(&self) -> usize {
-		self.page_count as usize * 
-		self.line_count as usize * 
+		self.page_count as usize *
+		self.line_count as usize *
 		self.column_count as usize
 	}
 }
@@ -414,15 +424,6 @@ impl fmt::Display for Palette {
 		try!(write!(f, "Palette"));
 		if let Some(data) = self.metadata.get(&address::Select::All) {
 			try!(write!(f, " {:?}\n", data));
-		}
-		if let Some(format) = self.format_type {
-			let version = format.get_version();
-			try!(write!(f, 
-				"[{} {}.{}.{}]", 
-				format.get_name(),
-				version.0,
-				version.1,
-				version.2));
 		}
 		try!(write!(f, 
 			" [{} pages] [wrap {}:{}] [cursor {}] \
@@ -594,10 +595,7 @@ impl<'p> Iterator for SelectIterator<'p> {
 ////////////////////////////////////////////////////////////////////////////////
 /// Encapsulates the state of the palette during builder pattern construction.
 pub struct PaletteBuilder {
-	/// The PaletteFormat used to configure the palette.
-	format_type: Option<&'static PaletteFormat>,
-	/// The version of the PaletteFormat used to configure the palette.
-	format_version: Option<(u8, u8, u8)>,
+	format: &'static PaletteFormat,
 	/// The internal address cursor that is used to track the next available 
 	/// address.
 	address_cursor: address::Select,
@@ -622,11 +620,12 @@ impl PaletteBuilder {
 
 	/// Allows the given palette format specification to set the palette's 
 	/// properties.
-	pub fn using_format<T>(mut self, format: &'static T) -> PaletteBuilder 
-		where T: PaletteFormat 
+	#[allow(unused_mut)]
+	pub fn using_format(
+		mut self, 
+		format: &'static PaletteFormat) 
+		-> PaletteBuilder 
 	{
-		self.format_type = Some(format);
-		self.format_version = Some(format.get_version());
 		format.configure(self)
 	}
 
@@ -675,8 +674,6 @@ impl PaletteBuilder {
 	/// Builds the palette and returns it.
 	pub fn create(self) -> Palette {
 		let mut pal = Palette {
-			format_type: self.format_type,
-			format_version: self.format_version,
 			address_cursor: self.address_cursor,
 			page_count: self.page_count,
 			line_count: self.line_count,
@@ -684,11 +681,10 @@ impl PaletteBuilder {
 			.. Default::default()
 		};
 
-		if self.palette_name.is_some() {
-			pal.metadata.insert(address::Select::All, Metadata {
-				format_label: None,
-				name: self.palette_name,
-			});
+		self.format.prepare_new_palette(&mut pal);
+
+		if let Some(name) = self.palette_name {
+			pal.set_name(address::Select::All, name)
 		}
 		pal
 	}
@@ -698,8 +694,7 @@ impl PaletteBuilder {
 impl Default for PaletteBuilder {
 	fn default() -> Self {
 		PaletteBuilder {
-			format_type: None,
-			format_version: None,
+			format: DEFAULT_FORMAT,
 			address_cursor: address::Select::All,
 			page_count: u8::MAX,
 			line_count: u8::MAX,

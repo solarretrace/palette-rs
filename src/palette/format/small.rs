@@ -45,8 +45,6 @@ const SMALL_FORMAT_INSTANCE: SmallFormat = SmallFormat;
 
 
 impl PaletteFormat for SmallFormat {
-	fn get_name(&self) -> &'static str {"SmallFormat"}
-	fn get_version(&self) -> (u8, u8, u8) {(0, 1, 0)}
 	fn configure(&self, builder: PaletteBuilder) -> PaletteBuilder {
 		builder
 			.with_page_count(8)
@@ -57,9 +55,6 @@ impl PaletteFormat for SmallFormat {
 
 impl fmt::Debug for SmallFormat {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		write!(f, 
-			"SmallFormat{{ name: {:?}, version: {:?} }}", 
-			self.get_name(),
-			self.get_version())
+		write!(f, "SmallFormat 1.0.0")
 	}
 }
