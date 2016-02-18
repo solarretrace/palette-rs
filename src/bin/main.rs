@@ -26,7 +26,6 @@ use rampeditor::Color;
 use rampeditor::PaletteBuilder;
 use rampeditor::Address;
 use rampeditor::palette;
-// use rampeditor::palette::element::ColorElement;
 
 fn main() {
 	
@@ -39,6 +38,6 @@ fn main() {
 	println!("{}", pal);
 	
 	pal.remove_slot(Address::new(0,0,0));
-	println!("{}", pal);
+	println!("{:?}", pal);
 	
 }

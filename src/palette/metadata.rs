@@ -25,7 +25,8 @@
 //! Defines a metadata object for tracking information about palette data.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-
+use std::fmt;
+use std::result;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Metadata
@@ -42,3 +43,13 @@ pub struct Metadata {
 	pub initialized: bool,
 }
 
+impl fmt::Display for Metadata {
+	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
+		match (self.name.as_ref(), self.format_label.as_ref()) {
+			(Some(name), Some(label)) => write!(f, "\"{}\" ({})", name, label),
+			(None, Some(label)) => write!(f, "({})", label),
+			(Some(name), None) => write!(f, "\"{}\"", name),
+			_ => Ok(())
+		}
+	}
+}

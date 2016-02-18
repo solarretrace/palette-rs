@@ -63,10 +63,6 @@ use std::mem;
 /// Encapsulates a single palette.
 #[derive(Debug)]
 pub struct Palette {
-	/// The PaletteFormat used to configure the palette.
-	format_type: Option<&'static PaletteFormat>,
-	/// The version of the PaletteFormat used to configure the palette.
-	format_version: Option<(u8, u8, u8)>,
 	/// A map assigning addresses to palette slots.
 	data: BTreeMap<Address, Rc<Slot>>,
 	/// Provided metadata for various parts of the palette.
@@ -332,6 +328,37 @@ impl Palette {
 		}
 	}
 
+	/// Returns the label associated with the given selection, or
+	/// None if it has no label.
+	pub fn get_label(&self, selection: address::Select) -> Option<&str> {
+		self.metadata
+			.get(&selection)
+			.and_then(|ref data| data.format_label.as_ref())
+			.map(|label| &label[..])
+	}
+
+	/// Sets the label for the given selection.
+	pub fn set_label<S>(
+		&mut self, 
+		selection: address::Select, 
+		format_label: S) 
+		where S: Into<String> 
+	{
+		self.metadata
+			.entry(selection)
+			.or_insert(Default::default())
+			.format_label = Some(format_label.into());
+	}
+
+	/// Returns the name associated with the given selection, or None if it has
+	/// no name.
+	pub fn get_name(&self, selection: address::Select) -> Option<&str> {
+		self.metadata
+			.get(&selection)
+			.and_then(|ref data| data.name.as_ref())
+			.map(|name| &name[..])
+	}
+
 	/// Sets the name for the given selection.
 	pub fn set_name<S>(&mut self, selection: address::Select, name: S) 
 		where S: Into<String> 
@@ -340,6 +367,22 @@ impl Palette {
 			.entry(selection)
 			.or_insert(Default::default())
 			.name = Some(name.into());
+	}
+
+	/// Returns whether the format's prepare function has been called for the 
+	/// given selection.
+	fn is_initialized(&self, selection: address::Select) -> bool {
+		self.metadata
+			.get(&selection)
+			.map_or(false, |ref data| data.initialized)
+	}
+
+	/// Sets the format preparation flag for the selection.
+	pub fn set_initialized(&mut self, selection: address::Select, value: bool) {
+		self.metadata
+			.entry(selection)
+			.or_insert(Default::default())
+			.initialized = value;
 	}
 
 	/// Returns an iterator over the palette slots contained in given selection.
@@ -423,7 +466,7 @@ impl fmt::Display for Palette {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
 		try!(write!(f, "Palette"));
 		if let Some(data) = self.metadata.get(&address::Select::All) {
-			try!(write!(f, " {:?}\n", data));
+			try!(write!(f, " {}\n", data));
 		}
 		try!(write!(f, 
 			" [{} pages] [wrap {}:{}] [cursor {}] \
@@ -457,8 +500,6 @@ impl fmt::Display for Palette {
 impl Default for Palette {
 	fn default() -> Self {
 		Palette {
-			format_type: None,
-			format_version: None,
 			data: BTreeMap::new(),
 			metadata: BTreeMap::new(),
 			address_cursor: address::Select::All,
@@ -626,6 +667,7 @@ impl PaletteBuilder {
 		format: &'static PaletteFormat) 
 		-> PaletteBuilder 
 	{
+		self.format = format;
 		format.configure(self)
 	}
 
@@ -682,6 +724,7 @@ impl PaletteBuilder {
 		};
 
 		self.format.prepare_new_palette(&mut pal);
+		pal.set_initialized(address::Select::All, true);
 
 		if let Some(name) = self.palette_name {
 			pal.set_name(address::Select::All, name)

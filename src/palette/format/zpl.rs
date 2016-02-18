@@ -27,8 +27,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 use super::format::PaletteFormat;
 
-use palette::PaletteBuilder;
-
+use palette::{Palette, PaletteBuilder};
+use address;
 use std::fmt;
 
 // The ZPL format was built for version 2.50 build 24 of Zelda Classic, and may
@@ -81,6 +81,7 @@ pub struct ZplFormat;
 pub const ZPL_FORMAT: &'static ZplFormat = &ZPL_FORMAT_INSTANCE;
 const ZPL_FORMAT_INSTANCE: ZplFormat = ZplFormat;
 
+const ZPL_VERSION_STRING: &'static str = "ZplFormat 1.0.0";
 
 impl PaletteFormat for ZplFormat {
 	fn configure(&self, builder: PaletteBuilder) -> PaletteBuilder {
@@ -89,11 +90,15 @@ impl PaletteFormat for ZplFormat {
 			.with_line_count(16)
 			.with_column_count(16)
 	}
+
+	fn prepare_new_palette(&self, palette: &mut Palette) {
+		palette.set_label(address::Select::All, ZPL_VERSION_STRING);
+	}
 }
 
 impl fmt::Debug for ZplFormat {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		write!(f, "ZplFormat 1.0.0")
+		write!(f, "{}", ZPL_VERSION_STRING)
 	}
 }
 
