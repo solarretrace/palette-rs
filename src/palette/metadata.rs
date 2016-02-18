@@ -25,7 +25,6 @@
 //! Defines a metadata object for tracking information about palette data.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use std::fmt;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -33,15 +32,9 @@ use std::fmt;
 ////////////////////////////////////////////////////////////////////////////////
 /// Provides metadata about palette data.
 #[derive(Debug)]
-pub enum Metadata {
-	/// A name for the item.
-	Name(String),
-}
-
-impl fmt::Display for Metadata {
-	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		match self {
-			&Metadata::Name(ref name) => write!(f, "\"{}\"", name),
-		}
-	}
+pub struct Metadata {
+	/// A format-generated label for the item.
+	pub format_label: Option<String>,
+	/// A user-provided name for the item.
+	pub name: Option<String>,
 }

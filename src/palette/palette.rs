@@ -413,7 +413,7 @@ impl fmt::Display for Palette {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
 		try!(write!(f, "Palette"));
 		if let Some(data) = self.metadata.get(&address::Select::All) {
-			try!(write!(f, " {}\n", data));
+			try!(write!(f, " {:?}\n", data));
 		}
 		if let Some(format) = self.format_type {
 			let version = format.get_version();
@@ -443,7 +443,7 @@ impl fmt::Display for Palette {
 				slot.borrow().get_order()
 			));
 			if let Some(data) = self.metadata.get(&address.clone().into()) {
-				try!(write!(f, "{}\n", data));
+				try!(write!(f, "{:?}\n", data));
 			} else {
 				try!(write!(f, "-\n"));
 			}
@@ -684,8 +684,11 @@ impl PaletteBuilder {
 			.. Default::default()
 		};
 
-		if let Some(name) = self.palette_name {
-			pal.metadata.insert(address::Select::All, Metadata::Name(name));
+		if self.palette_name.is_some() {
+			pal.metadata.insert(address::Select::All, Metadata {
+				format_label: None,
+				name: self.palette_name,
+			});
 		}
 		pal
 	}

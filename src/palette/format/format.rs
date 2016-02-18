@@ -26,7 +26,7 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 use palette::PaletteBuilder;
-
+use address;
 use std::fmt;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -47,5 +47,23 @@ pub trait PaletteFormat : fmt::Debug {
 		builder
 	}
 
-	
+	/// Called before an element is added to a new page in the palette. The 
+	/// expectation is that this will add the appropriate meta data to the 
+	/// palette. This will be called before the prepare_new_line and 
+	/// prepare_new_column functions are called.
+	#[allow(unused_variables)]
+	fn prepare_new_page(&self, page: address::Select) {}
+
+	/// Called before an element is added to a new line in the palette. The 
+	/// expectation is that this will add the appropriate meta data to the 
+	/// palette. This will be called before the prepare_new_column function is 
+	/// called.
+	#[allow(unused_variables)]
+	fn prepare_new_line(&self, line: address::Select) {}
+
+	/// Called before an element is added to the palette. The 
+	/// expectation is that this will add the appropriate meta data to the 
+	/// palette.
+	#[allow(unused_variables)]
+	fn prepare_new_column(&self, column: address::Select) {}
 }
