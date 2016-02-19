@@ -25,9 +25,8 @@
 //! Provides components for interacting with a small palette format.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::format::PaletteFormat;
-
-use palette::PaletteBuilder;
+use palette::format::Palette;
+// use palette::PaletteBuilder;
 
 use std::fmt;
 
@@ -39,18 +38,7 @@ use std::fmt;
 /// The default palette format with no special configuration.
 pub struct SmallFormat;
 
-/// A reference to a small pallete PaletteFormat for configuring palettes.
-pub const SMALL_FORMAT: &'static SmallFormat = &SMALL_FORMAT_INSTANCE;
-const SMALL_FORMAT_INSTANCE: SmallFormat = SmallFormat;
-
-
-impl PaletteFormat for SmallFormat {
-	fn configure(&self, builder: PaletteBuilder) -> PaletteBuilder {
-		builder
-			.with_page_count(8)
-			.with_line_count(16)
-			.with_column_count(16)
-	}
+impl Palette for SmallFormat {
 }
 
 impl fmt::Debug for SmallFormat {

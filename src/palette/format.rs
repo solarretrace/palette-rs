@@ -25,38 +25,45 @@
 //! Provides common definitions for format specifiers.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use palette::{Palette, PaletteBuilder};
+use palette::PaletteData;
 use address;
 use std::fmt;
+use std::io;
+use std::io::{Result, Write, Read};
 
 ////////////////////////////////////////////////////////////////////////////////
 // PaletteFormat
 ////////////////////////////////////////////////////////////////////////////////
 /// Specifies the interface for using a specific palette format.
-pub trait PaletteFormat : fmt::Debug {	
-	/// Returns a configured palette builder that will create a valid palette 
-	/// for this format.
-	#[allow(unused_mut)]
-	fn configure(&self, mut builder: PaletteBuilder) -> PaletteBuilder {
-		builder
-	}
-
+pub trait Palette : fmt::Debug {	
 	/// Called after the palette has been configured and created.
 	#[allow(unused_variables)]
-	fn prepare_new_palette(&self, palette: &mut Palette) {}
+	fn prepare_new_palette(&self, palette: &mut PaletteData) {}
 
 	/// Called before an element is added to a new page in the palette. The 
 	/// expectation is that this will add the appropriate meta data to the 
 	/// palette. This will be called before the prepare_new_line function is 
 	/// called.
 	#[allow(unused_variables)]
-	fn prepare_new_page(&self, palette: &mut Palette, page: address::Select) {}
+	fn prepare_new_page(&self, palette: &mut PaletteData, page: address::Select) {}
 
 	/// Called before an element is added to a new line in the palette. The 
 	/// expectation is that this will add the appropriate meta data to the 
 	/// palette.
 	#[allow(unused_variables)]
-	fn prepare_new_line(&self, palette: &mut Palette, line: address::Select) {}
+	fn prepare_new_line(&self, palette: &mut PaletteData, line: address::Select) {}
+
+	fn write_palette<W>(&self, out_buf: &W) -> io::Result<()> 
+		where W: io::Write
+	{
+		unimplemented!()
+	}
+
+	fn read_palette<R, F>(in_buf: &R) -> io::Result<F>
+		where R: io::Read, F: Palette
+	{
+		unimplemented!()
+	}
 }
 
 
@@ -65,12 +72,6 @@ pub trait PaletteFormat : fmt::Debug {
 ////////////////////////////////////////////////////////////////////////////////
 /// The default palette format with no special configuration.
 #[derive(Debug)]
-pub struct DefaultPaletteFormat;
+pub struct DefaultFormat;
 
-impl PaletteFormat for DefaultPaletteFormat {}
-
-/// A reference to a small pallete PaletteFormat for configuring palettes.
-pub const DEFAULT_FORMAT: &'static DefaultPaletteFormat 
-	= &DEFAULT_FORMAT_INSTANCE;
-
-const DEFAULT_FORMAT_INSTANCE: DefaultPaletteFormat = DefaultPaletteFormat;
+impl Palette for &'static DefaultFormat {}

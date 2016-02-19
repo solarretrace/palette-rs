@@ -25,9 +25,8 @@
 //! Provides components for interacting with the ZPL palette format.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::format::PaletteFormat;
-
-use palette::{Palette, PaletteBuilder};
+use palette::format::Palette;
+use palette::PaletteData;
 use address;
 use std::fmt;
 
@@ -77,21 +76,11 @@ const ZPL_FOOTER_E : [u8;36] = [
 /// The default palette format with no special configuration.
 pub struct ZplFormat;
 
-/// A reference to a small pallete PaletteFormat for configuring palettes.
-pub const ZPL_FORMAT: &'static ZplFormat = &ZPL_FORMAT_INSTANCE;
-const ZPL_FORMAT_INSTANCE: ZplFormat = ZplFormat;
-
 const ZPL_VERSION_STRING: &'static str = "ZplFormat 1.0.0";
 
-impl PaletteFormat for ZplFormat {
-	fn configure(&self, builder: PaletteBuilder) -> PaletteBuilder {
-		builder
-			.with_page_count(8)
-			.with_line_count(16)
-			.with_column_count(16)
-	}
+impl Palette for ZplFormat {
 
-	fn prepare_new_palette(&self, palette: &mut Palette) {
+	fn prepare_new_palette(&self, palette: &mut PaletteData) {
 		palette.set_label(address::Select::All, ZPL_VERSION_STRING);
 	}
 }

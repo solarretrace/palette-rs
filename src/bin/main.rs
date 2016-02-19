@@ -22,22 +22,22 @@
 
 extern crate rampeditor;
 
-use rampeditor::Color;
-use rampeditor::PaletteBuilder;
-use rampeditor::Address;
-use rampeditor::palette;
+// use rampeditor::Color;
+// use rampeditor::PaletteBuilder;
+// use rampeditor::Address;
+// use rampeditor::palette;
 
 fn main() {
 	
-	let mut pal = PaletteBuilder::new()
-		.using_format(palette::ZPL_FORMAT)
-		.named("Super Duper Palette")
-		.create();
+	// let mut pal = PaletteBuilder::new()
+	// 	.using_format(palette::ZplFormat)
+	// 	.named("Super Duper Palette")
+	// 	.create();
 	
-	pal.add_color(Color(1, 2, 3)).ok().unwrap();
-	println!("{}", pal);
+	// pal.add_color(Color(1, 2, 3)).ok().unwrap();
+	// println!("{}", pal);
 	
-	pal.remove_slot(Address::new(0,0,0));
-	println!("{:?}", pal);
+	// pal.remove_slot(Address::new(0,0,0));
+	// println!("{:?}", pal);
 	
 }

@@ -25,7 +25,7 @@
 //! Defines wrapper structs for common palette operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::palette::*;
+use super::data::*;
 use super::error::Result;
 // use color::Color;
 // use address::Address;
@@ -37,7 +37,7 @@ use super::error::Result;
 /// Provides the methods for modifying palettes.
 pub trait PaletteOperation {
 	/// Applies the operation to the given palette.
-	fn apply(&self, palette: &mut Palette) -> Result<()>;
+	fn apply(&self, palette: &mut PaletteData) -> Result<()>;
 }
 
 

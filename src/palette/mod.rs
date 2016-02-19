@@ -6,7 +6,7 @@ pub mod error;
 pub mod element;
 
 #[warn(missing_docs)]
-pub mod palette;
+pub mod data;
 
 #[warn(missing_docs)]
 pub mod metadata;
@@ -17,8 +17,11 @@ pub mod operations;
 #[warn(missing_docs)]
 pub mod format;
 
-pub use palette::palette::Palette;
-pub use palette::palette::PaletteBuilder;
-pub use palette::format::SMALL_FORMAT;
-pub use palette::format::ZPL_FORMAT;
+#[warn(missing_docs)]
+pub mod formats;
+
+pub use palette::data::PaletteData;
+pub use palette::format::Palette;
+pub use palette::formats::SmallFormat;
+pub use palette::formats::ZplFormat;
 pub use palette::error::{Error, Result};

@@ -22,7 +22,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! Defines a structured Palette object for storing and generating colors.
+//! Defines a structured PaletteData object for storing and generating colors.
 //!
 //! The palette acts as a tree-like structure that acts as a collection of 
 //! 'Slots' into which color elements are placed. Color elements will then 
@@ -41,7 +41,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use super::element::{Slot, ColorElement};
 use super::metadata::Metadata;
-use super::format::{PaletteFormat, DEFAULT_FORMAT};
+use super::format::Palette;
 use super::error::{Error, Result};
 use color::Color;
 use address::Address;
@@ -58,11 +58,11 @@ use std::mem;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Palette
+// PaletteData
 ////////////////////////////////////////////////////////////////////////////////
 /// Encapsulates a single palette.
 #[derive(Debug)]
-pub struct Palette {
+pub struct PaletteData {
 	/// A map assigning addresses to palette slots.
 	data: BTreeMap<Address, Rc<Slot>>,
 	/// Provided metadata for various parts of the palette.
@@ -79,26 +79,26 @@ pub struct Palette {
 }
 
 
-impl Palette {
+impl PaletteData {
 	
-	/// Constructs a new, empty Palette.
+	/// Constructs a new, empty PaletteData.
 	/// # Example
 	/// ```rust
-	/// # use rampeditor::palette::Palette;
-	/// let pal = Palette::new();
+	/// # use rampeditor::palette::PaletteData;
+	/// let pal = PaletteData::new();
 	/// ```
 	#[inline]
-	pub fn new() -> Palette {
+	pub fn new() -> PaletteData {
 		Default::default()
 	}
 
-	/// Returns the number of colors in the Palette.
+	/// Returns the number of colors in the PaletteData.
 	///
 	/// # Example
 	/// ```rust
-	/// # use rampeditor::palette::Palette;
+	/// # use rampeditor::palette::PaletteData;
 	/// # use rampeditor::Color;
-	/// let mut pal = Palette::new();
+	/// let mut pal = PaletteData::new();
 	/// assert_eq!(pal.len(), 0);
 	///
 	/// pal.add_color(Color(1, 2, 3));
@@ -112,9 +112,9 @@ impl Palette {
 	/// Returns the number of addresses still available in the palette.
 	/// # Example
 	/// ```rust
-	/// # use rampeditor::palette::Palette;
+	/// # use rampeditor::palette::PaletteData;
 	/// # use rampeditor::Color;
-	/// let mut pal = Palette::new(); 
+	/// let mut pal = PaletteData::new(); 
 	/// // Default palette is maximally sized:
 	/// assert_eq!(pal.free_addresses(), 16_581_375); 
 	///
@@ -132,9 +132,9 @@ impl Palette {
 	///
 	/// # Example
 	/// ```rust
-	/// # use rampeditor::palette::Palette;
+	/// # use rampeditor::palette::PaletteData;
 	/// # use rampeditor::Color;
-	/// let mut pal = Palette::new();
+	/// let mut pal = PaletteData::new();
 	/// pal.add_color(Color(255, 0, 0));
 	/// pal.add_color(Color(0, 255, 0));
 	/// pal.add_color(Color(0, 0, 255));
@@ -144,7 +144,7 @@ impl Palette {
 	///
 	/// # Example
 	/// ```rust
-	/// # use rampeditor::palette::{Palette, PaletteBuilder};
+	/// # use rampeditor::palette::{PaletteData, PaletteBuilder};
 	/// # use rampeditor::Color;
 	/// # let mut pal = PaletteBuilder::new()
 	/// # 	.with_page_count(1)
@@ -170,10 +170,10 @@ impl Palette {
 	///
 	/// # Examples
 	/// ```rust
-	/// # use rampeditor::palette::Palette;
+	/// # use rampeditor::palette::PaletteData;
 	/// # use rampeditor::Address;
 	/// # use rampeditor::Color;
-	/// let mut pal = Palette::new();
+	/// let mut pal = PaletteData::new();
 	/// pal.add_color(Color(255, 0, 0));
 	/// pal.add_color(Color(0, 255, 0));
 	/// pal.add_color(Color(0, 0, 255));
@@ -189,10 +189,10 @@ impl Palette {
 	///
 	/// Empty slots are empty:
 	/// ```rust
-	/// # use rampeditor::palette::Palette;
+	/// # use rampeditor::palette::PaletteData;
 	/// # use rampeditor::Address;
 	/// # use rampeditor::Color;
-	/// # let mut pal = Palette::new();
+	/// # let mut pal = PaletteData::new();
 	/// assert!(pal.get_color(Address::new(0, 2, 4)).is_none())
 	/// ```
 	#[inline]
@@ -290,10 +290,10 @@ impl Palette {
 	///
 	/// # Example
 	/// ```rust
-	/// # use rampeditor::palette::Palette;
+	/// # use rampeditor::palette::PaletteData;
 	/// # use rampeditor::{Select, Address};
 	/// # use rampeditor::Color;
-	/// let mut pal = Palette::new();
+	/// let mut pal = PaletteData::new();
 	/// assert_eq!(pal.get_cursor(), Select::All);
 	///
 	/// pal.add_color(Color(1, 2, 3)).ok().unwrap();
@@ -309,10 +309,10 @@ impl Palette {
 	///
 	/// # Example
 	/// ```rust
-	/// # use rampeditor::palette::Palette;
+	/// # use rampeditor::palette::PaletteData;
 	/// # use rampeditor::{Select, Address};
 	/// # use rampeditor::Color;
-	/// # let mut pal = Palette::new();
+	/// # let mut pal = PaletteData::new();
 	/// 
 	/// let s = Select::Line {page: 2, line: 3};
 	/// pal.set_cursor(s);
@@ -462,9 +462,9 @@ impl Palette {
 }
 
 
-impl fmt::Display for Palette {
+impl fmt::Display for PaletteData {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		try!(write!(f, "Palette"));
+		try!(write!(f, "PaletteData"));
 		if let Some(data) = self.metadata.get(&address::Select::All) {
 			try!(write!(f, " {}\n", data));
 		}
@@ -497,9 +497,9 @@ impl fmt::Display for Palette {
 }
 
 
-impl Default for Palette {
+impl Default for PaletteData {
 	fn default() -> Self {
-		Palette {
+		PaletteData {
 			data: BTreeMap::new(),
 			metadata: BTreeMap::new(),
 			address_cursor: address::Select::All,
@@ -523,7 +523,7 @@ pub struct PaletteIterator<'p> {
 
 
 impl<'p> PaletteIterator<'p> {
-	fn new(palette: &'p Palette) -> Self {
+	fn new(palette: &'p PaletteData) -> Self {
 		PaletteIterator {
 			inner: palette.data.iter()
 		}
@@ -557,7 +557,7 @@ pub struct ColorIterator<'p> {
 
 
 impl<'p> ColorIterator<'p> {
-	fn new(palette: &'p Palette) -> Self {
+	fn new(palette: &'p PaletteData) -> Self {
 		ColorIterator {inner: palette.iter()}
 	}
 }
@@ -583,7 +583,7 @@ pub struct AddressIterator<'p> {
 
 
 impl<'p> AddressIterator<'p> {
-	fn new(palette: &'p Palette) -> Self {
+	fn new(palette: &'p PaletteData) -> Self {
 		AddressIterator {inner: palette.data.keys()}
 	}
 }
@@ -608,7 +608,7 @@ pub struct SelectIterator<'p> {
 
 
 impl<'p> SelectIterator<'p> {
-	fn new(palette: &'p Palette, selection: address::Select) -> Self {
+	fn new(palette: &'p PaletteData, selection: address::Select) -> Self {
 		SelectIterator {
 			inner: palette.data.iter(),
 			selection: selection,
@@ -629,122 +629,4 @@ impl<'p> Iterator for SelectIterator<'p> {
 		None
 	}
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
-// PaletteBuilder
-////////////////////////////////////////////////////////////////////////////////
-/// Encapsulates the state of the palette during builder pattern construction.
-pub struct PaletteBuilder {
-	format: &'static PaletteFormat,
-	/// The internal address cursor that is used to track the next available 
-	/// address.
-	address_cursor: address::Select,
-	/// The number of pages in the palette.
-	page_count: u8,
-	/// The number of lines in each page.
-	line_count: u8,
-	/// The number of columns in each line.
-	column_count: u8,
-	/// The name of the palette.
-	palette_name: Option<String>,
-}
-
-
-impl PaletteBuilder {
-
-	/// Starts building the palette with the default settings.
-	pub fn new() -> PaletteBuilder {
-		Default::default()
-	}
-
-
-	/// Allows the given palette format specification to set the palette's 
-	/// properties.
-	#[allow(unused_mut)]
-	pub fn using_format(
-		mut self, 
-		format: &'static PaletteFormat) 
-		-> PaletteBuilder 
-	{
-		self.format = format;
-		format.configure(self)
-	}
-
-
-	/// Sets the palette name.
-	pub fn named<S>(mut self, palette_name: S) -> PaletteBuilder 
-		where S: Into<String>
-	{
-		self.palette_name = Some(palette_name.into());
-		self
-	}
-
-
-	/// Sets the max page count.
-	pub fn with_page_count(mut self, page_count: u8) -> PaletteBuilder {
-		self.page_count = page_count;
-		self
-	}
-
-
-	/// Sets the line wrap for new slots.
-	pub fn with_line_count(mut self, line_count: u8) -> PaletteBuilder {
-		self.line_count = line_count;
-		self
-	}
-	
-
-	/// Sets the max page count.
-	pub fn with_column_count(mut self, column_count: u8) -> PaletteBuilder {
-		self.column_count = column_count;
-		self
-	}
-
-
-	/// Sets the starting address cursor.
-	pub fn with_starting_address_cursor(
-		mut self, 
-		address_cursor: address::Select) 
-		-> PaletteBuilder
-	{
-		self.address_cursor = address_cursor;
-		self
-	}
-
-	
-	/// Builds the palette and returns it.
-	pub fn create(self) -> Palette {
-		let mut pal = Palette {
-			address_cursor: self.address_cursor,
-			page_count: self.page_count,
-			line_count: self.line_count,
-			column_count: self.column_count,
-			.. Default::default()
-		};
-
-		self.format.prepare_new_palette(&mut pal);
-		pal.set_initialized(address::Select::All, true);
-
-		if let Some(name) = self.palette_name {
-			pal.set_name(address::Select::All, name)
-		}
-		pal
-	}
-}
-
-
-impl Default for PaletteBuilder {
-	fn default() -> Self {
-		PaletteBuilder {
-			format: DEFAULT_FORMAT,
-			address_cursor: address::Select::All,
-			page_count: u8::MAX,
-			line_count: u8::MAX,
-			column_count: u8::MAX,
-			palette_name: None,
-		}
-	}
-}
-
 
