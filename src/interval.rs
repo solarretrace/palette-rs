@@ -213,7 +213,7 @@ pub struct Interval<T> where T: PartialOrd + PartialEq + Clone {
     /// The start of the range.
     start: Boundary<T>,
     /// The end of the range.
-    end: Option<Boundary<T>>
+    end: Boundary<T>
 }
 
 impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
@@ -247,12 +247,12 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     pub fn new(start: Boundary<T>, end: Option<Boundary<T>>) -> Self {
         if let Some(end_bound) = end {
             if *end_bound < *start {
-                Interval {start: end_bound, end: Some(start)}
+                Interval {start: end_bound, end: start}
             } else {
-                Interval {start: start, end: Some(end_bound)}
+                Interval {start: start, end: end_bound}
             }
         } else {
-            Interval {start: start, end: end}
+            Interval {start: start.clone(), end: start}
         }
     }
 
@@ -372,11 +372,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// ```
     #[inline]
     pub fn right_point(&self) -> T {
-        if let Some(ref end_bound) = self.end {
-            (**end_bound).clone()
-        } else {
-            self.left_point()
-        }
+        (*self.end).clone()
     }
 
     /// Returns the left (least) boundary of the interval.
@@ -408,11 +404,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// ```
     #[inline]
     pub fn right_bound(&self) -> Boundary<T> {
-        if let Some(ref end_bound) = self.end {
-            end_bound.clone()
-        } else {
-            self.left_bound()
-        }
+        self.end.clone()
     }
 
     /// Returns whether a given interval is empty.
@@ -510,7 +502,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
             None
         } else if a.right_point() == b.left_point() {
             // [_]{_}   -> ]{ or None
-            if a.right_bound().is_closed() || b.left_bound().is_closed() {
+            if a.right_bound().is_closed() && b.left_bound().is_closed() {
                 Some(Interval::new(
                     Boundary::Include(a.right_point()), 
                     None
@@ -519,6 +511,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
                 None
             }
         } else {
+            // [_{_]_}
             Some(Interval::new(
                  a.left_bound().intersect_or_greatest(&b.left_bound()),
                  Some(a.right_bound().intersect_or_least(&b.right_bound()))
@@ -571,11 +564,7 @@ impl <'a, T> Interval<T>
     pub fn width(&'a self) -> <&'a T as Sub>::Output 
         where <&'a T as Sub>::Output: Default 
     {
-        if let Some(ref end_bound) = self.end {
-            &**end_bound - &*self.start
-        } else {
-            Default::default()
-        }
+        &*self.end - &*self.start
     }
 }
 
@@ -609,28 +598,70 @@ mod tests {
         let lo: fn(f32, f32) -> Interval<f32> = Interval::left_open;
         let ro: fn(f32, f32) -> Interval<f32> = Interval::right_open;
 
-        // Open overlapping
+        // Open overlapping.
         assert_eq!( o(1.0, 2.0).intersect(& o(1.0, 2.0)), Some( o(1.0, 2.0)));
         assert_eq!( o(1.0, 2.0).intersect(&lo(1.0, 2.0)), Some( o(1.0, 2.0)));
         assert_eq!( o(1.0, 2.0).intersect(&ro(1.0, 2.0)), Some( o(1.0, 2.0)));
         assert_eq!( o(1.0, 2.0).intersect(& c(1.0, 2.0)), Some( o(1.0, 2.0)));
 
-        // Closed overlapping
+        // Closed overlapping.
         assert_eq!( c(1.0, 2.0).intersect(& o(1.0, 2.0)), Some( o(1.0, 2.0)));
         assert_eq!( c(1.0, 2.0).intersect(&lo(1.0, 2.0)), Some(lo(1.0, 2.0)));
         assert_eq!( c(1.0, 2.0).intersect(&ro(1.0, 2.0)), Some(ro(1.0, 2.0)));
         assert_eq!( c(1.0, 2.0).intersect(& c(1.0, 2.0)), Some( c(1.0, 2.0)));
         
-        // Open left-half overlapping
+        // Open left-half overlapping.
         assert_eq!( o(1.0, 2.0).intersect(& o(1.0, 1.5)), Some( o(1.0, 1.5)));
         assert_eq!( o(1.0, 2.0).intersect(&lo(1.0, 1.5)), Some(lo(1.0, 1.5)));
         assert_eq!( o(1.0, 2.0).intersect(&ro(1.0, 1.5)), Some( o(1.0, 1.5)));
         assert_eq!( o(1.0, 2.0).intersect(& c(1.0, 1.5)), Some(lo(1.0, 1.5)));
 
-        // Close left-half overlapping
+        // Close left-half overlapping.
         assert_eq!( c(1.0, 2.0).intersect(& o(1.0, 1.5)), Some( o(1.0, 1.5)));
         assert_eq!( c(1.0, 2.0).intersect(&lo(1.0, 1.5)), Some(lo(1.0, 1.5)));
         assert_eq!( c(1.0, 2.0).intersect(&ro(1.0, 1.5)), Some(ro(1.0, 1.5)));
         assert_eq!( c(1.0, 2.0).intersect(& c(1.0, 1.5)), Some( c(1.0, 1.5)));
+
+        // Open right-half overlapping.
+        assert_eq!( o(1.0, 2.0).intersect(& o(1.5, 2.0)), Some( o(1.5, 2.0)));
+        assert_eq!( o(1.0, 2.0).intersect(&lo(1.5, 2.0)), Some( o(1.5, 2.0)));
+        assert_eq!( o(1.0, 2.0).intersect(&ro(1.5, 2.0)), Some(ro(1.5, 2.0)));
+        assert_eq!( o(1.0, 2.0).intersect(& c(1.5, 2.0)), Some(ro(1.5, 2.0)));
+
+        // Closed right-half overlapping.
+        assert_eq!( c(1.0, 2.0).intersect(& o(1.5, 2.0)), Some( o(1.5, 2.0)));
+        assert_eq!( c(1.0, 2.0).intersect(&lo(1.5, 2.0)), Some(lo(1.5, 2.0)));
+        assert_eq!( c(1.0, 2.0).intersect(&ro(1.5, 2.0)), Some(ro(1.5, 2.0)));
+        assert_eq!( c(1.0, 2.0).intersect(& c(1.5, 2.0)), Some( c(1.5, 2.0)));
+
+        // Open Subset overlapping.
+        assert_eq!( o(1.0, 2.0).intersect(& o(1.2, 1.8)), Some( o(1.2, 1.8)));
+        assert_eq!( o(1.0, 2.0).intersect(&lo(1.2, 1.8)), Some(lo(1.2, 1.8)));
+        assert_eq!( o(1.0, 2.0).intersect(&ro(1.2, 1.8)), Some(ro(1.2, 1.8)));
+        assert_eq!( o(1.0, 2.0).intersect(& c(1.2, 1.8)), Some( c(1.2, 1.8)));
+
+        // Closed Subset overlapping.
+        assert_eq!( c(1.0, 2.0).intersect(& o(1.2, 1.8)), Some( o(1.2, 1.8)));
+        assert_eq!( c(1.0, 2.0).intersect(&lo(1.2, 1.8)), Some(lo(1.2, 1.8)));
+        assert_eq!( c(1.0, 2.0).intersect(&ro(1.2, 1.8)), Some(ro(1.2, 1.8)));
+        assert_eq!( c(1.0, 2.0).intersect(& c(1.2, 1.8)), Some( c(1.2, 1.8)));
+
+        // Right non-overlapping.
+        assert_eq!( o(1.0, 2.0).intersect(& o(2.0, 3.0)), None);
+        assert_eq!( o(1.0, 2.0).intersect(&lo(2.0, 3.0)), None);
+        assert_eq!( o(1.0, 2.0).intersect(&ro(2.0, 3.0)), None);
+        assert_eq!( o(1.0, 2.0).intersect(& c(2.0, 3.0)), None);
+
+        // Left non-overlapping.
+        assert_eq!( o(1.0, 2.0).intersect(& o(0.0, 1.0)), None);
+        assert_eq!( o(1.0, 2.0).intersect(&lo(0.0, 1.0)), None);
+        assert_eq!( o(1.0, 2.0).intersect(&ro(0.0, 1.0)), None);
+        assert_eq!( o(1.0, 2.0).intersect(& c(0.0, 1.0)), None);
+
+        // Point intersections.
+        assert_eq!( o(1.0, 2.0).intersect(& o(0.5, 0.5)), None);
+        // assert_eq!( o(1.0, 2.0).intersect(&lo(0.5, 0.5)), Some( c(0.5, 0.5)));
+        // assert_eq!( o(1.0, 2.0).intersect(&ro(0.5, 0.5)), Some( c(0.5, 0.5)));
+        // assert_eq!( o(1.0, 2.0).intersect(& c(0.5, 0.5)), Some( c(0.5, 0.5)));
     }
 }
