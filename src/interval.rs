@@ -26,7 +26,6 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 use std::ops::{Deref, Sub};
-use std::cmp::Ord;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Boundary
@@ -246,10 +245,9 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// ```
     pub fn new(start: Boundary<T>, end: Option<Boundary<T>>) -> Self {
         if let Some(end_bound) = end {
-            if *end_bound < *start {
-                Interval {start: end_bound, end: start}
-            } else {
-                Interval {start: start, end: end_bound}
+            Interval {
+                start: start.union_or_least(&end_bound), 
+                end: start.union_or_greatest(&end_bound)
             }
         } else {
             Interval {start: start.clone(), end: start}
@@ -448,12 +446,33 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
             && self.left_bound().is_open()
     }
 
+    /// Converts the interval into an Option, returning None if it is empty.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use rampeditor::Interval;
+    ///
+    /// assert!(Interval::open(0, 0).into_non_empty().is_none());
+    ///
+    /// let int = Interval::open(0, 1);
+    /// assert_eq!(int.into_non_empty().unwrap(), int);
+    /// ```
+    ///
+    pub fn into_non_empty(self) -> Option<Self> {
+        if self.is_empty() {
+            None
+        } else {
+            Some(self)
+        }
+    }
+
     /// Returns whether the given point is included in the interval.
     ///
     /// # Example
     ///
     /// ```rust
-    /// use rampeditor::{Interval, Boundary};
+    /// use rampeditor::Interval;
     /// let int = Interval::right_open(0.0, 2.0);
     /// assert!(int.contains(&0.0));
     /// assert!(int.contains(&1.0));
@@ -466,15 +485,18 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
             || *point == self.right_point() && self.right_bound().is_closed()
     }
 
-    /// Returns the set union of the interval with the given interval. Note that
-    /// since an interval requires contiguous points, a union of disjoint 
-    /// intervals will fail to produce an interval and None will be returned.
-    pub fn union(&self, other: &Self) -> Option<Self> {
-        unimplemented!()
-    }
-
     /// Returns the set intersection of the interval with the given interval,
     /// or None if the intervals do not overlap.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use rampeditor::Interval;
+    /// let a = Interval::right_open(0.0, 2.0);
+    /// let b = Interval::closed(1.0, 3.0);
+    /// 
+    /// assert_eq!(a.intersect(&b), Some(Interval::right_open(1.0, 2.0)));
+    /// ```
     pub fn intersect(&self, other: &Self) -> Option<Self> {
         // Check if either one is empty.
         if self.is_empty() || other.is_empty() {
@@ -486,32 +508,30 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
             return Some(self.clone());
         }
 
-        // a:[], b:{}
+        // Choose orientation for intervals.
         let (a, b) = if self.left_point() <= other.left_point() {
             (self, other)
         } else {
             (other, self)
         };
-
         
         if a.right_point() < b.left_point() {
-            // []_{}    -> None
-            // [_]_{}   -> None
-            // []_{_}   -> None
-            // [_]_{_}  -> None
+            // Not overlapping.
             None
         } else if a.right_point() == b.left_point() {
-            // [_]{_}   -> ]{ or None
+            // Overlapping at one point. 
             if a.right_bound().is_closed() && b.left_bound().is_closed() {
+                // Both are closed.
                 Some(Interval::new(
                     Boundary::Include(a.right_point()), 
                     None
                 ))
             } else {
+                // At least one is open.
                 None
             }
         } else {
-            // [_{_]_}
+            // Overlapping.
             Some(Interval::new(
                  a.left_bound().intersect_or_greatest(&b.left_bound()),
                  Some(a.right_bound().intersect_or_least(&b.right_bound()))
@@ -519,21 +539,84 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
         }
     }
 
-    /// Returns the interval with all the points in the intersection with the 
-    /// given interval removed.
-    pub fn minus(&self, other: &Self) -> Option<Self> {
-        unimplemented!()
+    /// Returns the set union of the interval with the given interval. Note that
+    /// since an interval requires contiguous points, a union of disjoint 
+    /// intervals will fail to produce an interval and None will be returned.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use rampeditor::Interval;
+    /// let a = Interval::left_open(0.0, 2.0);
+    /// let b = Interval::closed(1.0, 3.0);
+    /// 
+    /// assert_eq!(a.union(&b), Some(Interval::left_open(0.0, 3.0)));
+    /// ```
+    pub fn union(&self, other: &Self) -> Option<Self> {
+        // Check for empty unions.
+        if self.is_empty() && other.is_empty() {
+            return None;
+        } else if self.is_empty() {
+            return Some(other.clone())
+        } else if other.is_empty() {
+            return Some(self.clone())
+        }
+
+        // Check if they're the same set.
+        if self == other {
+            return Some(self.clone());
+        }
+
+        // Choose orientation for intervals.
+        let (a, b) = if self.left_point() <= other.left_point() {
+            (self, other)
+        } else {
+            (other, self)
+        };
+        
+        if a.right_point() < b.left_point() ||
+            (a.right_point() == b.left_point() &&
+            a.right_bound().is_open() && 
+            b.left_bound().is_open())
+        {
+            // Not overlapping, or overlapping at one open point.
+            None
+        } else {
+            // Overlapping.
+            Some(Interval::new(
+                 a.left_bound().union_or_least(&b.left_bound()),
+                 Some(a.right_bound().union_or_greatest(&b.right_bound()))
+            ))
+        }
     }
 
     /// Returns the smallest interval containing both of the given intervals.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use rampeditor::Interval;
+    /// let a = Interval::closed(0.0, 0.0);
+    /// let b = Interval::open(2.0, 3.0);
+    /// 
+    /// assert_eq!(a.connect(&b), Some(Interval::right_open(0.0, 3.0)));
+    /// ```
     pub fn connect(&self, other: &Self) -> Option<Self> {
-        unimplemented!()
-    }
-
-    /// Transforms a collection of intervals by combining any intervals that 
-    /// overlap or touch and removing any that are empty.
-    pub fn normalize(intervals: Vec<Self>) -> Vec<Self> {
-        unimplemented!()
+        if self.is_empty() && other.is_empty() {
+            None
+        } else if self.is_empty() {
+            Some(other.clone())
+        } else if other.is_empty() {
+            Some(self.clone())
+        } else {
+            Some(Interval::new(
+                self.left_bound()
+                    .union_or_least(&other.left_bound()),
+                Some(self.right_bound()
+                    .union_or_greatest(&other.right_bound())
+                )
+            ))
+        }
     }
 }
 
@@ -576,6 +659,21 @@ impl <'a, T> Interval<T>
 #[cfg(test)]
 mod tests {
     use super::{Boundary, Interval};
+
+    /// Tests the Interval constructors for points.
+    #[test]
+    fn interval_point_constructors() {
+        let o: fn(f32, f32) -> Interval<f32> = Interval::open;
+        let c: fn(f32, f32) -> Interval<f32> = Interval::closed;
+        let lo: fn(f32, f32) -> Interval<f32> = Interval::left_open;
+        let ro: fn(f32, f32) -> Interval<f32> = Interval::right_open;
+
+        // Point constructors.
+        assert!(o(0.5, 0.5).is_empty());
+        assert_eq!(lo(0.5, 0.5), c(0.5, 0.5));
+        assert_eq!(ro(0.5, 0.5), c(0.5, 0.5));
+        assert_eq!(c(0.5, 0.5), c(0.5, 0.5));
+    }
 
     /// Tests the Interval::intersect function.
     #[test]
@@ -658,10 +756,197 @@ mod tests {
         assert_eq!( o(1.0, 2.0).intersect(&ro(0.0, 1.0)), None);
         assert_eq!( o(1.0, 2.0).intersect(& c(0.0, 1.0)), None);
 
-        // Point intersections.
-        assert_eq!( o(1.0, 2.0).intersect(& o(0.5, 0.5)), None);
-        // assert_eq!( o(1.0, 2.0).intersect(&lo(0.5, 0.5)), Some( c(0.5, 0.5)));
-        // assert_eq!( o(1.0, 2.0).intersect(&ro(0.5, 0.5)), Some( c(0.5, 0.5)));
-        // assert_eq!( o(1.0, 2.0).intersect(& c(0.5, 0.5)), Some( c(0.5, 0.5)));
+        // Center Point intersections.
+        assert_eq!( o(1.0, 2.0).intersect(& o(1.5, 1.5)), None);
+        assert_eq!( o(1.0, 2.0).intersect(&lo(1.5, 1.5)), Some( c(1.5, 1.5)));
+        assert_eq!( o(1.0, 2.0).intersect(&ro(1.5, 1.5)), Some( c(1.5, 1.5)));
+        assert_eq!( o(1.0, 2.0).intersect(& c(1.5, 1.5)), Some( c(1.5, 1.5)));
+
+        // Left Point intersections.
+        assert_eq!( c(1.0, 2.0).intersect(& o(1.0, 1.0)), None);
+        assert_eq!( c(1.0, 2.0).intersect(&lo(1.0, 1.0)), Some( c(1.0, 1.0)));
+        assert_eq!( c(1.0, 2.0).intersect(&ro(1.0, 1.0)), Some( c(1.0, 1.0)));
+        assert_eq!( c(1.0, 2.0).intersect(& c(1.0, 1.0)), Some( c(1.0, 1.0)));
+
+        // Left Point intersections.
+        assert_eq!( c(1.0, 2.0).intersect(& o(2.0, 2.0)), None);
+        assert_eq!( c(1.0, 2.0).intersect(&lo(2.0, 2.0)), Some( c(2.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).intersect(&ro(2.0, 2.0)), Some( c(2.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).intersect(& c(2.0, 2.0)), Some( c(2.0, 2.0)));
+    }
+
+
+    /// Tests the Interval::union function.
+    #[test]
+    fn interval_union() {
+        let o: fn(f32, f32) -> Interval<f32> = Interval::open;
+        let c: fn(f32, f32) -> Interval<f32> = Interval::closed;
+        let lo: fn(f32, f32) -> Interval<f32> = Interval::left_open;
+        let ro: fn(f32, f32) -> Interval<f32> = Interval::right_open;
+
+        // Open overlapping.
+        assert_eq!( o(1.0, 2.0).union(& o(1.0, 2.0)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(&lo(1.0, 2.0)), Some(lo(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(&ro(1.0, 2.0)), Some(ro(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(& c(1.0, 2.0)), Some( c(1.0, 2.0)));
+
+        // Closed overlapping.
+        assert_eq!( c(1.0, 2.0).union(& o(1.0, 2.0)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).union(&lo(1.0, 2.0)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).union(&ro(1.0, 2.0)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).union(& c(1.0, 2.0)), Some( c(1.0, 2.0)));
+        
+        // Open left-half overlapping.
+        assert_eq!( o(1.0, 2.0).union(& o(1.0, 1.5)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(&lo(1.0, 1.5)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(&ro(1.0, 1.5)), Some(ro(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(& c(1.0, 1.5)), Some(ro(1.0, 2.0)));
+
+        // Close left-half overlapping.
+        assert_eq!( c(1.0, 2.0).union(& o(1.0, 1.5)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).union(&lo(1.0, 1.5)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).union(&ro(1.0, 1.5)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).union(& c(1.0, 1.5)), Some( c(1.0, 2.0)));
+
+        // Open right-half overlapping.
+        assert_eq!( o(1.0, 2.0).union(& o(1.5, 2.0)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(&lo(1.5, 2.0)), Some(lo(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(&ro(1.5, 2.0)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(& c(1.5, 2.0)), Some(lo(1.0, 2.0)));
+
+        // Closed right-half overlapping.
+        assert_eq!( c(1.0, 2.0).union(& o(1.5, 2.0)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).union(&lo(1.5, 2.0)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).union(&ro(1.5, 2.0)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).union(& c(1.5, 2.0)), Some( c(1.0, 2.0)));
+
+        // Open Subset overlapping.
+        assert_eq!( o(1.0, 2.0).union(& o(1.2, 1.8)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(&lo(1.2, 1.8)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(&ro(1.2, 1.8)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(& c(1.2, 1.8)), Some( o(1.0, 2.0)));
+
+        // Closed Subset overlapping.
+        assert_eq!( c(1.0, 2.0).union(& o(1.2, 1.8)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).union(&lo(1.2, 1.8)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).union(&ro(1.2, 1.8)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).union(& c(1.2, 1.8)), Some( c(1.0, 2.0)));
+
+        // Right non-overlapping.
+        assert_eq!( o(1.0, 2.0).union(& o(2.0, 3.0)), None);
+        assert_eq!( o(1.0, 2.0).union(&lo(2.0, 3.0)), None);
+        assert_eq!( o(1.0, 2.0).union(&ro(2.0, 3.0)), Some( o(1.0, 3.0)));
+        assert_eq!( o(1.0, 2.0).union(& c(2.0, 3.0)), Some(lo(1.0, 3.0)));
+
+        // Left non-overlapping.
+        assert_eq!( o(1.0, 2.0).union(& o(0.0, 1.0)), None);
+        assert_eq!( o(1.0, 2.0).union(&lo(0.0, 1.0)), Some( o(0.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(&ro(0.0, 1.0)), None);
+        assert_eq!( o(1.0, 2.0).union(& c(0.0, 1.0)), Some(ro(0.0, 2.0)));
+
+        // Center Point unions.
+        assert_eq!( o(1.0, 2.0).union(& o(1.5, 1.5)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(&lo(1.5, 1.5)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(&ro(1.5, 1.5)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(& c(1.5, 1.5)), Some( o(1.0, 2.0)));
+
+        // Left Point unions.
+        assert_eq!( o(1.0, 2.0).union(& o(1.0, 1.0)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(&lo(1.0, 1.0)), Some(ro(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(&ro(1.0, 1.0)), Some(ro(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(& c(1.0, 1.0)), Some(ro(1.0, 2.0)));
+
+        // Left Point unions.
+        assert_eq!( o(1.0, 2.0).union(& o(2.0, 2.0)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(&lo(2.0, 2.0)), Some(lo(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(&ro(2.0, 2.0)), Some(lo(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).union(& c(2.0, 2.0)), Some(lo(1.0, 2.0)));
+    }
+
+    /// Tests the Interval::connect function.
+    #[test]
+    fn interval_connect() {
+        let o: fn(f32, f32) -> Interval<f32> = Interval::open;
+        let c: fn(f32, f32) -> Interval<f32> = Interval::closed;
+        let lo: fn(f32, f32) -> Interval<f32> = Interval::left_open;
+        let ro: fn(f32, f32) -> Interval<f32> = Interval::right_open;
+
+        // Open overlapping.
+        assert_eq!( o(1.0, 2.0).connect(& o(1.0, 2.0)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(&lo(1.0, 2.0)), Some(lo(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(&ro(1.0, 2.0)), Some(ro(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(& c(1.0, 2.0)), Some( c(1.0, 2.0)));
+
+        // Closed overlapping.
+        assert_eq!( c(1.0, 2.0).connect(& o(1.0, 2.0)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).connect(&lo(1.0, 2.0)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).connect(&ro(1.0, 2.0)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).connect(& c(1.0, 2.0)), Some( c(1.0, 2.0)));
+        
+        // Open left-half overlapping.
+        assert_eq!( o(1.0, 2.0).connect(& o(1.0, 1.5)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(&lo(1.0, 1.5)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(&ro(1.0, 1.5)), Some(ro(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(& c(1.0, 1.5)), Some(ro(1.0, 2.0)));
+
+        // Close left-half overlapping.
+        assert_eq!( c(1.0, 2.0).connect(& o(1.0, 1.5)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).connect(&lo(1.0, 1.5)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).connect(&ro(1.0, 1.5)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).connect(& c(1.0, 1.5)), Some( c(1.0, 2.0)));
+
+        // Open right-half overlapping.
+        assert_eq!( o(1.0, 2.0).connect(& o(1.5, 2.0)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(&lo(1.5, 2.0)), Some(lo(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(&ro(1.5, 2.0)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(& c(1.5, 2.0)), Some(lo(1.0, 2.0)));
+
+        // Closed right-half overlapping.
+        assert_eq!( c(1.0, 2.0).connect(& o(1.5, 2.0)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).connect(&lo(1.5, 2.0)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).connect(&ro(1.5, 2.0)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).connect(& c(1.5, 2.0)), Some( c(1.0, 2.0)));
+
+        // Open Subset overlapping.
+        assert_eq!( o(1.0, 2.0).connect(& o(1.2, 1.8)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(&lo(1.2, 1.8)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(&ro(1.2, 1.8)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(& c(1.2, 1.8)), Some( o(1.0, 2.0)));
+
+        // Closed Subset overlapping.
+        assert_eq!( c(1.0, 2.0).connect(& o(1.2, 1.8)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).connect(&lo(1.2, 1.8)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).connect(&ro(1.2, 1.8)), Some( c(1.0, 2.0)));
+        assert_eq!( c(1.0, 2.0).connect(& c(1.2, 1.8)), Some( c(1.0, 2.0)));
+
+        // Right non-overlapping.
+        assert_eq!( o(1.0, 2.0).connect(& o(2.0, 3.0)), Some( o(1.0, 3.0)));
+        assert_eq!( o(1.0, 2.0).connect(&lo(2.0, 3.0)), Some(lo(1.0, 3.0)));
+        assert_eq!( o(1.0, 2.0).connect(&ro(2.0, 3.0)), Some( o(1.0, 3.0)));
+        assert_eq!( o(1.0, 2.0).connect(& c(2.0, 3.0)), Some(lo(1.0, 3.0)));
+
+        // Left non-overlapping.
+        assert_eq!( o(1.0, 2.0).connect(& o(0.0, 1.0)), Some( o(0.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(&lo(0.0, 1.0)), Some( o(0.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(&ro(0.0, 1.0)), Some(ro(0.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(& c(0.0, 1.0)), Some(ro(0.0, 2.0)));
+
+        // Center Point connects.
+        assert_eq!( o(1.0, 2.0).connect(& o(1.5, 1.5)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(&lo(1.5, 1.5)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(&ro(1.5, 1.5)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(& c(1.5, 1.5)), Some( o(1.0, 2.0)));
+
+        // Left Point connects.
+        assert_eq!( o(1.0, 2.0).connect(& o(1.0, 1.0)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(&lo(1.0, 1.0)), Some(ro(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(&ro(1.0, 1.0)), Some(ro(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(& c(1.0, 1.0)), Some(ro(1.0, 2.0)));
+
+        // Left Point connects.
+        assert_eq!( o(1.0, 2.0).connect(& o(2.0, 2.0)), Some( o(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(&lo(2.0, 2.0)), Some(lo(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(&ro(2.0, 2.0)), Some(lo(1.0, 2.0)));
+        assert_eq!( o(1.0, 2.0).connect(& c(2.0, 2.0)), Some(lo(1.0, 2.0)));
     }
 }

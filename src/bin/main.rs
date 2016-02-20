@@ -23,7 +23,6 @@
 extern crate rampeditor;
 
 use rampeditor::*;
-// use rampeditor::palette;
 
 fn main() {
 	let pal = ZplPalette::new("Super Duper");
@@ -31,8 +30,6 @@ fn main() {
 	// pal.add_color(Color(1, 2, 3)).ok().unwrap();
 	println!("{}", pal);
 
-	
-	
 	// pal.remove_slot(Address::new(0,0,0));
 	// println!("{:?}", pal);
 	

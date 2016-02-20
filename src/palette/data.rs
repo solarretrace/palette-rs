@@ -247,7 +247,6 @@ impl PaletteData {
 		Ok(address)
 	}
 
-
 	/// Returns the label associated with the given selection, or
 	/// None if it has no label.
 	pub fn get_label(&self, selection: address::Select) -> Option<&str> {
