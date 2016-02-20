@@ -32,8 +32,14 @@ use address;
 use std::fmt;
 use std::result;
 
+use std::io;
+use std::io::{Result, Write, Read};
+
 // The ZPL format was built for version 2.50 build 24 of Zelda Classic, and may
 // not work on versions 1.92 or older.
+
+const ZPL_COLOR_DEPTH_SCALE: f32 = 0.25;
+
 const ZPL_HEADER : [u8;12] = [
 	0x43, 0x53, 0x45, 0x54, 
 	0x04, 0x00, 0x01, 0x00, 
@@ -86,11 +92,39 @@ impl Palette for ZplPalette {
 		let mut pal = ZplPalette {core: Default::default()};
 		pal.core.set_label(address::Select::All, "ZplPalette 1.0.0");
 		pal.core.set_name(address::Select::All, name.into());
-		pal.core.page_count = 16;
+		pal.core.page_count = 255;
 		pal.core.line_count = 16;
 		pal.core.column_count = 16;
 		pal.core.set_initialized(address::Select::All, true);
 		pal
+	}
+
+	fn write_palette<W>(&self, out_buf: &mut W) -> io::Result<()> 
+		where W: io::Write
+	{
+		// Write header.
+		try!(out_buf.write(&ZPL_HEADER)); 
+		// Write all groups in sequence.
+
+		// Write level names.
+
+		// Write footer.
+		try!(out_buf.write(&ZPL_FOOTER_A));
+		for _ in 1..109 {
+			try!(out_buf.write(&ZPL_FOOTER_B));
+		}
+		try!(out_buf.write(&ZPL_FOOTER_C));
+		for _ in 1..79 {
+			try!(out_buf.write(&ZPL_FOOTER_D));
+		}
+		try!(out_buf.write(&ZPL_FOOTER_E));
+		Ok(())
+	}
+
+	fn read_palette<R>(in_buf: &R) -> io::Result<Self>
+		where R: io::Read, Self: Sized
+	{
+		unimplemented!()
 	}
 }
 

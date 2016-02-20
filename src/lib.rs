@@ -1,11 +1,21 @@
 
+#[warn(missing_docs)]
+pub mod palette;
+
+#[warn(missing_docs)]
+pub mod address;
+
+#[warn(missing_docs)]
+pub mod utilities;
+
+#[warn(missing_docs)]
+pub mod interval;
 
 pub mod color;
-pub mod palette;
-pub mod address;
-pub mod utilities;
+
 
 
 pub use color::Color;
 pub use palette::{Palette, DefaultPalette, ZplPalette};
 pub use address::{Address, Select};
+pub use interval::{Boundary, Interval};

@@ -22,21 +22,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! Defines a structured PaletteData object for storing and generating colors.
-//!
-//! The palette acts as a tree-like structure that acts as a collection of 
-//! 'Slots' into which color elements are placed. Color elements will then 
-//! lazily generate a color when queried. This allows for the construction of 
-//! dynamic palette structures that can generate related colors based off of a 
-//! small subset of 'control' colors.
-//!
-//! More practically, `Slot`s are identified by `Address`, and each slot 
-//! contains a single `ColorElement`, which will generate a `Color` when either
-//! the Slot's or ColorElement's `get_color` method is called. ColorElements are
-//! categorized by 'order', which denotes the number of dependencies needed to
-//! generate a color. For example, a second order element is dependent upon two
-//! other colors, while a zeroth order color element is simply a color. These
-//! dependencies are expressed through references to other slots in the palette.
+//! Defines a structured PaletteData object for storing common data for palette
+//! formats.
 //!
 ////////////////////////////////////////////////////////////////////////////////
 use super::element::{Slot, ColorElement};
@@ -85,11 +72,11 @@ impl PaletteData {
 	/// ```rust
 	/// # use rampeditor::palette::PaletteData;
 	/// # use rampeditor::Color;
-	/// let mut pal = PaletteData::new();
-	/// assert_eq!(pal.len(), 0);
+	/// let mut dat: PaletteData = Default::default();
+	/// assert_eq!(dat.len(), 0);
 	///
-	/// pal.add_color(Color(1, 2, 3));
-	/// assert_eq!(pal.len(), 1);
+	/// dat.add_color(Color(1, 2, 3));
+	/// assert_eq!(dat.len(), 1);
 	/// ```
 	#[inline]
 	pub fn len(&self) -> usize {
@@ -101,12 +88,12 @@ impl PaletteData {
 	/// ```rust
 	/// # use rampeditor::palette::PaletteData;
 	/// # use rampeditor::Color;
-	/// let mut pal = PaletteData::new(); 
+	/// let mut dat: PaletteData = Default::default(); 
 	/// // Default palette is maximally sized:
-	/// assert_eq!(pal.free_addresses(), 16_581_375); 
+	/// assert_eq!(dat.free_addresses(), 16_581_375); 
 	///
-	/// pal.add_color(Color(1, 2, 3));
-	/// assert_eq!(pal.free_addresses(), 16_581_374);
+	/// dat.add_color(Color(1, 2, 3));
+	/// assert_eq!(dat.free_addresses(), 16_581_374);
 	/// ```
 	#[inline]
 	pub fn free_addresses(&self) -> usize {
@@ -121,26 +108,25 @@ impl PaletteData {
 	/// ```rust
 	/// # use rampeditor::palette::PaletteData;
 	/// # use rampeditor::Color;
-	/// let mut pal = PaletteData::new();
-	/// pal.add_color(Color(255, 0, 0));
-	/// pal.add_color(Color(0, 255, 0));
-	/// pal.add_color(Color(0, 0, 255));
+	/// let mut dat: PaletteData = Default::default();
+	/// dat.add_color(Color(255, 0, 0));
+	/// dat.add_color(Color(0, 255, 0));
+	/// dat.add_color(Color(0, 0, 255));
 	///
-	/// assert_eq!(pal.len(), 3);
+	/// assert_eq!(dat.len(), 3);
 	/// ```
 	///
 	/// # Example
 	/// ```rust
-	/// # use rampeditor::palette::{PaletteData, PaletteBuilder};
+	/// # use rampeditor::palette::PaletteData;
 	/// # use rampeditor::Color;
-	/// # let mut pal = PaletteBuilder::new()
-	/// # 	.with_page_count(1)
-	/// # 	.with_line_count(1)
-	/// # 	.with_column_count(1)	
-	/// # 	.create();
-	/// # pal.add_color(Color(255, 0, 0));
-	/// assert_eq!(pal.free_addresses(), 0);
-	/// let result = pal.add_color(Color(0, 0, 0)); // fails...
+	/// let mut dat: PaletteData = Default::default();
+	/// dat.page_count = 1;
+	/// dat.line_count = 1;
+	/// dat.column_count = 1;
+	/// # dat.add_color(Color(255, 0, 0));
+	/// assert_eq!(dat.free_addresses(), 0);
+	/// let result = dat.add_color(Color(0, 0, 0)); // fails...
 	/// assert!(result.is_err()); 
 	/// ```
 	#[inline]
@@ -160,14 +146,14 @@ impl PaletteData {
 	/// # use rampeditor::palette::PaletteData;
 	/// # use rampeditor::Address;
 	/// # use rampeditor::Color;
-	/// let mut pal = PaletteData::new();
-	/// pal.add_color(Color(255, 0, 0));
-	/// pal.add_color(Color(0, 255, 0));
-	/// pal.add_color(Color(0, 0, 255));
+	/// let mut dat: PaletteData = Default::default();
+	/// dat.add_color(Color(255, 0, 0));
+	/// dat.add_color(Color(0, 255, 0));
+	/// dat.add_color(Color(0, 0, 255));
 	///
-	/// let red = pal.get_color(Address::new(0, 0, 0)).unwrap();
-	/// let blue = pal.get_color(Address::new(0, 0, 1)).unwrap();
-	/// let green = pal.get_color(Address::new(0, 0, 2)).unwrap();
+	/// let red = dat.get_color(Address::new(0, 0, 0)).unwrap();
+	/// let blue = dat.get_color(Address::new(0, 0, 1)).unwrap();
+	/// let green = dat.get_color(Address::new(0, 0, 2)).unwrap();
 	///
 	/// assert_eq!(red, Color(255, 0, 0));
 	/// assert_eq!(blue, Color(0, 255, 0));
@@ -179,8 +165,8 @@ impl PaletteData {
 	/// # use rampeditor::palette::PaletteData;
 	/// # use rampeditor::Address;
 	/// # use rampeditor::Color;
-	/// # let mut pal = PaletteData::new();
-	/// assert!(pal.get_color(Address::new(0, 2, 4)).is_none())
+	/// # let mut dat = PaletteData::new();
+	/// assert!(dat.get_color(Address::new(0, 2, 4)).is_none())
 	/// ```
 	#[inline]
 	pub fn get_color(&self, address: Address) -> Option<Color> {

@@ -27,7 +27,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 use palette::PaletteData;
 use address;
+
 use std::fmt;
+
 use std::io;
 use std::io::{Result, Write, Read};
 
@@ -54,7 +56,7 @@ pub trait Palette : fmt::Debug {
 
 	/// Writes the palette to the given buffer.
 	#[allow(unused_variables)]
-	fn write_palette<W>(&self, out_buf: &W) -> io::Result<()> 
+	fn write_palette<W>(&self, out_buf: &mut W) -> io::Result<()> 
 		where W: io::Write
 	{
 		unimplemented!()

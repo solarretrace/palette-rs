@@ -26,10 +26,12 @@ use rampeditor::*;
 // use rampeditor::palette;
 
 fn main() {
-	let mut pal = DefaultPalette::new("Super Duper");
+	let pal = ZplPalette::new("Super Duper");
 	
 	// pal.add_color(Color(1, 2, 3)).ok().unwrap();
 	println!("{}", pal);
+
+	
 	
 	// pal.remove_slot(Address::new(0,0,0));
 	// println!("{:?}", pal);
