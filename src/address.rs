@@ -55,7 +55,8 @@ impl Address {
 	///
 	/// # Example
 	/// ```rust
-	/// # use rampeditor::Address;
+	/// use rampeditor::Address;
+	/// 
 	/// let a = Address::new(0, 9, 9);
 	/// let b = a.wrapped_next(10, 10, 10);
 	/// 

@@ -70,8 +70,9 @@ impl PaletteData {
 	///
 	/// # Example
 	/// ```rust
-	/// # use rampeditor::palette::PaletteData;
-	/// # use rampeditor::Color;
+	/// use rampeditor::palette::PaletteData;
+	/// use rampeditor::Color;
+	////
 	/// let mut dat: PaletteData = Default::default();
 	/// assert_eq!(dat.len(), 0);
 	///
@@ -86,8 +87,9 @@ impl PaletteData {
 	/// Returns the number of addresses still available in the palette.
 	/// # Example
 	/// ```rust
-	/// # use rampeditor::palette::PaletteData;
-	/// # use rampeditor::Color;
+	/// use rampeditor::palette::PaletteData;
+	/// use rampeditor::Color;
+	////
 	/// let mut dat: PaletteData = Default::default(); 
 	/// // Default palette is maximally sized:
 	/// assert_eq!(dat.free_addresses(), 16_581_375); 
@@ -106,8 +108,9 @@ impl PaletteData {
 	///
 	/// # Example
 	/// ```rust
-	/// # use rampeditor::palette::PaletteData;
-	/// # use rampeditor::Color;
+	/// use rampeditor::palette::PaletteData;
+	/// use rampeditor::Color;
+	/// 
 	/// let mut dat: PaletteData = Default::default();
 	/// dat.add_color(Color(255, 0, 0));
 	/// dat.add_color(Color(0, 255, 0));
@@ -143,9 +146,9 @@ impl PaletteData {
 	///
 	/// # Examples
 	/// ```rust
-	/// # use rampeditor::palette::PaletteData;
-	/// # use rampeditor::Address;
-	/// # use rampeditor::Color;
+	///  use rampeditor::palette::PaletteData;
+	///  use rampeditor::{Address, Color};
+	/// 
 	/// let mut dat: PaletteData = Default::default();
 	/// dat.add_color(Color(255, 0, 0));
 	/// dat.add_color(Color(0, 255, 0));
@@ -163,9 +166,8 @@ impl PaletteData {
 	/// Empty slots are empty:
 	/// ```rust
 	/// # use rampeditor::palette::PaletteData;
-	/// # use rampeditor::Address;
-	/// # use rampeditor::Color;
-	/// # let mut dat = PaletteData::new();
+	/// # use rampeditor::{Address, Color};
+	/// let dat: PaletteData = Default::default();
 	/// assert!(dat.get_color(Address::new(0, 2, 4)).is_none())
 	/// ```
 	#[inline]

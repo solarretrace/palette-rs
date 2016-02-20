@@ -190,6 +190,37 @@ impl <T> Interval<T> where T: PartialOrd {
         )
     }
 
+    /// Returns whether a given interval is empty.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use rampeditor::{Interval, Boundary};
+    /// let int = Interval::right_open(0, 2);
+    /// assert!(!int.is_empty());
+    /// ```
+    ///
+    /// An open interval with two of the same points is empty:
+    /// ```rust
+    /// # use rampeditor::{Interval, Boundary};
+    /// let int = Interval::open(0, 0);
+    /// assert!(int.is_empty());
+    /// ```
+    ///
+    /// A half-open interval with two of the same points is not:
+    /// ```rust
+    /// # use rampeditor::{Interval, Boundary};
+    /// let int = Interval::left_open(0, 0);
+    /// assert!(!int.is_empty());
+    /// ```
+    ///
+    /// A single-point interval is empty only if that point is excluded:
+    /// ```rust
+    /// # use rampeditor::{Interval, Boundary};
+    /// let int_a = Interval::new(Boundary::Exclude(0), None);
+    /// let int_b = Interval::new(Boundary::Include(0), None);
+    /// assert!(int_a.is_empty());
+    /// assert!(!int_b.is_empty());
+    /// ```
     pub fn is_empty(&self) -> bool {
         !if let Some(ref end_bound) = self.end {
             self.start.is_inclusive() ||
