@@ -53,14 +53,18 @@ pub trait Palette : fmt::Debug {
 	#[allow(unused_variables)]
 	fn prepare_new_line(&self, palette: &mut PaletteData, line: address::Select) {}
 
+	/// Writes the palette to the given buffer.
+	#[allow(unused_variables)]
 	fn write_palette<W>(&self, out_buf: &W) -> io::Result<()> 
 		where W: io::Write
 	{
 		unimplemented!()
 	}
 
-	fn read_palette<R, F>(in_buf: &R) -> io::Result<F>
-		where R: io::Read, F: Palette
+	/// Reads a palette from the given buffer.
+	#[allow(unused_variables)]
+	fn read_palette<R>(in_buf: &R) -> io::Result<Self>
+		where R: io::Read, Self: Sized
 	{
 		unimplemented!()
 	}

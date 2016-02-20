@@ -22,6 +22,5 @@ pub mod formats;
 
 pub use palette::data::PaletteData;
 pub use palette::format::Palette;
-pub use palette::formats::SmallFormat;
 pub use palette::formats::ZplFormat;
 pub use palette::error::{Error, Result};

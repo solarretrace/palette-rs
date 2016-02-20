@@ -3,13 +3,6 @@
 
 #[warn(missing_docs)]
 #[allow(dead_code)]
-pub mod small;
-
-#[warn(missing_docs)]
-#[allow(dead_code)]
 pub mod zpl;
 
-
-
-pub use palette::formats::small::*;
 pub use palette::formats::zpl::*;

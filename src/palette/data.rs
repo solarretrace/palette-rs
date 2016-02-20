@@ -41,7 +41,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 use super::element::{Slot, ColorElement};
 use super::metadata::Metadata;
-use super::format::Palette;
 use super::error::{Error, Result};
 use color::Color;
 use address::Address;
@@ -64,18 +63,18 @@ use std::mem;
 #[derive(Debug)]
 pub struct PaletteData {
 	/// A map assigning addresses to palette slots.
-	data: BTreeMap<Address, Rc<Slot>>,
+	pub slotmap: BTreeMap<Address, Rc<Slot>>,
 	/// Provided metadata for various parts of the palette.
-	metadata: BTreeMap<address::Select, Metadata>,
+	pub metadata: BTreeMap<address::Select, Metadata>,
 	/// The internal address cursor that is used to track the next available 
 	/// address.
-	address_cursor: address::Select,
+	pub address_cursor: address::Select,
 	/// The number of pages in the palette.
-	page_count: u8,
+	pub page_count: u8,
 	/// The number of lines in each page.
-	line_count: u8,
+	pub line_count: u8,
 	/// The number of columns in each line.
-	column_count: u8,
+	pub column_count: u8,
 }
 
 
@@ -106,7 +105,7 @@ impl PaletteData {
 	/// ```
 	#[inline]
 	pub fn len(&self) -> usize {
-		self.data.len()
+		self.slotmap.len()
 	}
 
 	/// Returns the number of addresses still available in the palette.
@@ -123,7 +122,7 @@ impl PaletteData {
 	/// ```
 	#[inline]
 	pub fn free_addresses(&self) -> usize {
-		self.size_bound() - self.data.len()
+		self.size_bound() - self.slotmap.len()
 	}
 
 	/// Adds a new color to the palette in the nearest valid location after 
@@ -197,7 +196,7 @@ impl PaletteData {
 	/// ```
 	#[inline]
 	pub fn get_color(&self, address: Address) -> Option<Color> {
-		self.get_slot(address).and_then(|slot| slot.get_color())
+		self.slotmap.get(&address).and_then(|slot| slot.get_color())
 	}
 
 	/// Sets the color at the located address. Returns the old color if it 
@@ -212,8 +211,8 @@ impl PaletteData {
 	{
 		if self.check_address(address) {
 			let new_element = ColorElement::ZerothOrder {color: new_color};
-			if self.data.contains_key(&address) {
-				if let Some(slot) = self.get_slot(address) {
+			if self.slotmap.contains_key(&address) {
+				if let Some(slot) = self.slotmap.get(&address) {
 					if slot.get_order() != 0 {
 						return Err(Error::CannotSetDerivedColor)
 					}
@@ -249,14 +248,14 @@ impl PaletteData {
 		-> Result<Option<ColorElement>> 
 	{
 		if self.check_address(address) {
-			if self.data.contains_key(&address) {
-				if let Some(slot) = self.get_slot(address) {
+			if self.slotmap.contains_key(&address) {
+				if let Some(slot) = self.slotmap.get(&address) {
 					let old_element = &mut*slot.borrow_mut();
 					let old = mem::replace(old_element, new_element);
 					return Ok(Some(old));
 				}
 			}
-			self.data.insert(address, Rc::new(Slot::new(new_element)));
+			self.slotmap.insert(address, Rc::new(Slot::new(new_element)));
 			return Ok(None)
 		}
 		Err(Error::InvalidAddress)
@@ -268,72 +267,17 @@ impl PaletteData {
 	#[inline]
 	pub fn add_slot(&mut self, new_slot: Slot) -> Result<Address> {
 		let address = try!(self.next_free_address_advance_cursor());
-		self.data.insert(address, Rc::new(new_slot));
+		self.slotmap.insert(address, Rc::new(new_slot));
 		Ok(address)
 	}
 
-	/// Removes a slot from the palette and returns it. Returns None if the slot
-	/// doesn't exist in the palette.
-	#[inline]
-	pub fn remove_slot(&mut self, address: Address) -> Option<Rc<Slot>> {
-		self.data.remove(&address)
-	}
-
-	/// Returns the slot located at the given address, or `None` if the address
-	/// is invalid or empty.
-	#[inline]
-	pub fn get_slot(&self, address: Address) -> Option<&Rc<Slot>> {
-		self.data.get(&address)
-	}
-
-	/// Returns the palette's current selection cursor.
-	///
-	/// # Example
-	/// ```rust
-	/// # use rampeditor::palette::PaletteData;
-	/// # use rampeditor::{Select, Address};
-	/// # use rampeditor::Color;
-	/// let mut pal = PaletteData::new();
-	/// assert_eq!(pal.get_cursor(), Select::All);
-	///
-	/// pal.add_color(Color(1, 2, 3)).ok().unwrap();
-	/// assert_eq!(pal.get_cursor(), Select::Address(Address::new(0,0,1)));
-	/// ```
-	#[inline]
-	pub fn get_cursor(&self) -> address::Select {
-		self.address_cursor
-	}
-
-	/// Sets the palette's selection cursor to the given selection. Does nothing
-	/// if the selection is not valid for this palette.
-	///
-	/// # Example
-	/// ```rust
-	/// # use rampeditor::palette::PaletteData;
-	/// # use rampeditor::{Select, Address};
-	/// # use rampeditor::Color;
-	/// # let mut pal = PaletteData::new();
-	/// 
-	/// let s = Select::Line {page: 2, line: 3};
-	/// pal.set_cursor(s);
-	/// assert_eq!(pal.get_cursor(), s);
-	/// 
-	/// pal.set_cursor(Select::All);
-	/// assert_eq!(pal.get_cursor(), Select::All);
-	/// ```
-	#[inline]
-	pub fn set_cursor(&mut self, new_selection: address::Select) {
-		if self.check_address(new_selection.base_address()) {
-			self.address_cursor = new_selection;
-		}
-	}
 
 	/// Returns the label associated with the given selection, or
 	/// None if it has no label.
 	pub fn get_label(&self, selection: address::Select) -> Option<&str> {
 		self.metadata
 			.get(&selection)
-			.and_then(|ref data| data.format_label.as_ref())
+			.and_then(|ref slotmap| slotmap.format_label.as_ref())
 			.map(|label| &label[..])
 	}
 
@@ -369,22 +313,6 @@ impl PaletteData {
 			.name = Some(name.into());
 	}
 
-	/// Returns whether the format's prepare function has been called for the 
-	/// given selection.
-	fn is_initialized(&self, selection: address::Select) -> bool {
-		self.metadata
-			.get(&selection)
-			.map_or(false, |ref data| data.initialized)
-	}
-
-	/// Sets the format preparation flag for the selection.
-	pub fn set_initialized(&mut self, selection: address::Select, value: bool) {
-		self.metadata
-			.entry(selection)
-			.or_insert(Default::default())
-			.initialized = value;
-	}
-
 	/// Returns an iterator over the palette slots contained in given selection.
 	#[inline]
 	pub fn select_iter(&self, selection: address::Select) -> SelectIterator {
@@ -393,8 +321,8 @@ impl PaletteData {
 
 	/// Returns an iterator over the (Address, Color) entries of the palette.
 	#[inline]
-	pub fn iter(&self) -> PaletteIterator {
-		PaletteIterator::new(self)
+	pub fn iter(&self) -> DataIterator {
+		DataIterator::new(self)
 	}
 
 	/// Returns an iterator over the colors of the palette in address order.
@@ -407,6 +335,22 @@ impl PaletteData {
 	#[inline]
 	pub fn addresses(&self) -> AddressIterator {
 		AddressIterator::new(self)
+	}
+
+	/// Returns whether the format's prepare function has been called for the 
+	/// given selection.
+	fn is_initialized(&self, selection: address::Select) -> bool {
+		self.metadata
+			.get(&selection)
+			.map_or(false, |ref slotmap| slotmap.initialized)
+	}
+
+	/// Sets the format preparation flag for the selection.
+	pub fn set_initialized(&mut self, selection: address::Select, value: bool) {
+		self.metadata
+			.entry(selection)
+			.or_insert(Default::default())
+			.initialized = value;
 	}
 
 	/// Returns the next available address after the cursor, and also advances
@@ -433,7 +377,7 @@ impl PaletteData {
 		}
 
 		let mut address = self.address_cursor.base_address();
-		while self.data.get(&address).and_then(|s| s.get_color()).is_some() {
+		while self.slotmap.get(&address).and_then(|s| s.get_color()).is_some() {
 			address = address.wrapped_next(
 				self.page_count,
 				self.line_count, 
@@ -480,14 +424,14 @@ impl fmt::Display for PaletteData {
 		
 
 		try!(write!(f, "\n\tAddress   Color    Order  Name\n"));
-		for (&address, ref slot) in self.data.iter() {
+		for (&address, ref slot) in self.slotmap.iter() {
 			try!(write!(f, "\t{:X}  {:X}  {:<5}  ",
 				address,
 				slot.borrow().get_color().unwrap_or(Color(0,0,0)),
 				slot.borrow().get_order()
 			));
-			if let Some(data) = self.metadata.get(&address.clone().into()) {
-				try!(write!(f, "{:?}\n", data));
+			if let Some(slotmap) = self.metadata.get(&address.clone().into()) {
+				try!(write!(f, "{:?}\n", slotmap));
 			} else {
 				try!(write!(f, "-\n"));
 			}
@@ -500,7 +444,7 @@ impl fmt::Display for PaletteData {
 impl Default for PaletteData {
 	fn default() -> Self {
 		PaletteData {
-			data: BTreeMap::new(),
+			slotmap: BTreeMap::new(),
 			metadata: BTreeMap::new(),
 			address_cursor: address::Select::All,
 			page_count: u8::MAX,
@@ -513,25 +457,25 @@ impl Default for PaletteData {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// PaletteIterator
+// DataIterator
 ////////////////////////////////////////////////////////////////////////////////
 /// An iterator over the (Address, Color) entries of a palette. The entries are 
 /// returned in address order.
-pub struct PaletteIterator<'p> {
+pub struct DataIterator<'p> {
 	inner: Iter<'p, Address, Rc<Slot>>
 }
 
 
-impl<'p> PaletteIterator<'p> {
+impl<'p> DataIterator<'p> {
 	fn new(palette: &'p PaletteData) -> Self {
-		PaletteIterator {
-			inner: palette.data.iter()
+		DataIterator {
+			inner: palette.slotmap.iter()
 		}
 	}
 }
 
 
-impl<'p> Iterator for PaletteIterator<'p> {
+impl<'p> Iterator for DataIterator<'p> {
 	type Item = (Address, Color);
 
 	fn next(&mut self) -> Option<Self::Item> {
@@ -552,7 +496,7 @@ impl<'p> Iterator for PaletteIterator<'p> {
 /// An iterator over the colors of a palette. The colors are returned in address 
 /// order.
 pub struct ColorIterator<'p> {
-	inner: PaletteIterator<'p>
+	inner: DataIterator<'p>
 }
 
 
@@ -584,7 +528,7 @@ pub struct AddressIterator<'p> {
 
 impl<'p> AddressIterator<'p> {
 	fn new(palette: &'p PaletteData) -> Self {
-		AddressIterator {inner: palette.data.keys()}
+		AddressIterator {inner: palette.slotmap.keys()}
 	}
 }
 
@@ -610,7 +554,7 @@ pub struct SelectIterator<'p> {
 impl<'p> SelectIterator<'p> {
 	fn new(palette: &'p PaletteData, selection: address::Select) -> Self {
 		SelectIterator {
-			inner: palette.data.iter(),
+			inner: palette.slotmap.iter(),
 			selection: selection,
 		}
 	}
