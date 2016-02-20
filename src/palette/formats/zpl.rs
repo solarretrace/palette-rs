@@ -28,7 +28,9 @@
 use palette::format::Palette;
 use palette::PaletteData;
 use address;
+
 use std::fmt;
+use std::result;
 
 // The ZPL format was built for version 2.50 build 24 of Zelda Classic, and may
 // not work on versions 1.92 or older.
@@ -71,23 +73,32 @@ const ZPL_FOOTER_E : [u8;36] = [
 ];
 
 ////////////////////////////////////////////////////////////////////////////////
-// ZplFormat
+// ZplPalette
 ////////////////////////////////////////////////////////////////////////////////
 /// The default palette format with no special configuration.
-pub struct ZplFormat;
+#[derive(Debug)]
+pub struct ZplPalette {
+	core: PaletteData,
+}
 
-const ZPL_VERSION_STRING: &'static str = "ZplFormat 1.0.0";
-
-impl Palette for ZplFormat {
-
-	fn prepare_new_palette(&self, palette: &mut PaletteData) {
-		palette.set_label(address::Select::All, ZPL_VERSION_STRING);
+impl Palette for ZplPalette {
+	fn new<S>(name: S) -> Self where S: Into<String> {
+		let mut pal = ZplPalette {core: Default::default()};
+		pal.core.set_label(address::Select::All, "ZplPalette 1.0.0");
+		pal.core.set_name(address::Select::All, name.into());
+		pal.core.page_count = 16;
+		pal.core.line_count = 16;
+		pal.core.column_count = 16;
+		pal.core.set_initialized(address::Select::All, true);
+		pal
 	}
 }
 
-impl fmt::Debug for ZplFormat {
-	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		write!(f, "{}", ZPL_VERSION_STRING)
+impl fmt::Display for ZplPalette {
+	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
+		write!(f, "{} {}",
+			self.core.get_label(address::Select::All).unwrap_or(""),
+			self.core
+		)
 	}
 }
-

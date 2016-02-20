@@ -22,50 +22,40 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! Provides common definitions for format specifiers.
+//! Provides components for interacting with the default palette format.
 //!
 ////////////////////////////////////////////////////////////////////////////////
+use palette::format::Palette;
 use palette::PaletteData;
 use address;
+
 use std::fmt;
-use std::io;
-use std::io::{Result, Write, Read};
+use std::result;
 
 ////////////////////////////////////////////////////////////////////////////////
-// PalettePalette
+// DefaultPalette
 ////////////////////////////////////////////////////////////////////////////////
-/// Specifies the interface for using a specific palette format.
-pub trait Palette : fmt::Debug {
-	/// Creates a new palette with the given name.
-	fn new<S>(name: S) -> Self where S: Into<String>, Self: Sized;
+/// The default palette format with no special configuration.
+#[derive(Debug)]
+pub struct DefaultPalette {
+	core: PaletteData,
+}
 
-	/// Called before an element is added to a new page in the palette. The 
-	/// expectation is that this will add the appropriate meta data to the 
-	/// palette. This will be called before the prepare_new_line function is 
-	/// called.
-	#[allow(unused_variables)]
-	fn prepare_new_page(&self, palette: &mut PaletteData, page: address::Select) {}
+impl Palette for DefaultPalette {
 
-	/// Called before an element is added to a new line in the palette. The 
-	/// expectation is that this will add the appropriate meta data to the 
-	/// palette.
-	#[allow(unused_variables)]
-	fn prepare_new_line(&self, palette: &mut PaletteData, line: address::Select) {}
-
-	/// Writes the palette to the given buffer.
-	#[allow(unused_variables)]
-	fn write_palette<W>(&self, out_buf: &W) -> io::Result<()> 
-		where W: io::Write
-	{
-		unimplemented!()
-	}
-
-	/// Reads a palette from the given buffer.
-	#[allow(unused_variables)]
-	fn read_palette<R>(in_buf: &R) -> io::Result<Self>
-		where R: io::Read, Self: Sized
-	{
-		unimplemented!()
+	fn new<S>(name: S) -> Self where S: Into<String> {
+		let mut pal = DefaultPalette {core: Default::default()};
+		pal.core.set_label(address::Select::All, "DefaultPalette 1.0.0");
+		pal.core.set_name(address::Select::All, name.into());
+		pal
 	}
 }
 
+impl fmt::Display for DefaultPalette {
+	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
+		write!(f, "{} {}",
+			self.core.get_label(address::Select::All).unwrap_or(""),
+			self.core
+		)
+	}
+}

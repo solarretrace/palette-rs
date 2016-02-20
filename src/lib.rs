@@ -7,5 +7,5 @@ pub mod utilities;
 
 
 pub use color::Color;
-pub use palette::Palette;
+pub use palette::{Palette, DefaultPalette, ZplPalette};
 pub use address::{Address, Select};

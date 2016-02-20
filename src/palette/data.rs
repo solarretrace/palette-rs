@@ -79,18 +79,6 @@ pub struct PaletteData {
 
 
 impl PaletteData {
-	
-	/// Constructs a new, empty PaletteData.
-	/// # Example
-	/// ```rust
-	/// # use rampeditor::palette::PaletteData;
-	/// let pal = PaletteData::new();
-	/// ```
-	#[inline]
-	pub fn new() -> PaletteData {
-		Default::default()
-	}
-
 	/// Returns the number of colors in the PaletteData.
 	///
 	/// # Example
@@ -408,7 +396,6 @@ impl PaletteData {
 
 impl fmt::Display for PaletteData {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		try!(write!(f, "PaletteData"));
 		if let Some(data) = self.metadata.get(&address::Select::All) {
 			try!(write!(f, " {}\n", data));
 		}
