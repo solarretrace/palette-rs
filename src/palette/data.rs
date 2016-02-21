@@ -30,11 +30,10 @@ use super::element::{Slot, ColorElement};
 use super::metadata::Metadata;
 use super::error::{Error, Result};
 use color::Color;
-use address::{Address, Group, Selection};
+use address::{Address, Group};
 
 use std::rc::Rc;
 use std::collections::BTreeMap;
-use std::collections::btree_map::{Iter, Keys};
 use std::u8;
 use std::u16;
 use std::fmt;

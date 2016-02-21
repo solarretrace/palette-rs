@@ -28,9 +28,15 @@
 use std::fmt;
 use std::u16;
 use std::u8;
+use std::collections::HashSet;
 
 use super::Interval;
-pub type Selection = Vec<Interval<Address>>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Selection
+////////////////////////////////////////////////////////////////////////////////
+/// A set of address intervals.
+pub type Selection = HashSet<Interval<Address>>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Address
@@ -124,7 +130,7 @@ impl Address {
 
 impl Into<Selection> for Address {
 	fn into(self) -> Selection {
-		vec![Interval::closed(self.clone(), self)]
+		[Interval::closed(self.clone(), self)].iter().cloned().collect()
 	}
 }
 
@@ -195,7 +201,7 @@ impl Group {
 
 impl Into<Selection> for Group {
 	fn into(self) -> Selection {
-		vec![
+		[
 			match self {
 				Group::Line {page, line} => Interval::right_open(
 					Address::new(page, line, 0),
@@ -210,7 +216,7 @@ impl Into<Selection> for Group {
 					Address::new(u16::MAX, u8::MAX, u8::MAX),
 				),
 			}
-		]
+		].iter().cloned().collect()
 	}
 }
 

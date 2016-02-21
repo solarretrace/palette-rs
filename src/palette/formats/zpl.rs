@@ -112,11 +112,11 @@ impl Palette for ZplPalette {
 		// Write header.
 		try!(out_buf.write(&ZPL_HEADER)); 
 
-		let mut addresses = self.core.addresses();
-		let mut next = addresses.next();
-		// Write all pages in sequence.
-		for page in 0..ZPL_PAGE_LIMIT {
-		}
+		// let mut addresses = self.core.addresses();
+		// let mut next = addresses.next();
+		// // Write all pages in sequence.
+		// for page in 0..ZPL_PAGE_LIMIT {
+		// }
 
 		// Write level names.
 
@@ -133,11 +133,12 @@ impl Palette for ZplPalette {
 		Ok(())
 	}
 
-	fn read_palette<R>(in_buf: &R) -> io::Result<Self>
-		where R: io::Read, Self: Sized
-	{
-		unimplemented!()
-	}
+
+	// fn read_palette<R>(in_buf: &R) -> io::Result<Self>
+	// 	where R: io::Read, Self: Sized
+	// {
+	// 	unimplemented!()
+	// }
 }
 
 impl fmt::Display for ZplPalette {
