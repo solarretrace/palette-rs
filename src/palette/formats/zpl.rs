@@ -133,12 +133,12 @@ impl Palette for ZplPalette {
 		Ok(())
 	}
 
-
-	// fn read_palette<R>(in_buf: &R) -> io::Result<Self>
-	// 	where R: io::Read, Self: Sized
-	// {
-	// 	unimplemented!()
-	// }
+	#[allow(unused_variables)]
+	fn read_palette<R>(in_buf: &R) -> io::Result<Self>
+		where R: io::Read, Self: Sized
+	{
+		unimplemented!()
+	}
 }
 
 impl fmt::Display for ZplPalette {

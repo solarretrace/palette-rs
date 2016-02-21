@@ -27,6 +27,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 use std::ops::{Deref, Sub};
 
+use std::mem;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Bound
 ////////////////////////////////////////////////////////////////////////////////
@@ -617,6 +619,51 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
                 )
             ))
         }
+    }
+
+    /// Reduces a collection of intervals to a smaller set by removing redundant
+    /// intervals through unions.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use rampeditor::Interval;
+    /// let ints = Interval::normalize(vec![
+    ///     Interval::open(1.0, 2.0),
+    ///     Interval::open(2.0, 3.0),
+    ///     Interval::open(2.5, 3.5),
+    ///     Interval::open(3.0, 3.0),
+    ///     Interval::open(0.0, 1.5),
+    /// ].into_iter());
+    /// 
+    /// assert_eq!(ints[0], Interval::open(0.0, 2.0));
+    /// assert_eq!(ints[1], Interval::open(2.0, 3.5));
+    /// ```
+    pub fn normalize<I>(intervals: I) -> Vec<Interval<T>> 
+        where I: IntoIterator<Item=Interval<T>>
+    {   
+        // Remove empty intervals.
+        let mut it = intervals
+            .into_iter()
+            .filter(|int| !int.is_empty());
+
+        // Get first interval.
+        let start = it.next().unwrap();
+
+        it.fold(vec![start], |mut prev, int| {
+            let mut append = false;
+            for item in prev.iter_mut() {
+                if let Some(val) = item.union(&int) {
+                    // Union with int succeeded.
+                    mem::replace(item, val);
+                } else {
+                    // Union failed; append int to prev list.
+                    append = true;
+                }
+            }
+            if append {prev.push(int);}
+            prev
+        })
     }
 }
 
