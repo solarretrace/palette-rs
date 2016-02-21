@@ -27,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use palette::format::Palette;
 use palette::PaletteData;
-use address;
+use address::Group;
 
 use std::fmt;
 use std::result;
@@ -45,8 +45,8 @@ impl Palette for DefaultPalette {
 
 	fn new<S>(name: S) -> Self where S: Into<String> {
 		let mut pal = DefaultPalette {core: Default::default()};
-		pal.core.set_label(address::Select::All, "DefaultPalette 1.0.0");
-		pal.core.set_name(address::Select::All, name.into());
+		pal.core.set_label(Group::All, "DefaultPalette 1.0.0");
+		pal.core.set_name(Group::All, name.into());
 		pal
 	}
 }
@@ -54,7 +54,7 @@ impl Palette for DefaultPalette {
 impl fmt::Display for DefaultPalette {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
 		write!(f, "{} {}",
-			self.core.get_label(address::Select::All).unwrap_or(""),
+			self.core.get_label(Group::All).unwrap_or(""),
 			self.core
 		)
 	}

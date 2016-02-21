@@ -30,13 +30,14 @@ use super::element::{Slot, ColorElement};
 use super::metadata::Metadata;
 use super::error::{Error, Result};
 use color::Color;
-use address::Address;
+use address::{Address, Group};
 use address;
 
 use std::rc::Rc;
 use std::collections::BTreeMap;
 use std::collections::btree_map::{Iter, Keys};
 use std::u8;
+use std::u16;
 use std::fmt;
 use std::result;
 use std::mem;
@@ -52,12 +53,12 @@ pub struct PaletteData {
 	/// A map assigning addresses to palette slots.
 	pub slotmap: BTreeMap<Address, Rc<Slot>>,
 	/// Provided metadata for various parts of the palette.
-	pub metadata: BTreeMap<address::Select, Metadata>,
+	pub metadata: BTreeMap<Group, Metadata>,
 	/// The internal address cursor that is used to track the next available 
 	/// address.
-	pub address_cursor: address::Select,
+	pub address_cursor: Group,
 	/// The number of pages in the palette.
-	pub page_count: u8,
+	pub page_count: u16,
 	/// The number of lines in each page.
 	pub line_count: u8,
 	/// The number of columns in each line.
@@ -203,7 +204,7 @@ impl PaletteData {
 
 
 	/// Adds a new element to the palette in the nearest valid location after 
-	/// the selection cursor and returns its address. Returns an error if the 
+	/// the group cursor and returns its address. Returns an error if the 
 	/// palette is full.
 	#[inline]
 	pub fn add_element(
@@ -238,7 +239,7 @@ impl PaletteData {
 	}
 
 	/// Adds a new slot to the palette in the nearest valid location after the 
-	/// selection cursor and returns its address. Returns an error if the 
+	/// group cursor and returns its address. Returns an error if the 
 	/// palette is full.
 	#[inline]
 	pub fn add_slot(&mut self, new_slot: Slot) -> Result<Address> {
@@ -247,51 +248,51 @@ impl PaletteData {
 		Ok(address)
 	}
 
-	/// Returns the label associated with the given selection, or
+	/// Returns the label associated with the given group, or
 	/// None if it has no label.
-	pub fn get_label(&self, selection: address::Select) -> Option<&str> {
+	pub fn get_label(&self, group: Group) -> Option<&str> {
 		self.metadata
-			.get(&selection)
+			.get(&group)
 			.and_then(|ref slotmap| slotmap.format_label.as_ref())
 			.map(|label| &label[..])
 	}
 
-	/// Sets the label for the given selection.
+	/// Sets the label for the given group.
 	pub fn set_label<S>(
 		&mut self, 
-		selection: address::Select, 
+		group: Group, 
 		format_label: S) 
 		where S: Into<String> 
 	{
 		self.metadata
-			.entry(selection)
+			.entry(group)
 			.or_insert(Default::default())
 			.format_label = Some(format_label.into());
 	}
 
-	/// Returns the name associated with the given selection, or None if it has
+	/// Returns the name associated with the given group, or None if it has
 	/// no name.
-	pub fn get_name(&self, selection: address::Select) -> Option<&str> {
+	pub fn get_name(&self, group: Group) -> Option<&str> {
 		self.metadata
-			.get(&selection)
+			.get(&group)
 			.and_then(|ref data| data.name.as_ref())
 			.map(|name| &name[..])
 	}
 
-	/// Sets the name for the given selection.
-	pub fn set_name<S>(&mut self, selection: address::Select, name: S) 
+	/// Sets the name for the given group.
+	pub fn set_name<S>(&mut self, group: Group, name: S) 
 		where S: Into<String> 
 	{
 		self.metadata
-			.entry(selection)
+			.entry(group)
 			.or_insert(Default::default())
 			.name = Some(name.into());
 	}
 
-	/// Returns an iterator over the palette slots contained in given selection.
+	/// Returns an iterator over the palette slots contained in given group.
 	#[inline]
-	pub fn select_iter(&self, selection: address::Select) -> SelectIterator {
-		SelectIterator::new(self, selection)
+	pub fn select_iter(&self, group: Group) -> SelectIterator {
+		SelectIterator::new(self, group)
 	}
 
 	/// Returns an iterator over the (Address, Color) entries of the palette.
@@ -313,17 +314,17 @@ impl PaletteData {
 	}
 
 	/// Returns whether the format's prepare function has been called for the 
-	/// given selection.
-	fn is_initialized(&self, selection: address::Select) -> bool {
+	/// given group.
+	fn is_initialized(&self, group: Group) -> bool {
 		self.metadata
-			.get(&selection)
+			.get(&group)
 			.map_or(false, |ref slotmap| slotmap.initialized)
 	}
 
-	/// Sets the format preparation flag for the selection.
-	pub fn set_initialized(&mut self, selection: address::Select, value: bool) {
+	/// Sets the format preparation flag for the group.
+	pub fn set_initialized(&mut self, group: Group, value: bool) {
 		self.metadata
-			.entry(selection)
+			.entry(group)
 			.or_insert(Default::default())
 			.initialized = value;
 	}
@@ -383,7 +384,7 @@ impl PaletteData {
 
 impl fmt::Display for PaletteData {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		if let Some(data) = self.metadata.get(&address::Select::All) {
+		if let Some(data) = self.metadata.get(&Group::All) {
 			try!(write!(f, " {}\n", data));
 		}
 		try!(write!(f, 
@@ -420,8 +421,8 @@ impl Default for PaletteData {
 		PaletteData {
 			slotmap: BTreeMap::new(),
 			metadata: BTreeMap::new(),
-			address_cursor: address::Select::All,
-			page_count: u8::MAX,
+			address_cursor: Group::All,
+			page_count: u16::MAX,
 			line_count: u8::MAX,
 			column_count: u8::MAX,
 		}
@@ -521,15 +522,15 @@ impl<'p> Iterator for AddressIterator<'p> {
 /// An iterator over the selected slots of a palette.
 pub struct SelectIterator<'p> {
 	inner: Iter<'p, Address, Rc<Slot>>,
-	selection: address::Select,
+	group: Group,
 }
 
 
 impl<'p> SelectIterator<'p> {
-	fn new(palette: &'p PaletteData, selection: address::Select) -> Self {
+	fn new(palette: &'p PaletteData, group: Group) -> Self {
 		SelectIterator {
 			inner: palette.slotmap.iter(),
-			selection: selection,
+			group: group,
 		}
 	}
 }
@@ -540,7 +541,7 @@ impl<'p> Iterator for SelectIterator<'p> {
 
 	fn next(&mut self) -> Option<Self::Item> {
 		while let Some((&key, value)) = self.inner.next() {
-			if self.selection.contains(key) {
+			if self.group.contains(key) {
 				return Some(value.clone());
 			}
 		}

@@ -27,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use palette::format::Palette;
 use palette::PaletteData;
-use address;
+use address::Group;
 
 use std::fmt;
 use std::result;
@@ -78,6 +78,13 @@ const ZPL_FOOTER_E : [u8;36] = [
 	0x3f, 0x07, 0x07, 0x07
 ];
 
+const ZPL_PAGE_LIMIT: u16 =  0x203;
+const ZPL_LONG_LINES_BEGIN: u8 = 0x200;
+const ZPL_LONG_LINE_LIMIT: u8 =  16;
+const ZPL_SHORT_LINE_LIMIT: u8 =  14;
+const ZPL_COLUMN_LIMIT: u8 =  16;
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // ZplPalette
 ////////////////////////////////////////////////////////////////////////////////
@@ -90,12 +97,12 @@ pub struct ZplPalette {
 impl Palette for ZplPalette {
 	fn new<S>(name: S) -> Self where S: Into<String> {
 		let mut pal = ZplPalette {core: Default::default()};
-		pal.core.set_label(address::Select::All, "ZplPalette 1.0.0");
-		pal.core.set_name(address::Select::All, name.into());
-		pal.core.page_count = 255;
-		pal.core.line_count = 16;
-		pal.core.column_count = 16;
-		pal.core.set_initialized(address::Select::All, true);
+		pal.core.set_label(Group::All, "ZplPalette 1.0.0");
+		pal.core.set_name(Group::All, name.into());
+		pal.core.page_count = ZPL_PAGE_LIMIT;
+		pal.core.line_count = ZPL_LONG_LINE_LIMIT;
+		pal.core.column_count = ZPL_COLUMN_LIMIT;
+		pal.core.set_initialized(Group::All, true);
 		pal
 	}
 
@@ -104,7 +111,12 @@ impl Palette for ZplPalette {
 	{
 		// Write header.
 		try!(out_buf.write(&ZPL_HEADER)); 
-		// Write all groups in sequence.
+
+		let mut addresses = self.core.addresses();
+		let mut next = addresses.next();
+		// Write all pages in sequence.
+		for page in 0..ZPL_PAGE_LIMIT {
+		}
 
 		// Write level names.
 
@@ -131,7 +143,7 @@ impl Palette for ZplPalette {
 impl fmt::Display for ZplPalette {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
 		write!(f, "{} {}",
-			self.core.get_label(address::Select::All).unwrap_or(""),
+			self.core.get_label(Group::All).unwrap_or(""),
 			self.core
 		)
 	}

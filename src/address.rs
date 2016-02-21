@@ -27,6 +27,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 use std::fmt;
 
+use super::Interval;
+type Selection = Vec<Interval<Address>>;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Address
 ////////////////////////////////////////////////////////////////////////////////
@@ -34,7 +37,7 @@ use std::fmt;
 #[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone, Copy, Default)]
 pub struct Address {
 	/// The page of the Address.
-	pub page: u8,
+	pub page: u16,
 	/// The line of the Address.
 	pub line: u8,
 	/// The column of the Address.
@@ -43,7 +46,7 @@ pub struct Address {
 
 impl Address {
 	/// Creates a new Address.
-	pub fn new(page: u8, line: u8, column: u8) -> Self {
+	pub fn new(page: u16, line: u8, column: u8) -> Self {
 		Address {
 			page: page,
 			line: line,
@@ -64,7 +67,7 @@ impl Address {
 	/// ```
 	pub fn wrapped_next(
 		&self, 
-		pages: u8,
+		pages: u16,
 		lines: u8, 
 		columns: u8) 
 		-> Address
@@ -111,90 +114,90 @@ impl fmt::LowerHex for Address {
 }
 
 
-impl Into<Select> for Address {
-	fn into(self) -> Select {
-		Select::Address(self)
+impl Into<Group> for Address {
+	fn into(self) -> Group {
+		Group::Address(self)
 	}
 }
 
 
-impl<'a> Into<Select> for &'a Address {
-	fn into(self) -> Select {
-		Select::Address(*self)
+impl<'a> Into<Group> for &'a Address {
+	fn into(self) -> Group {
+		Group::Address(*self)
 	}
 }
 
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Select
+// Group
 ////////////////////////////////////////////////////////////////////////////////
 /// Encapsulates the selection of a single address, line, page, or palette.
 #[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone, Copy)]
-pub enum Select {
+pub enum Group {
 	/// A single address selection.
 	Address(Address),
 	/// A single line selection.
 	Line {
 		/// The page of the selection.
-		page: u8, 
+		page: u16, 
 		/// The line of the selection.
 		line: u8
 	},
 	/// A single page selection.
 	Page {
 		/// The page of the selection.
-		page: u8
+		page: u16
 	},
 	/// A full palette selection.
 	All,
 }
 
 
-impl Select {
+impl Group {
 	/// Returns the first address located within the selection.
 	pub fn base_address(&self) -> Address {
 		match *self {
-			Select::Address(addr) => addr,
-			Select::Line {page, line} => Address::new(page, line, 0),
-			Select::Page {page} => Address::new(page, 0, 0),
-			Select::All => Address::new(0, 0, 0),
+			Group::Address(addr) => addr,
+			Group::Line {page, line} => Address::new(page, line, 0),
+			Group::Page {page} => Address::new(page, 0, 0),
+			Group::All => Address::new(0, 0, 0),
 		}
 	}
 
 	/// Returns whether the address is contained within the selection.
 	pub fn contains(&self, address: Address) -> bool {
 		match *self {
-			Select::Address(addr) => address == addr,
-			Select::Line {page, line} 
+			Group::Address(addr) => address == addr,
+			Group::Line {page, line} 
 				=> address.page == page && address.line == line,
-			Select::Page {page} => address.page == page,
-			Select::All => true,
+			Group::Page {page} => address.page == page,
+			Group::All => true,
 		}
 	}
 }
 
 
-impl Into<Address> for Select {
+impl Into<Address> for Group {
 	fn into(self) -> Address {
 		self.base_address()
 	}
 }
 
-impl<'a> Into<Address> for &'a Select {
+impl<'a> Into<Address> for &'a Group {
 	fn into(self) -> Address {
 		self.base_address()
 	}
 }
 
 
-impl fmt::Display for Select {
+impl fmt::Display for Group {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
 		match *self {
-			Select::Address(addr) => write!(f, "{}", addr),
-			Select::Line {page, line} => write!(f, "{}:{}:*", page, line),
-			Select::Page {page} => write!(f, "{}:*:*", page),
-			Select::All => write!(f, "*:*:*", ),
+			Group::Address(addr) => write!(f, "{}", addr),
+			Group::Line {page, line} => write!(f, "{}:{}:*", page, line),
+			Group::Page {page} => write!(f, "{}:*:*", page),
+			Group::All => write!(f, "*:*:*", ),
 		}
 	}
 }

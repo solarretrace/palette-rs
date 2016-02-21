@@ -26,7 +26,7 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 use palette::PaletteData;
-use address;
+use address::Group;
 
 use std::fmt;
 
@@ -46,13 +46,13 @@ pub trait Palette : fmt::Debug {
 	/// palette. This will be called before the prepare_new_line function is 
 	/// called.
 	#[allow(unused_variables)]
-	fn prepare_new_page(&self, palette: &mut PaletteData, page: address::Select) {}
+	fn prepare_new_page(&self, palette: &mut PaletteData, page: Group) {}
 
 	/// Called before an element is added to a new line in the palette. The 
 	/// expectation is that this will add the appropriate meta data to the 
 	/// palette.
 	#[allow(unused_variables)]
-	fn prepare_new_line(&self, palette: &mut PaletteData, line: address::Select) {}
+	fn prepare_new_line(&self, palette: &mut PaletteData, line: Group) {}
 
 	/// Writes the palette to the given buffer.
 	#[allow(unused_variables)]
