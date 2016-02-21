@@ -56,7 +56,7 @@ pub struct PaletteData {
 	pub metadata: BTreeMap<Group, Metadata>,
 	/// The internal address cursor that is used to track the next available 
 	/// address.
-	pub address_cursor: Group,
+	pub address_cursor: Address,
 	/// The number of pages in the palette.
 	pub page_count: u16,
 	/// The number of lines in each page.
@@ -340,7 +340,7 @@ impl PaletteData {
 			self.page_count,
 			self.line_count, 
 			self.column_count
-		).into();
+		);
 		Ok(address)
 	}
 
@@ -352,7 +352,7 @@ impl PaletteData {
 			return Err(Error::MaxSlotLimitExceeded);
 		}
 
-		let mut address = self.address_cursor.base_address();
+		let mut address = self.address_cursor;
 		while self.slotmap.get(&address).and_then(|s| s.get_color()).is_some() {
 			address = address.wrapped_next(
 				self.page_count,
@@ -405,11 +405,6 @@ impl fmt::Display for PaletteData {
 				slot.borrow().get_color().unwrap_or(Color(0,0,0)),
 				slot.borrow().get_order()
 			));
-			if let Some(slotmap) = self.metadata.get(&address.clone().into()) {
-				try!(write!(f, "{:?}\n", slotmap));
-			} else {
-				try!(write!(f, "-\n"));
-			}
 		}
 		Ok(())
 	}
@@ -421,7 +416,7 @@ impl Default for PaletteData {
 		PaletteData {
 			slotmap: BTreeMap::new(),
 			metadata: BTreeMap::new(),
-			address_cursor: Group::All,
+			address_cursor: Default::default(),
 			page_count: u16::MAX,
 			line_count: u8::MAX,
 			column_count: u8::MAX,

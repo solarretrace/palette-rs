@@ -114,29 +114,12 @@ impl fmt::LowerHex for Address {
 }
 
 
-impl Into<Group> for Address {
-	fn into(self) -> Group {
-		Group::Address(self)
-	}
-}
-
-
-impl<'a> Into<Group> for &'a Address {
-	fn into(self) -> Group {
-		Group::Address(*self)
-	}
-}
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // Group
 ////////////////////////////////////////////////////////////////////////////////
 /// Encapsulates the selection of a single address, line, page, or palette.
 #[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone, Copy)]
 pub enum Group {
-	/// A single address selection.
-	Address(Address),
 	/// A single line selection.
 	Line {
 		/// The page of the selection.
@@ -158,7 +141,6 @@ impl Group {
 	/// Returns the first address located within the selection.
 	pub fn base_address(&self) -> Address {
 		match *self {
-			Group::Address(addr) => addr,
 			Group::Line {page, line} => Address::new(page, line, 0),
 			Group::Page {page} => Address::new(page, 0, 0),
 			Group::All => Address::new(0, 0, 0),
@@ -168,7 +150,6 @@ impl Group {
 	/// Returns whether the address is contained within the selection.
 	pub fn contains(&self, address: Address) -> bool {
 		match *self {
-			Group::Address(addr) => address == addr,
 			Group::Line {page, line} 
 				=> address.page == page && address.line == line,
 			Group::Page {page} => address.page == page,
@@ -177,24 +158,9 @@ impl Group {
 	}
 }
 
-
-impl Into<Address> for Group {
-	fn into(self) -> Address {
-		self.base_address()
-	}
-}
-
-impl<'a> Into<Address> for &'a Group {
-	fn into(self) -> Address {
-		self.base_address()
-	}
-}
-
-
 impl fmt::Display for Group {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
 		match *self {
-			Group::Address(addr) => write!(f, "{}", addr),
 			Group::Line {page, line} => write!(f, "{}:{}:*", page, line),
 			Group::Page {page} => write!(f, "{}:*:*", page),
 			Group::All => write!(f, "*:*:*", ),
