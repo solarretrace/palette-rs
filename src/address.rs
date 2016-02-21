@@ -26,9 +26,11 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 use std::fmt;
+use std::u16;
+use std::u8;
 
 use super::Interval;
-type Selection = Vec<Interval<Address>>;
+pub type Selection = Vec<Interval<Address>>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Address
@@ -120,6 +122,11 @@ impl Address {
 	}
 }
 
+impl Into<Selection> for Address {
+	fn into(self) -> Selection {
+		vec![Interval::closed(self.clone(), self)]
+	}
+}
 
 impl fmt::Display for Address {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
@@ -183,6 +190,27 @@ impl Group {
 			Group::Page {page} => address.page == page,
 			Group::All => true,
 		}
+	}
+}
+
+impl Into<Selection> for Group {
+	fn into(self) -> Selection {
+		vec![
+			match self {
+				Group::Line {page, line} => Interval::right_open(
+					Address::new(page, line, 0),
+					Address::new(page, line+1, 0)
+				),
+				Group::Page {page} => Interval::right_open(
+					Address::new(page, 0, 0),
+					Address::new(page+1, 0, 0)
+				),
+				Group::All => Interval::closed(
+					Address::new(0, 0, 0),
+					Address::new(u16::MAX, u8::MAX, u8::MAX),
+				),
+			}
+		]
 	}
 }
 

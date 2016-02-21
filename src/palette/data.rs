@@ -30,8 +30,7 @@ use super::element::{Slot, ColorElement};
 use super::metadata::Metadata;
 use super::error::{Error, Result};
 use color::Color;
-use address::{Address, Group};
-use address;
+use address::{Address, Group, Selection};
 
 use std::rc::Rc;
 use std::collections::BTreeMap;
@@ -42,7 +41,10 @@ use std::fmt;
 use std::result;
 use std::mem;
 
-fn noop(data: &mut PaletteData) {}
+/// Default function for prepare_new_page and prepare_new_line triggers.
+#[allow(unused_variables)]
+#[inline]
+fn no_op(data: &mut PaletteData) {}
 
 ////////////////////////////////////////////////////////////////////////////////
 // PaletteData
@@ -66,11 +68,11 @@ pub struct PaletteData {
 	/// expectation is that this will add the appropriate meta data to the 
 	/// palette. This will be called before the prepare_new_line function is 
 	/// called.
-	pub new_page: fn(&mut PaletteData),
+	pub prepare_new_page: fn(&mut PaletteData),
 	/// Called before an element is added to a new line in the palette. The 
 	/// expectation is that this will add the appropriate meta data to the 
 	/// palette.
-	pub new_line: fn(&mut PaletteData),
+	pub prepare_new_line: fn(&mut PaletteData),
 }
 
 
@@ -176,6 +178,7 @@ impl PaletteData {
 		-> Result<Option<Color>>
 	{
 		if self.check_address(address) {
+			self.prepare_address(address);
 			let new_element = ColorElement::ZerothOrder {color: new_color};
 			if self.slotmap.contains_key(&address) {
 				if let Some(slot) = self.slotmap.get(&address) {
@@ -214,6 +217,7 @@ impl PaletteData {
 		-> Result<Option<ColorElement>> 
 	{
 		if self.check_address(address) {
+			self.prepare_address(address);
 			if self.slotmap.contains_key(&address) {
 				if let Some(slot) = self.slotmap.get(&address) {
 					let old_element = &mut*slot.borrow_mut();
@@ -234,6 +238,7 @@ impl PaletteData {
 	pub fn add_slot(&mut self, new_slot: Slot) -> Result<Address> {
 		let address = try!(self.next_free_address_advance_cursor());
 		self.slotmap.insert(address, Rc::new(new_slot));
+		self.prepare_address(address);
 		Ok(address)
 	}
 
@@ -280,8 +285,8 @@ impl PaletteData {
 
 	/// Returns an iterator over the palette slots contained in given group.
 	#[inline]
-	pub fn select_iter(&self, group: Group) -> SelectIterator {
-		SelectIterator::new(self, group)
+	pub fn select_iter(&self, group: Group) -> SelectionIterator {
+		SelectionIterator::new(self, group)
 	}
 
 	/// Returns an iterator over the (Address, Color) entries of the palette.
@@ -363,21 +368,39 @@ impl PaletteData {
 		address.column < self.column_count
 	}
 
+	/// Checks if the groups containing the given addresses have been 
+	/// initialized by the Palette format yet, and if not, initializes them.
 	#[inline]
-	fn prepare_address(&self, address: Address) {
+	fn prepare_address(&mut self, address: Address) {
 		if !self.is_initialized(address.page_group()) {
-			unimplemented!()
+			(self.prepare_new_page)(self);
+			self.set_initialized(address.page_group(), true);
 		}
 		if !self.is_initialized(address.line_group()) {
-			unimplemented!()
+			(self.prepare_new_line)(self);
+			self.set_initialized(address.line_group(), true);
 		}
+
 	}
 }
 
+
 impl fmt::Debug for PaletteData {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		try!(write!(f, "___"));
-		Ok(())
+		write!(f, "PaletteData {{ \
+			slotmap: {:?}, \
+			metadata: {:?}, \
+			address_cursor: {:?}, \
+			page_count: {:?}, \
+			line_count: {:?}, \
+			column_count: {:?} }}",
+			self.slotmap,
+			self.metadata,
+			self.address_cursor,
+			self.page_count,
+			self.line_count,
+			self.column_count
+		)
 	}
 }
 
@@ -418,8 +441,8 @@ impl Default for PaletteData {
 			page_count: u16::MAX,
 			line_count: u8::MAX,
 			column_count: u8::MAX,
-			new_page: noop,
-			new_line: noop,
+			prepare_new_page: no_op,
+			prepare_new_line: no_op,
 		}
 	}
 }
@@ -512,31 +535,33 @@ impl<'p> Iterator for AddressIterator<'p> {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// SelectIterator
+// SelectionIterator
 ////////////////////////////////////////////////////////////////////////////////
 /// An iterator over the selected slots of a palette.
-pub struct SelectIterator<'p> {
+pub struct SelectionIterator<'p> {
 	inner: Iter<'p, Address, Rc<Slot>>,
-	group: Group,
+	selection: Selection,
 }
 
 
-impl<'p> SelectIterator<'p> {
-	fn new(palette: &'p PaletteData, group: Group) -> Self {
-		SelectIterator {
+impl<'p> SelectionIterator<'p> {
+	fn new(palette: &'p PaletteData, selection: S) -> Self 
+		where S: Into<Selection>
+	{
+		SelectionIterator {
 			inner: palette.slotmap.iter(),
-			group: group,
+			selection: selection.into(),
 		}
 	}
 }
 
 
-impl<'p> Iterator for SelectIterator<'p> {
+impl<'p> Iterator for SelectionIterator<'p> {
 	type Item = Rc<Slot>;
 
 	fn next(&mut self) -> Option<Self::Item> {
 		while let Some((&key, value)) = self.inner.next() {
-			if self.group.contains(key) {
+			if self.selection.contains(key) {
 				return Some(value.clone());
 			}
 		}
