@@ -42,13 +42,12 @@ use std::fmt;
 use std::result;
 use std::mem;
 
-
+fn noop(data: &mut PaletteData) {}
 
 ////////////////////////////////////////////////////////////////////////////////
 // PaletteData
 ////////////////////////////////////////////////////////////////////////////////
 /// Encapsulates a single palette.
-#[derive(Debug)]
 pub struct PaletteData {
 	/// A map assigning addresses to palette slots.
 	pub slotmap: BTreeMap<Address, Rc<Slot>>,
@@ -63,6 +62,15 @@ pub struct PaletteData {
 	pub line_count: u8,
 	/// The number of columns in each line.
 	pub column_count: u8,
+	/// Called before an element is added to a new page in the palette. The 
+	/// expectation is that this will add the appropriate meta data to the 
+	/// palette. This will be called before the prepare_new_line function is 
+	/// called.
+	pub new_page: fn(&mut PaletteData),
+	/// Called before an element is added to a new line in the palette. The 
+	/// expectation is that this will add the appropriate meta data to the 
+	/// palette.
+	pub new_line: fn(&mut PaletteData),
 }
 
 
@@ -85,24 +93,6 @@ impl PaletteData {
 		self.slotmap.len()
 	}
 
-	/// Returns the number of addresses still available in the palette.
-	/// # Example
-	/// ```rust
-	/// use rampeditor::palette::PaletteData;
-	/// use rampeditor::Color;
-	////
-	/// let mut dat: PaletteData = Default::default(); 
-	/// // Default palette is maximally sized:
-	/// assert_eq!(dat.free_addresses(), 16_581_375); 
-	///
-	/// dat.add_color(Color(1, 2, 3));
-	/// assert_eq!(dat.free_addresses(), 16_581_374);
-	/// ```
-	#[inline]
-	pub fn free_addresses(&self) -> usize {
-		self.size_bound() - self.slotmap.len()
-	}
-
 	/// Adds a new color to the palette in the nearest valid location after 
 	/// the selection cursor and returns its address. Returns an error if the 
 	/// palette is full.
@@ -120,7 +110,7 @@ impl PaletteData {
 	/// assert_eq!(dat.len(), 3);
 	/// ```
 	///
-	/// # Example
+	/// # Errors
 	/// ```rust
 	/// # use rampeditor::palette::PaletteData;
 	/// # use rampeditor::Color;
@@ -128,8 +118,7 @@ impl PaletteData {
 	/// dat.page_count = 1;
 	/// dat.line_count = 1;
 	/// dat.column_count = 1;
-	/// # dat.add_color(Color(255, 0, 0));
-	/// assert_eq!(dat.free_addresses(), 0);
+	/// dat.add_color(Color(0, 0, 0));
 	/// let result = dat.add_color(Color(0, 0, 0)); // fails...
 	/// assert!(result.is_err()); 
 	/// ```
@@ -348,7 +337,9 @@ impl PaletteData {
 	/// there are no free addresses.
 	#[inline]
 	fn next_free_address(&self) -> Result<Address> {
-		if self.free_addresses() == 0 {
+		if self.len() >= (self.page_count as usize * 
+			self.line_count as usize * self.column_count as usize)
+		{
 			return Err(Error::MaxSlotLimitExceeded);
 		}
 
@@ -372,12 +363,21 @@ impl PaletteData {
 		address.column < self.column_count
 	}
 
-	/// Returns the upper bound on the number of slots storable in the palette.
 	#[inline]
-	fn size_bound(&self) -> usize {
-		self.page_count as usize *
-		self.line_count as usize *
-		self.column_count as usize
+	fn prepare_address(&self, address: Address) {
+		if !self.is_initialized(address.page_group()) {
+			unimplemented!()
+		}
+		if !self.is_initialized(address.line_group()) {
+			unimplemented!()
+		}
+	}
+}
+
+impl fmt::Debug for PaletteData {
+	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
+		try!(write!(f, "___"));
+		Ok(())
 	}
 }
 
@@ -388,13 +388,11 @@ impl fmt::Display for PaletteData {
 			try!(write!(f, " {}\n", data));
 		}
 		try!(write!(f, 
-			" [{} pages] [wrap {}:{}] [cursor {}] \
-			[{} slots free]",
+			" [{} pages] [wrap {}:{}] [cursor {}]",
 			self.page_count,
 			self.line_count,
 			self.column_count,
-			self.address_cursor,
-			self.free_addresses()
+			self.address_cursor
 		));
 		
 
@@ -420,6 +418,8 @@ impl Default for PaletteData {
 			page_count: u16::MAX,
 			line_count: u8::MAX,
 			column_count: u8::MAX,
+			new_page: noop,
+			new_line: noop,
 		}
 	}
 }

@@ -658,7 +658,7 @@ impl <'a, T> Interval<T>
 ////////////////////////////////////////////////////////////////////////////////
 #[cfg(test)]
 mod tests {
-    use super::{Boundary, Interval};
+    use super::Interval;
 
     /// Tests the Interval constructors for points.
     #[test]

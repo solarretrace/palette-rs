@@ -90,6 +90,34 @@ impl Address {
 		}
 		next
 	}
+
+	/// Returns the page group containing the address.
+	///
+	/// # Example
+	/// ```rust
+	/// use rampeditor::{Address, Group};
+	/// 
+	/// let a = Address::new(1, 2, 3).page_group();
+	/// 
+	/// assert_eq!(a, Group::Page {page: 1});
+	/// ```
+	pub fn page_group(&self) -> Group {
+		Group::Page {page: self.page}
+	}
+
+	/// Returns the line group containing the address.
+	///
+	/// # Example
+	/// ```rust
+	/// use rampeditor::{Address, Group};
+	/// 
+	/// let a = Address::new(1, 2, 3).line_group();
+	/// 
+	/// assert_eq!(a, Group::Line {page: 1, line: 2});
+	/// ```
+	pub fn line_group(&self) -> Group {
+		Group::Line {page: self.page, line: self.line}
+	}
 }
 
 
@@ -117,28 +145,28 @@ impl fmt::LowerHex for Address {
 ////////////////////////////////////////////////////////////////////////////////
 // Group
 ////////////////////////////////////////////////////////////////////////////////
-/// Encapsulates the selection of a single address, line, page, or palette.
+/// Encapsulates the group of a single line, page, or palette.
 #[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone, Copy)]
 pub enum Group {
-	/// A single line selection.
+	/// A single line group.
 	Line {
-		/// The page of the selection.
+		/// The page of the group.
 		page: u16, 
-		/// The line of the selection.
+		/// The line of the group.
 		line: u8
 	},
-	/// A single page selection.
+	/// A single page group.
 	Page {
-		/// The page of the selection.
+		/// The page of the group.
 		page: u16
 	},
-	/// A full palette selection.
+	/// A full palette group.
 	All,
 }
 
 
 impl Group {
-	/// Returns the first address located within the selection.
+	/// Returns the first address located within the group.
 	pub fn base_address(&self) -> Address {
 		match *self {
 			Group::Line {page, line} => Address::new(page, line, 0),
@@ -147,7 +175,7 @@ impl Group {
 		}
 	}
 
-	/// Returns whether the address is contained within the selection.
+	/// Returns whether the address is contained within the group.
 	pub fn contains(&self, address: Address) -> bool {
 		match *self {
 			Group::Line {page, line} 

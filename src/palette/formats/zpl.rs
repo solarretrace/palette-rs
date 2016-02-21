@@ -79,7 +79,7 @@ const ZPL_FOOTER_E : [u8;36] = [
 ];
 
 const ZPL_PAGE_LIMIT: u16 =  0x203;
-const ZPL_LONG_LINES_BEGIN: u8 = 0x200;
+const ZPL_LONG_LINES_BEGIN: u16 = 0x200;
 const ZPL_LONG_LINE_LIMIT: u8 =  16;
 const ZPL_SHORT_LINE_LIMIT: u8 =  14;
 const ZPL_COLUMN_LIMIT: u8 =  16;
