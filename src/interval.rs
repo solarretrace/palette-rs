@@ -28,28 +28,28 @@
 use std::ops::{Deref, Sub};
 
 ////////////////////////////////////////////////////////////////////////////////
-// Boundary
+// Bound
 ////////////////////////////////////////////////////////////////////////////////
 ///
 /// Determines the type of an interval's boundary.
 #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Copy)]
-pub enum Boundary<T> where T: PartialOrd + PartialEq + Clone {
+pub enum Bound<T> where T: PartialOrd + PartialEq + Clone {
     /// The boundary includes the point.
-    Include(T),
+    Included(T),
     /// The boundary excludes the point.
-    Exclude(T),
+    Excluded(T),
 }
 
-impl<T> Boundary<T> where T: PartialOrd + PartialEq + Clone {
+impl<T> Bound<T> where T: PartialOrd + PartialEq + Clone {
     /// Returns whether the boundary includes its point.
     ///
     /// # Example
     ///
     /// ```rust
-    /// use rampeditor::Boundary;
+    /// use rampeditor::Bound;
     ///
-    /// let b1 = Boundary::Include(0);
-    /// let b2 = Boundary::Exclude(1);
+    /// let b1 = Bound::Included(0);
+    /// let b2 = Bound::Excluded(1);
     /// 
     /// assert!(b1.is_closed());
     /// assert!(!b2.is_closed());
@@ -57,8 +57,8 @@ impl<T> Boundary<T> where T: PartialOrd + PartialEq + Clone {
     #[inline]
     pub fn is_closed(&self) -> bool {
         match self {
-            &Boundary::Include(..) => true,
-            &Boundary::Exclude(..) => false
+            &Bound::Included(..) => true,
+            &Bound::Excluded(..) => false
         }
     }
 
@@ -67,10 +67,10 @@ impl<T> Boundary<T> where T: PartialOrd + PartialEq + Clone {
     /// # Example
     ///
     /// ```rust
-    /// use rampeditor::Boundary;
+    /// use rampeditor::Bound;
     ///
-    /// let b1 = Boundary::Include(0);
-    /// let b2 = Boundary::Exclude(1);
+    /// let b1 = Bound::Included(0);
+    /// let b2 = Bound::Excluded(1);
     /// 
     /// assert!(!b1.is_open());
     /// assert!(b2.is_open());
@@ -86,10 +86,10 @@ impl<T> Boundary<T> where T: PartialOrd + PartialEq + Clone {
     /// # Example
     ///
     /// ```rust
-    /// use rampeditor::Boundary;
+    /// use rampeditor::Bound;
     ///
-    /// let b1 = Boundary::Include(0);
-    /// let b2 = Boundary::Exclude(0);
+    /// let b1 = Bound::Included(0);
+    /// let b2 = Bound::Excluded(0);
     /// 
     /// assert_eq!(b1.intersect_or_least(&b2), b2);
     /// ```
@@ -98,7 +98,7 @@ impl<T> Boundary<T> where T: PartialOrd + PartialEq + Clone {
             if self.is_closed() && other.is_closed() {
                 self.clone()
             } else {
-                Boundary::Exclude((**self).clone())
+                Bound::Excluded((**self).clone())
             }
         } else if **self < **other {
             self.clone()
@@ -113,10 +113,10 @@ impl<T> Boundary<T> where T: PartialOrd + PartialEq + Clone {
     /// # Example
     ///
     /// ```rust
-    /// use rampeditor::Boundary;
+    /// use rampeditor::Bound;
     ///
-    /// let b1 = Boundary::Include(0);
-    /// let b2 = Boundary::Exclude(0);
+    /// let b1 = Bound::Included(0);
+    /// let b2 = Bound::Excluded(0);
     /// 
     /// assert_eq!(b1.intersect_or_greatest(&b2), b2);
     /// ```
@@ -125,7 +125,7 @@ impl<T> Boundary<T> where T: PartialOrd + PartialEq + Clone {
             if self.is_closed() && other.is_closed() {
                 self.clone()
             } else {
-                Boundary::Exclude((**self).clone())
+                Bound::Excluded((**self).clone())
             }
         } else if **self > **other {
             self.clone()
@@ -140,10 +140,10 @@ impl<T> Boundary<T> where T: PartialOrd + PartialEq + Clone {
     /// # Example
     ///
     /// ```rust
-    /// use rampeditor::Boundary;
+    /// use rampeditor::Bound;
     ///
-    /// let b1 = Boundary::Include(0);
-    /// let b2 = Boundary::Exclude(0);
+    /// let b1 = Bound::Included(0);
+    /// let b2 = Bound::Excluded(0);
     /// 
     /// assert_eq!(b1.union_or_least(&b2), b1);
     /// ```
@@ -152,7 +152,7 @@ impl<T> Boundary<T> where T: PartialOrd + PartialEq + Clone {
             if self.is_open() && other.is_open() {
                 self.clone()
             } else {
-                Boundary::Include((**self).clone())
+                Bound::Included((**self).clone())
             }
         } else if **self < **other {
             self.clone()
@@ -167,10 +167,10 @@ impl<T> Boundary<T> where T: PartialOrd + PartialEq + Clone {
     /// # Example
     ///
     /// ```rust
-    /// use rampeditor::Boundary;
+    /// use rampeditor::Bound;
     ///
-    /// let b1 = Boundary::Include(0);
-    /// let b2 = Boundary::Exclude(0);
+    /// let b1 = Bound::Included(0);
+    /// let b2 = Bound::Excluded(0);
     /// 
     /// assert_eq!(b1.union_or_greatest(&b2), b1);
     /// ```
@@ -179,7 +179,7 @@ impl<T> Boundary<T> where T: PartialOrd + PartialEq + Clone {
             if self.is_open() && other.is_open() {
                 self.clone()
             } else {
-                Boundary::Include((**self).clone())
+                Bound::Included((**self).clone())
             }
         } else if **self > **other {
             self.clone()
@@ -189,14 +189,14 @@ impl<T> Boundary<T> where T: PartialOrd + PartialEq + Clone {
     }
 }
 
-// Implemented to prevent having to match on the Boundary enum to use its 
+// Implemented to prevent having to match on the Bound enum to use its 
 // contents.
-impl<T> Deref for Boundary<T> where T: PartialOrd + PartialEq + Clone {
+impl<T> Deref for Bound<T> where T: PartialOrd + PartialEq + Clone {
     type Target = T;
     fn deref(&self) -> &Self::Target {
         match *self {
-            Boundary::Include(ref bound) => bound,
-            Boundary::Exclude(ref bound) => bound
+            Bound::Included(ref bound) => bound,
+            Bound::Excluded(ref bound) => bound
         }
     }
 }
@@ -210,9 +210,9 @@ impl<T> Deref for Boundary<T> where T: PartialOrd + PartialEq + Clone {
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Interval<T> where T: PartialOrd + PartialEq + Clone {
     /// The start of the range.
-    start: Boundary<T>,
+    start: Bound<T>,
     /// The end of the range.
-    end: Boundary<T>
+    end: Bound<T>
 }
 
 impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
@@ -221,10 +221,10 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// # Example
     ///
     /// ```rust
-    /// use rampeditor::{Boundary, Interval};
+    /// use rampeditor::{Bound, Interval};
     ///
-    /// let l = Boundary::Include(12);
-    /// let r = Boundary::Include(16);
+    /// let l = Bound::Included(12);
+    /// let r = Bound::Included(16);
     /// let int = Interval::new(l, Some(r));
     /// 
     /// assert_eq!(int.left_point(), 12);
@@ -234,16 +234,16 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// If the arguments are out of order, they will be swapped:
     ///
     /// ```rust
-    /// use rampeditor::{Boundary, Interval};
+    /// use rampeditor::{Bound, Interval};
     ///
-    /// let l = Boundary::Include(12);
-    /// let r = Boundary::Include(16);
+    /// let l = Bound::Included(12);
+    /// let r = Bound::Included(16);
     /// let int = Interval::new(r, Some(l));
     /// 
     /// assert_eq!(int.left_point(), 12);
     /// assert_eq!(int.right_point(), 16);
     /// ```
-    pub fn new(start: Boundary<T>, end: Option<Boundary<T>>) -> Self {
+    pub fn new(start: Bound<T>, end: Option<Bound<T>>) -> Self {
         if let Some(end_bound) = end {
             Interval {
                 start: start.union_or_least(&end_bound), 
@@ -270,8 +270,8 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// ```
     pub fn open(start: T, end: T) -> Self {
         Interval::new(
-            Boundary::Exclude(start),
-            Some(Boundary::Exclude(end))
+            Bound::Excluded(start),
+            Some(Bound::Excluded(end))
         )
     }
 
@@ -291,8 +291,8 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// ```
     pub fn closed(start: T, end: T) -> Self {
         Interval::new(
-            Boundary::Include(start),
-            Some(Boundary::Include(end))
+            Bound::Included(start),
+            Some(Bound::Included(end))
         )
     }
 
@@ -312,8 +312,8 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// ```
     pub fn left_open(start: T, end: T) -> Self {
         Interval::new(
-            Boundary::Exclude(start),
-            Some(Boundary::Include(end))
+            Bound::Excluded(start),
+            Some(Bound::Included(end))
         )
     }
 
@@ -333,8 +333,8 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// ```
     pub fn right_open(start: T, end: T) -> Self {
         Interval::new(
-            Boundary::Include(start),
-            Some(Boundary::Exclude(end))
+            Bound::Included(start),
+            Some(Bound::Excluded(end))
         )
     }
 
@@ -378,14 +378,14 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// # Example
     ///
     /// ```rust
-    /// use rampeditor::{Interval, Boundary};
+    /// use rampeditor::{Interval, Bound};
     ///
     /// let int = Interval::open(0, 2);
     /// 
-    /// assert_eq!(int.left_bound(), Boundary::Exclude(0));
+    /// assert_eq!(int.left_bound(), Bound::Excluded(0));
     /// ```
     #[inline]
-    pub fn left_bound(&self) -> Boundary<T> {
+    pub fn left_bound(&self) -> Bound<T> {
         self.start.clone()
     }
 
@@ -394,14 +394,14 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// # Example
     ///
     /// ```rust
-    /// use rampeditor::{Interval, Boundary};
+    /// use rampeditor::{Interval, Bound};
     ///
     /// let int = Interval::open(0, 2);
     /// 
-    /// assert_eq!(int.right_bound(), Boundary::Exclude(2));
+    /// assert_eq!(int.right_bound(), Bound::Excluded(2));
     /// ```
     #[inline]
-    pub fn right_bound(&self) -> Boundary<T> {
+    pub fn right_bound(&self) -> Bound<T> {
         self.end.clone()
     }
 
@@ -410,7 +410,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// # Examples
     ///
     /// ```rust
-    /// use rampeditor::{Interval, Boundary};
+    /// use rampeditor::{Interval, Bound};
     /// let int = Interval::right_open(0, 2);
     /// assert!(!int.is_empty());
     /// ```
@@ -418,7 +418,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// An open interval with two of the same points is empty:
     ///
     /// ```rust
-    /// # use rampeditor::{Interval, Boundary};
+    /// # use rampeditor::{Interval, Bound};
     /// let int = Interval::open(0, 0);
     /// assert!(int.is_empty());
     /// ```
@@ -426,7 +426,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// A half-open interval with two of the same points is not:
     ///
     /// ```rust
-    /// # use rampeditor::{Interval, Boundary};
+    /// # use rampeditor::{Interval, Bound};
     /// let int = Interval::left_open(0, 0);
     /// assert!(!int.is_empty());
     /// ```
@@ -434,9 +434,9 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// A single-point interval is empty only if that point is excluded:
     ///
     /// ```rust
-    /// # use rampeditor::{Interval, Boundary};
-    /// let int_a = Interval::new(Boundary::Exclude(0), None);
-    /// let int_b = Interval::new(Boundary::Include(0), None);
+    /// # use rampeditor::{Interval, Bound};
+    /// let int_a = Interval::new(Bound::Excluded(0), None);
+    /// let int_b = Interval::new(Bound::Included(0), None);
     /// assert!(int_a.is_empty());
     /// assert!(!int_b.is_empty());
     /// ```
@@ -523,7 +523,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
             if a.right_bound().is_closed() && b.left_bound().is_closed() {
                 // Both are closed.
                 Some(Interval::new(
-                    Boundary::Include(a.right_point()), 
+                    Bound::Included(a.right_point()), 
                     None
                 ))
             } else {
@@ -630,7 +630,7 @@ impl <'a, T> Interval<T>
     /// # Examples
     ///
     /// ```rust
-    /// use rampeditor::{Interval, Boundary};
+    /// use rampeditor::{Interval, Bound};
     /// let int = Interval::open(0.0, 2.2);
     ///
     /// assert_eq!(int.width(), 2.2);
@@ -639,7 +639,7 @@ impl <'a, T> Interval<T>
     /// If the interval is empty, a default value is returned:
     ///
     /// ```rust
-    /// # use rampeditor::{Interval, Boundary};
+    /// # use rampeditor::{Interval, Bound};
     /// let int = Interval::open(0.0, 0.0);
     ///
     /// assert_eq!(int.width(), 0.0);
