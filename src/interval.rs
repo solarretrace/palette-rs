@@ -407,12 +407,13 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
         self.end.clone()
     }
 
-    /// Returns whether a given interval is empty.
+    /// Returns whether the interval contains any points.
     ///
     /// # Examples
     ///
     /// ```rust
     /// use rampeditor::{Interval, Bound};
+    ///
     /// let int = Interval::right_open(0, 2);
     /// assert!(!int.is_empty());
     /// ```
@@ -475,6 +476,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     ///
     /// ```rust
     /// use rampeditor::Interval;
+    ///
     /// let int = Interval::right_open(0.0, 2.0);
     /// assert!(int.contains(&0.0));
     /// assert!(int.contains(&1.0));
@@ -494,6 +496,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     ///
     /// ```rust
     /// use rampeditor::Interval;
+    ///
     /// let a = Interval::right_open(0.0, 2.0);
     /// let b = Interval::closed(1.0, 3.0);
     /// 
@@ -549,6 +552,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     ///
     /// ```rust
     /// use rampeditor::Interval;
+    ///
     /// let a = Interval::left_open(0.0, 2.0);
     /// let b = Interval::closed(1.0, 3.0);
     /// 
@@ -598,6 +602,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     ///
     /// ```rust
     /// use rampeditor::Interval;
+    ///
     /// let a = Interval::closed(0.0, 0.0);
     /// let b = Interval::open(2.0, 3.0);
     /// 
@@ -628,6 +633,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     ///
     /// ```rust
     /// use rampeditor::Interval;
+    ///
     /// let ints = Interval::normalize(vec![
     ///     Interval::open(1.0, 2.0),
     ///     Interval::open(2.0, 3.0),
@@ -637,9 +643,10 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     ///     Interval::open(6.0, 6.0),
     /// ].into_iter());
     /// 
-    /// assert_eq!(ints[0], Interval::open(0.0, 2.0));
-    /// assert_eq!(ints[1], Interval::open(2.0, 3.5));
-    /// assert_eq!(ints.len(), 2);
+    /// assert_eq!(
+    ///     &ints[..], 
+    ///     &[Interval::open(0.0, 2.0), Interval::open(2.0, 3.5)]
+    /// );
     /// ```
     pub fn normalize<I>(intervals: I) -> Vec<Interval<T>> 
         where I: IntoIterator<Item=Interval<T>>
@@ -659,6 +666,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
                     // Union with int succeeded.
                     mem::replace(item, val);
                     append = false;
+                    break;
                 }
             }
             if append {prev.push(int);}
