@@ -632,12 +632,14 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     ///     Interval::open(1.0, 2.0),
     ///     Interval::open(2.0, 3.0),
     ///     Interval::open(2.5, 3.5),
-    ///     Interval::open(3.0, 3.0),
+    ///     Interval::closed(3.0, 3.0),
     ///     Interval::open(0.0, 1.5),
+    ///     Interval::open(6.0, 6.0),
     /// ].into_iter());
     /// 
     /// assert_eq!(ints[0], Interval::open(0.0, 2.0));
     /// assert_eq!(ints[1], Interval::open(2.0, 3.5));
+    /// assert_eq!(ints.len(), 2);
     /// ```
     pub fn normalize<I>(intervals: I) -> Vec<Interval<T>> 
         where I: IntoIterator<Item=Interval<T>>
@@ -651,14 +653,12 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
         let start = it.next().unwrap();
 
         it.fold(vec![start], |mut prev, int| {
-            let mut append = false;
+            let mut append = true;
             for item in prev.iter_mut() {
                 if let Some(val) = item.union(&int) {
                     // Union with int succeeded.
                     mem::replace(item, val);
-                } else {
-                    // Union failed; append int to prev list.
-                    append = true;
+                    append = false;
                 }
             }
             if append {prev.push(int);}
