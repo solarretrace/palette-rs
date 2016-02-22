@@ -30,7 +30,6 @@ use super::Interval;
 use std::fmt;
 use std::u16;
 use std::u8;
-use std::collections::HashSet;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -50,12 +49,6 @@ pub const LINE_MAX: LineCount = u8::MAX;
 /// The maximum column in an Address.
 pub const COLUMN_MAX: ColumnCount = u8::MAX;
 
-
-////////////////////////////////////////////////////////////////////////////////
-// Selection
-////////////////////////////////////////////////////////////////////////////////
-/// A set of address intervals.
-pub type Selection = HashSet<Interval<Address>>;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -86,6 +79,7 @@ impl Address {
 	/// Returns the next address, assuming the given wrapping parameters.
 	///
 	/// # Example
+	///
 	/// ```rust
 	/// use rampeditor::Address;
 	/// 
@@ -123,6 +117,7 @@ impl Address {
 	/// Returns the page group containing the address.
 	///
 	/// # Example
+	///
 	/// ```rust
 	/// use rampeditor::{Address, Group};
 	/// 
@@ -137,6 +132,7 @@ impl Address {
 	/// Returns the line group containing the address.
 	///
 	/// # Example
+	///
 	/// ```rust
 	/// use rampeditor::{Address, Group};
 	/// 
@@ -151,7 +147,7 @@ impl Address {
 
 impl Into<Selection> for Address {
 	fn into(self) -> Selection {
-		[Interval::closed(self.clone(), self)].iter().cloned().collect()
+		Selection::new([Interval::closed(self.clone(), self)].iter().cloned())
 	}
 }
 
@@ -174,6 +170,7 @@ impl fmt::LowerHex for Address {
 		write!(f, "{:02x}:{:02x}:{:02x}", self.page, self.line, self.column)
 	}
 }
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -223,7 +220,7 @@ impl Group {
 
 impl Into<Selection> for Group {
 	fn into(self) -> Selection {
-		[
+		Selection::new([
 			match self {
 				Group::Line {page, line} => Interval::right_open(
 					Address::new(page, line, 0),
@@ -242,7 +239,7 @@ impl Into<Selection> for Group {
 					),
 				),
 			}
-		].iter().cloned().collect()
+		].iter().cloned())
 	}
 }
 
@@ -254,5 +251,82 @@ impl fmt::Display for Group {
 			Group::Page {page} => write!(f, "{}:*:*", page),
 			Group::All => write!(f, "*:*:*", ),
 		}
+	}
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Selection
+////////////////////////////////////////////////////////////////////////////////
+/// A possibly non-contiguous selection of addresses.
+pub struct Selection {
+	inner: Vec<Interval<Address>>
+}
+
+
+impl Selection {
+	/// Creates a new selection from a collection of address intervals.
+	///
+	/// # Example
+	///
+	/// ```rust
+	/// use rampeditor::{Selection, Interval, Address};
+	/// 
+	/// let sel = Selection::new([
+	///		Interval::open(Address::new(0, 0, 0), Address::new(1, 0, 0)),
+	///		Interval::open(Address::new(3, 0, 0), Address::new(3, 5, 0)),
+	///		Interval::closed(Address::new(8, 0, 6), Address::new(8, 0, 6))
+	///	].iter().cloned());
+	/// 
+	/// assert!(sel.contains(&Address::new(8, 0, 6)));
+	/// assert!(sel.contains(&Address::new(3, 0, 6)));
+	/// assert!(!sel.contains(&Address::new(0, 0, 0)));
+	/// ```
+	pub fn new<I>(intervals: I) -> Self 
+		where I: IntoIterator<Item=Interval<Address>> 
+	{
+		Selection {
+			inner: Interval::normalize(intervals.into_iter())
+		}
+	}
+
+	/// Adds an interval to the selection.
+	///
+	/// # Example
+	///
+	/// ```rust
+	/// # use rampeditor::{Selection, Interval, Address};
+	/// 
+	/// let mut sel = Selection::new([
+	///		Interval::closed(Address::new(0, 0, 0), Address::new(1, 0, 0)),
+	///	].iter().cloned());
+	/// 
+	/// assert!(!sel.contains(&Address::new(2, 0, 0)));
+	///
+	/// sel.add(Interval::open(Address::new(1, 0, 0), Address::new(4, 0, 0)));
+	///
+	/// assert!(sel.contains(&Address::new(2, 0, 0)));
+	/// ```
+	pub fn add(&mut self, interval: Interval<Address>) {
+		self.inner.push(interval);
+	}
+
+	/// Returns whether the given address is contained in the selection.
+	///
+	/// # Example
+	///
+	/// ```rust
+	/// # use rampeditor::{Selection, Interval, Address};
+	/// 
+	/// let sel = Selection::new([
+	///		Interval::closed(Address::new(0, 0, 0), Address::new(1, 0, 0)),
+	///	].iter().cloned());
+	///
+	/// assert!(sel.contains(&Address::new(0, 0, 1)));
+	/// assert!(!sel.contains(&Address::new(10, 0, 0)));
+	/// ```
+	pub fn contains(&self, address: &Address) -> bool {
+		self.inner.iter().any(|int| int.contains(address))
 	}
 }
