@@ -28,9 +28,8 @@
 use super::Interval;
 
 use std::fmt;
-use std::u16::MAX as PAGE_MAX_IMPORT;
-use std::u8::MAX as LINE_MAX_IMPORT;
-use std::u8::MAX as COLUMN_MAX_IMPORT;
+use std::u16;
+use std::u8;
 use std::collections::HashSet;
 
 
@@ -45,11 +44,11 @@ pub type LineCount = u8;
 pub type ColumnCount = u8;
 
 /// The maximum page in an Address.
-pub const PAGE_MAX: PageCount = PAGE_MAX_IMPORT;
+pub const PAGE_MAX: PageCount = u16::MAX;
 /// The maximum line in an Address.
-pub const LINE_MAX: LineCount = LINE_MAX_IMPORT;
+pub const LINE_MAX: LineCount = u8::MAX;
 /// The maximum column in an Address.
-pub const COLUMN_MAX: ColumnCount = COLUMN_MAX_IMPORT;
+pub const COLUMN_MAX: ColumnCount = u8::MAX;
 
 
 ////////////////////////////////////////////////////////////////////////////////

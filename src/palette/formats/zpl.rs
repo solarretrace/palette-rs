@@ -113,8 +113,8 @@ impl Palette for ZplPalette {
 		pal.core.set_name(Group::All, name.into());
 		pal.core.set_initialized(Group::All, true);
 		pal.core.page_count = ZPL_PAGE_LIMIT;
-		pal.core.line_count = ZPL_LONG_LINE_LIMIT;
-		pal.core.column_count = ZPL_COLUMN_LIMIT;
+		pal.core.default_line_count = ZPL_LONG_LINE_LIMIT;
+		pal.core.default_column_count = ZPL_COLUMN_LIMIT;
 		pal.core.prepare_new_page = ZplPalette::prepare_new_page;
 		pal.core.prepare_new_line = ZplPalette::prepare_new_line;
 		pal

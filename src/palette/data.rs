@@ -60,10 +60,10 @@ pub struct PaletteData {
 	pub address_cursor: Address,
 	/// The number of pages in the palette.
 	pub page_count: PageCount,
-	/// The number of lines in each page.
-	pub line_count: LineCount,
-	/// The number of columns in each line.
-	pub column_count: ColumnCount,
+	/// The default number of lines in each page.
+	pub default_line_count: LineCount,
+	/// The default number of columns in each line.
+	pub default_column_count: ColumnCount,
 	/// Called before an element is added to a new page in the palette. The 
 	/// expectation is that this will add the appropriate meta data to the 
 	/// palette. This will be called before the prepare_new_line function is 
@@ -118,8 +118,8 @@ impl PaletteData {
 	/// # use rampeditor::Color;
 	/// let mut dat: PaletteData = Default::default();
 	/// dat.page_count = 1;
-	/// dat.line_count = 1;
-	/// dat.column_count = 1;
+	/// dat.default_line_count = 1;
+	/// dat.default_column_count = 1;
 	/// dat.add_color(Color(0, 0, 0));
 	/// let result = dat.add_color(Color(0, 0, 0)); // fails...
 	/// assert!(result.is_err()); 
@@ -308,8 +308,8 @@ impl PaletteData {
 		// Update the cursor.
 		self.address_cursor = address.wrapped_next(
 			self.page_count,
-			self.line_count, 
-			self.column_count
+			self.default_line_count, 
+			self.default_column_count
 		);
 		Ok(address)
 	}
@@ -319,7 +319,7 @@ impl PaletteData {
 	#[inline]
 	fn next_free_address(&self) -> Result<Address> {
 		if self.len() >= (self.page_count as usize * 
-			self.line_count as usize * self.column_count as usize)
+			self.default_line_count as usize * self.default_column_count as usize)
 		{
 			return Err(Error::MaxSlotLimitExceeded);
 		}
@@ -328,8 +328,8 @@ impl PaletteData {
 		while self.slotmap.get(&address).and_then(|s| s.get_color()).is_some() {
 			address = address.wrapped_next(
 				self.page_count,
-				self.line_count, 
-				self.column_count
+				self.default_line_count, 
+				self.default_column_count
 			);
 		}
 		Ok(address)
@@ -340,8 +340,8 @@ impl PaletteData {
 	#[inline]
 	fn check_address(&self, address: Address) -> bool {
 		address.page < self.page_count &&
-		address.line < self.line_count &&
-		address.column < self.column_count
+		address.line < self.default_line_count &&
+		address.column < self.default_column_count
 	}
 
 	/// Checks if the groups containing the given addresses have been 
@@ -368,14 +368,14 @@ impl fmt::Debug for PaletteData {
 			metadata: {:#?}, \
 			address_cursor: {:#?}, \
 			page_count: {:#?}, \
-			line_count: {:#?}, \
-			column_count: {:#?} }}",
+			default_line_count: {:#?}, \
+			default_column_count: {:#?} }}",
 			self.slotmap,
 			self.metadata,
 			self.address_cursor,
 			self.page_count,
-			self.line_count,
-			self.column_count
+			self.default_line_count,
+			self.default_column_count
 		)
 	}
 }
@@ -389,8 +389,8 @@ impl fmt::Display for PaletteData {
 		try!(write!(f, 
 			" [{} pages] [wrap {}:{}] [cursor {}]",
 			self.page_count,
-			self.line_count,
-			self.column_count,
+			self.default_line_count,
+			self.default_column_count,
 			self.address_cursor
 		));
 		
@@ -415,8 +415,8 @@ impl Default for PaletteData {
 			metadata: BTreeMap::new(),
 			address_cursor: Default::default(),
 			page_count: PAGE_MAX,
-			line_count: LINE_MAX,
-			column_count: COLUMN_MAX,
+			default_line_count: LINE_MAX,
+			default_column_count: COLUMN_MAX,
 			prepare_new_page: no_op,
 			prepare_new_line: no_op,
 		}

@@ -35,6 +35,6 @@ fn main() {
 	pal.write_palette(&mut file).ok().unwrap();
 
 	// pal.remove_slot(Address::new(0,0,0));
-	println!("{:?}", pal);
+	println!("{:#?}", pal);
 	
 }
