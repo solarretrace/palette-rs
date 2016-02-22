@@ -44,7 +44,7 @@ use std::mem;
 /// Default function for prepare_new_page and prepare_new_line triggers.
 #[allow(unused_variables)]
 #[inline]
-fn no_op(data: &mut PaletteData) {}
+fn no_op(data: &mut PaletteData, group: Group) {}
 
 ////////////////////////////////////////////////////////////////////////////////
 // PaletteData
@@ -68,11 +68,11 @@ pub struct PaletteData {
 	/// expectation is that this will add the appropriate meta data to the 
 	/// palette. This will be called before the prepare_new_line function is 
 	/// called.
-	pub prepare_new_page: fn(&mut PaletteData),
+	pub prepare_new_page: fn(&mut PaletteData, Group),
 	/// Called before an element is added to a new line in the palette. The 
 	/// expectation is that this will add the appropriate meta data to the 
 	/// palette.
-	pub prepare_new_line: fn(&mut PaletteData),
+	pub prepare_new_line: fn(&mut PaletteData, Group),
 }
 
 
@@ -80,6 +80,7 @@ impl PaletteData {
 	/// Returns the number of colors in the PaletteData.
 	///
 	/// # Example
+	///
 	/// ```rust
 	/// use rampeditor::palette::PaletteData;
 	/// use rampeditor::Color;
@@ -100,6 +101,7 @@ impl PaletteData {
 	/// palette is full.
 	///
 	/// # Example
+	///
 	/// ```rust
 	/// use rampeditor::palette::PaletteData;
 	/// use rampeditor::Color;
@@ -113,6 +115,7 @@ impl PaletteData {
 	/// ```
 	///
 	/// # Errors
+	///
 	/// ```rust
 	/// # use rampeditor::palette::PaletteData;
 	/// # use rampeditor::Color;
@@ -137,9 +140,10 @@ impl PaletteData {
 	/// is invalid or empty.
 	///
 	/// # Examples
+	///
 	/// ```rust
-	///  use rampeditor::palette::PaletteData;
-	///  use rampeditor::{Address, Color};
+	/// use rampeditor::palette::PaletteData;
+	/// use rampeditor::{Address, Color};
 	/// 
 	/// let mut dat: PaletteData = Default::default();
 	/// dat.add_color(Color(255, 0, 0));
@@ -155,7 +159,8 @@ impl PaletteData {
 	/// assert_eq!(green, Color(0, 0, 255));
 	/// ```
 	///
-	/// Empty slots are empty:
+	/// Empty slots are return None:
+	///
 	/// ```rust
 	/// # use rampeditor::palette::PaletteData;
 	/// # use rampeditor::{Address, Color};
@@ -171,6 +176,20 @@ impl PaletteData {
 	/// succeeds, or none if there was no color at the location. Returns an 
 	/// error if the address is invalid, or if the element at the address is a
 	/// derived color value.
+	///
+	/// # Example
+	///
+	/// ```rust
+	/// use rampeditor::palette::PaletteData;
+	/// use rampeditor::{Address, Color};
+	/// 
+	/// let mut dat: PaletteData = Default::default();
+	/// let fst = Address::new(0, 0, 0);
+	/// dat.add_color(Color(255, 0, 0));
+	/// dat.set_color(fst, Color(50, 50, 50));
+	///
+	/// assert_eq!(dat.get_color(fst), Some(Color(50, 50, 50)));
+	/// ```
 	pub fn set_color(
 		&mut self, 
 		address: Address,
@@ -197,6 +216,21 @@ impl PaletteData {
 	/// Adds a new element to the palette in the nearest valid location after 
 	/// the group cursor and returns its address. Returns an error if the 
 	/// palette is full.
+	///
+	/// # Example
+	///
+	/// ```rust
+	/// use rampeditor::palette::PaletteData;
+	/// use rampeditor::palette::element::ColorElement;
+	/// use rampeditor::{Address, Color};
+	/// 
+	/// let mut dat: PaletteData = Default::default();
+	/// let fst = Address::new(0, 0, 0);
+	/// let elem = ColorElement::ZerothOrder {color: Color(50, 50, 50)};
+	/// dat.add_element(elem);
+	///
+	/// assert_eq!(dat.get_color(fst), Some(Color(50, 50, 50)));
+	/// ```
 	#[inline]
 	pub fn add_element(
 		&mut self, 
@@ -232,6 +266,22 @@ impl PaletteData {
 	/// Adds a new slot to the palette in the nearest valid location after the 
 	/// group cursor and returns its address. Returns an error if the 
 	/// palette is full.
+	///
+	/// # Example
+	///
+	/// ```rust
+	/// use rampeditor::palette::PaletteData;
+	/// use rampeditor::palette::element::{ColorElement, Slot};
+	/// use rampeditor::{Address, Color};
+	/// 
+	/// let mut dat: PaletteData = Default::default();
+	/// let fst = Address::new(0, 0, 0);
+	/// let elem = ColorElement::ZerothOrder {color: Color(50, 50, 50)};
+	/// let slot = Slot::new(elem);
+	/// dat.add_slot(slot);
+	///
+	/// assert_eq!(dat.get_color(fst), Some(Color(50, 50, 50)));
+	/// ```
 	#[inline]
 	pub fn add_slot(&mut self, new_slot: Slot) -> Result<Address> {
 		let address = try!(self.next_free_address_advance_cursor());
@@ -241,6 +291,18 @@ impl PaletteData {
 
 	/// Returns the label associated with the given group, or
 	/// None if it has no label.
+	///
+	/// # Example
+	///
+	/// ```rust
+	/// use rampeditor::palette::PaletteData;
+	/// use rampeditor::Group;
+	/// 
+	/// let mut dat: PaletteData = Default::default();
+	/// dat.set_label(Group::All, "My Palette");
+	///
+	/// assert_eq!(dat.get_label(Group::All), Some("My Palette"));
+	/// ```
 	pub fn get_label(&self, group: Group) -> Option<&str> {
 		self.metadata
 			.get(&group)
@@ -263,6 +325,18 @@ impl PaletteData {
 
 	/// Returns the name associated with the given group, or None if it has
 	/// no name.
+	///
+	/// # Example
+	///
+	/// ```rust
+	/// use rampeditor::palette::PaletteData;
+	/// use rampeditor::Group;
+	/// 
+	/// let mut dat: PaletteData = Default::default();
+	/// dat.set_name(Group::All, "My Palette");
+	///
+	/// assert_eq!(dat.get_name(Group::All), Some("My Palette"));
+	/// ```
 	pub fn get_name(&self, group: Group) -> Option<&str> {
 		self.metadata
 			.get(&group)
@@ -300,12 +374,22 @@ impl PaletteData {
 	#[inline]
 	fn next_free_address(&mut self) -> Result<Address> {
 		let mut address = self.address_cursor;
-		while self.slotmap.get(&address).and_then(|s| s.get_color()).is_some() {
-			
+
+		// Ensure that the current address has been prepared in case the cursor
+		// was moved.
+		self.prepare_and_get_line_count(address.page_group());
+		self.prepare_and_get_column_count(address.line_group());
+
+		// Loop until we don't see a color.
+		while self.slotmap
+			.get(&address)
+			.and_then(|s| s.get_color())
+			.is_some() 
+		{
 			address = address.wrapped_next(
 				self.page_count,
-				self.get_line_count(address.page_group()), 
-				self.get_column_count(address.line_group())
+				self.prepare_and_get_line_count(address.page_group()), 
+				self.prepare_and_get_column_count(address.line_group())
 			);
 			// Return an error if we've looped all the way around.
 			if address == self.address_cursor {
@@ -315,10 +399,12 @@ impl PaletteData {
 		Ok(address)
 	}
 
-	/// Returns the current line count for the given group.
-	fn get_line_count(&mut self, group: Group) -> LineCount {
+	/// Calls the prepare_new_page function and returns the current line count 
+	/// for the given group.
+	#[inline]
+	fn prepare_and_get_line_count(&mut self, group: Group) -> LineCount {
 		if !self.metadata.contains_key(&group) {
-			(self.prepare_new_page)(self);
+			(self.prepare_new_page)(self, group);
 		}
 		self.metadata
 			.get(&group)
@@ -328,10 +414,12 @@ impl PaletteData {
 			)
 	}
 
-	/// Returns the current column count for the given group.
-	fn get_column_count(&mut self, group: Group) -> LineCount {
+	/// Calls the prepare_new_line function and returns the current column count 
+	/// for the given group.
+	#[inline]
+	fn prepare_and_get_column_count(&mut self, group: Group) -> LineCount {
 		if !self.metadata.contains_key(&group) {
-			(self.prepare_new_line)(self);
+			(self.prepare_new_line)(self, group);
 		}
 		self.metadata
 			.get(&group)
@@ -346,8 +434,8 @@ impl PaletteData {
 	#[inline]
 	fn check_address(&mut self, address: Address) -> bool {
 		address.page < self.page_count &&
-		address.line < self.get_line_count(address.page_group()) &&
-		address.column < self.get_column_count(address.line_group())
+		address.line < self.prepare_and_get_line_count(address.page_group()) &&
+		address.column < self.prepare_and_get_column_count(address.line_group())
 	}
 }
 
@@ -378,16 +466,31 @@ impl fmt::Display for PaletteData {
 			try!(write!(f, " {}\n", data));
 		}
 		try!(write!(f, 
-			" [{} pages] [wrap {}:{}] [cursor {}]",
+			" [{} pages] [default wrap {}:{}] [cursor {}]",
 			self.page_count,
 			self.default_line_count,
 			self.default_column_count,
 			self.address_cursor
 		));
-		
 
 		try!(write!(f, "\n\tAddress   Color    Order  Name\n"));
+		let mut cur_page_group = Group::All;
 		for (&address, ref slot) in self.slotmap.iter() {
+			if cur_page_group != address.page_group() {
+				match self.metadata.get(&address.page_group()) {
+					Some(meta) => try!(writeln!(f, "Page {} - {}", 
+						address.page_group(), 
+						meta)
+					),
+					None => try!(writeln!(f, "Page {}", 
+						address.page_group())
+					)
+				}
+			};
+			cur_page_group = address.page_group();
+			if let Some(meta) = self.metadata.get(&address.line_group()) {
+				try!(write!(f, "\t{}", meta));
+			}
 			try!(write!(f, "\t{:X}  {:X}  {:<5}  ",
 				address,
 				slot.borrow().get_color().unwrap_or(Color(0,0,0)),

@@ -96,13 +96,13 @@ pub struct ZplPalette {
 
 impl ZplPalette {
 	#[allow(unused_variables)]
-	fn prepare_new_page(data: &mut PaletteData) {
-
+	fn prepare_new_page(data: &mut PaletteData, group: Group) {
+		data.set_label(group, "Hello");
 	}
 
 	#[allow(unused_variables)]
-	fn prepare_new_line(data: &mut PaletteData) {
-
+	fn prepare_new_line(data: &mut PaletteData, group: Group) {
+		data.set_label(group, "Hello");
 	}
 }
 

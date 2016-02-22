@@ -458,7 +458,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// assert!(Interval::open(0, 0).into_non_empty().is_none());
     ///
     /// let int = Interval::open(0, 1);
-    /// assert_eq!(int.into_non_empty().unwrap(), int);
+    /// assert_eq!(int.into_non_empty(), Some(int));
     /// ```
     ///
     pub fn into_non_empty(self) -> Option<Self> {
@@ -639,21 +639,24 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
             .filter(|int| !int.is_empty());
 
         // Get first interval.
-        let start = it.next().unwrap();
+        if let Some(start) = it.next() {
 
-        it.fold(vec![start], |mut prev, int| {
-            let mut append = true;
-            for item in prev.iter_mut() {
-                if let Some(val) = item.union(&int) {
-                    // Union with int succeeded.
-                    mem::replace(item, val);
-                    append = false;
-                    break;
+            it.fold(vec![start], |mut prev, int| {
+                let mut append = true;
+                for item in prev.iter_mut() {
+                    if let Some(val) = item.union(&int) {
+                        // Union with int succeeded.
+                        mem::replace(item, val);
+                        append = false;
+                        break;
+                    }
                 }
-            }
-            if append {prev.push(int);}
-            prev
-        })
+                if append {prev.push(int);}
+                prev
+            })
+        } else {
+            Vec::new()
+        }
     }
 }
 
