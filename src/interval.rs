@@ -445,8 +445,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     /// ```
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.left_bound() == self.right_bound() 
-            && self.left_bound().is_open()
+        self.left_bound() == self.right_bound() && self.left_bound().is_open()
     }
 
     /// Converts the interval into an Option, returning None if it is empty.
@@ -508,11 +507,6 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
             return None;
         }
 
-        // Check if they're the same set.
-        if self == other {
-            return Some(self.clone());
-        }
-
         // Choose orientation for intervals.
         let (a, b) = if self.left_point() <= other.left_point() {
             (self, other)
@@ -520,21 +514,13 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
             (other, self)
         };
         
-        if a.right_point() < b.left_point() {
-            // Not overlapping.
+        if a.right_point() < b.left_point() ||
+            (a.right_point() == b.left_point() &&
+            (a.right_bound().is_open() || 
+            b.left_bound().is_open()))
+        {
+            // Not overlapping, or overlapping at one non-closed point.
             None
-        } else if a.right_point() == b.left_point() {
-            // Overlapping at one point. 
-            if a.right_bound().is_closed() && b.left_bound().is_closed() {
-                // Both are closed.
-                Some(Interval::new(
-                    Bound::Included(a.right_point()), 
-                    None
-                ))
-            } else {
-                // At least one is open.
-                None
-            }
         } else {
             // Overlapping.
             Some(Interval::new(
@@ -568,11 +554,6 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
             return Some(self.clone())
         }
 
-        // Check if they're the same set.
-        if self == other {
-            return Some(self.clone());
-        }
-
         // Choose orientation for intervals.
         let (a, b) = if self.left_point() <= other.left_point() {
             (self, other)
@@ -596,7 +577,8 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
         }
     }
 
-    /// Returns the smallest interval containing both of the given intervals.
+    /// Returns the smallest interval containing both of the given intervals, or
+    /// None if both are empty.
     ///
     /// # Example
     ///
@@ -627,7 +609,7 @@ impl <T> Interval<T> where T: PartialOrd + PartialEq + Clone  {
     }
 
     /// Reduces a collection of intervals to a smaller set by removing redundant
-    /// intervals through unions.
+    /// intervals by unioning them together.
     ///
     /// # Example
     ///
@@ -823,7 +805,7 @@ mod tests {
         assert_eq!( c(1.0, 2.0).intersect(&ro(1.0, 1.0)), Some( c(1.0, 1.0)));
         assert_eq!( c(1.0, 2.0).intersect(& c(1.0, 1.0)), Some( c(1.0, 1.0)));
 
-        // Left Point intersections.
+        // Right Point intersections.
         assert_eq!( c(1.0, 2.0).intersect(& o(2.0, 2.0)), None);
         assert_eq!( c(1.0, 2.0).intersect(&lo(2.0, 2.0)), Some( c(2.0, 2.0)));
         assert_eq!( c(1.0, 2.0).intersect(&ro(2.0, 2.0)), Some( c(2.0, 2.0)));
@@ -911,7 +893,7 @@ mod tests {
         assert_eq!( o(1.0, 2.0).union(&ro(1.0, 1.0)), Some(ro(1.0, 2.0)));
         assert_eq!( o(1.0, 2.0).union(& c(1.0, 1.0)), Some(ro(1.0, 2.0)));
 
-        // Left Point unions.
+        // Right Point unions.
         assert_eq!( o(1.0, 2.0).union(& o(2.0, 2.0)), Some( o(1.0, 2.0)));
         assert_eq!( o(1.0, 2.0).union(&lo(2.0, 2.0)), Some(lo(1.0, 2.0)));
         assert_eq!( o(1.0, 2.0).union(&ro(2.0, 2.0)), Some(lo(1.0, 2.0)));
@@ -998,7 +980,7 @@ mod tests {
         assert_eq!( o(1.0, 2.0).connect(&ro(1.0, 1.0)), Some(ro(1.0, 2.0)));
         assert_eq!( o(1.0, 2.0).connect(& c(1.0, 1.0)), Some(ro(1.0, 2.0)));
 
-        // Left Point connects.
+        // Right Point connects.
         assert_eq!( o(1.0, 2.0).connect(& o(2.0, 2.0)), Some( o(1.0, 2.0)));
         assert_eq!( o(1.0, 2.0).connect(&lo(2.0, 2.0)), Some(lo(1.0, 2.0)));
         assert_eq!( o(1.0, 2.0).connect(&ro(2.0, 2.0)), Some(lo(1.0, 2.0)));

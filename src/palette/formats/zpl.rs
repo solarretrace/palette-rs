@@ -27,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use palette::format::Palette;
 use palette::PaletteData;
-use address::Group;
+use address::{Group, PageCount, LineCount, ColumnCount};
 
 use std::fmt;
 use std::result;
@@ -78,11 +78,11 @@ const ZPL_FOOTER_E : [u8;36] = [
 	0x3f, 0x07, 0x07, 0x07
 ];
 
-const ZPL_PAGE_LIMIT: u16 =  0x203;
-const ZPL_LONG_LINES_BEGIN: u16 = 0x200;
-const ZPL_LONG_LINE_LIMIT: u8 =  16;
-const ZPL_SHORT_LINE_LIMIT: u8 =  14;
-const ZPL_COLUMN_LIMIT: u8 =  16;
+const ZPL_PAGE_LIMIT: PageCount =  0x203;
+const ZPL_LONG_LINES_BEGIN: PageCount = 0x200;
+const ZPL_LONG_LINE_LIMIT: LineCount =  16;
+const ZPL_SHORT_LINE_LIMIT: LineCount =  14;
+const ZPL_COLUMN_LIMIT: ColumnCount =  16;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -94,15 +94,29 @@ pub struct ZplPalette {
 	core: PaletteData,
 }
 
+impl ZplPalette {
+	#[allow(unused_variables)]
+	fn prepare_new_page(data: &mut PaletteData) {
+
+	}
+
+	#[allow(unused_variables)]
+	fn prepare_new_line(data: &mut PaletteData) {
+
+	}
+}
+
 impl Palette for ZplPalette {
 	fn new<S>(name: S) -> Self where S: Into<String> {
 		let mut pal = ZplPalette {core: Default::default()};
 		pal.core.set_label(Group::All, "ZplPalette 1.0.0");
 		pal.core.set_name(Group::All, name.into());
+		pal.core.set_initialized(Group::All, true);
 		pal.core.page_count = ZPL_PAGE_LIMIT;
 		pal.core.line_count = ZPL_LONG_LINE_LIMIT;
 		pal.core.column_count = ZPL_COLUMN_LIMIT;
-		pal.core.set_initialized(Group::All, true);
+		pal.core.prepare_new_page = ZplPalette::prepare_new_page;
+		pal.core.prepare_new_line = ZplPalette::prepare_new_line;
 		pal
 	}
 

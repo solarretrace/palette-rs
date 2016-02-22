@@ -25,18 +25,39 @@
 //! Provides a Page:Line:Column addressing object for organizing the palette.
 //!
 ////////////////////////////////////////////////////////////////////////////////
+use super::Interval;
+
 use std::fmt;
-use std::u16;
-use std::u8;
+use std::u16::MAX as PAGE_MAX_IMPORT;
+use std::u8::MAX as LINE_MAX_IMPORT;
+use std::u8::MAX as COLUMN_MAX_IMPORT;
 use std::collections::HashSet;
 
-use super::Interval;
+
+////////////////////////////////////////////////////////////////////////////////
+// Address internal types and limits.
+////////////////////////////////////////////////////////////////////////////////
+/// A type alias for the pages of an Address.
+pub type PageCount = u16;
+/// A type alias for the lines of an Address.
+pub type LineCount = u8;
+/// A type alias for the columns of an Address.
+pub type ColumnCount = u8;
+
+/// The maximum page in an Address.
+pub const PAGE_MAX: PageCount = PAGE_MAX_IMPORT;
+/// The maximum line in an Address.
+pub const LINE_MAX: LineCount = LINE_MAX_IMPORT;
+/// The maximum column in an Address.
+pub const COLUMN_MAX: ColumnCount = COLUMN_MAX_IMPORT;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Selection
 ////////////////////////////////////////////////////////////////////////////////
 /// A set of address intervals.
 pub type Selection = HashSet<Interval<Address>>;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Address
@@ -45,16 +66,17 @@ pub type Selection = HashSet<Interval<Address>>;
 #[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone, Copy, Default)]
 pub struct Address {
 	/// The page of the Address.
-	pub page: u16,
+	pub page: PageCount,
 	/// The line of the Address.
-	pub line: u8,
+	pub line: LineCount,
 	/// The column of the Address.
-	pub column: u8,
+	pub column: ColumnCount,
 }
+
 
 impl Address {
 	/// Creates a new Address.
-	pub fn new(page: u16, line: u8, column: u8) -> Self {
+	pub fn new(page: PageCount, line: LineCount, column: ColumnCount) -> Self {
 		Address {
 			page: page,
 			line: line,
@@ -75,9 +97,9 @@ impl Address {
 	/// ```
 	pub fn wrapped_next(
 		&self, 
-		pages: u16,
-		lines: u8, 
-		columns: u8) 
+		pages: PageCount,
+		lines: LineCount, 
+		columns: ColumnCount) 
 		-> Address
 	{
 		let mut next = Address::new(
@@ -164,14 +186,14 @@ pub enum Group {
 	/// A single line group.
 	Line {
 		/// The page of the group.
-		page: u16, 
+		page: PageCount, 
 		/// The line of the group.
-		line: u8
+		line: LineCount
 	},
 	/// A single page group.
 	Page {
 		/// The page of the group.
-		page: u16
+		page: PageCount
 	},
 	/// A full palette group.
 	All,
@@ -199,6 +221,7 @@ impl Group {
 	}
 }
 
+
 impl Into<Selection> for Group {
 	fn into(self) -> Selection {
 		[
@@ -213,12 +236,17 @@ impl Into<Selection> for Group {
 				),
 				Group::All => Interval::closed(
 					Address::new(0, 0, 0),
-					Address::new(u16::MAX, u8::MAX, u8::MAX),
+					Address::new(
+						PAGE_MAX, 
+						LINE_MAX, 
+						COLUMN_MAX
+					),
 				),
 			}
 		].iter().cloned().collect()
 	}
 }
+
 
 impl fmt::Display for Group {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {

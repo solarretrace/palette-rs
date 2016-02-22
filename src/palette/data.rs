@@ -30,12 +30,13 @@ use super::element::{Slot, ColorElement};
 use super::metadata::Metadata;
 use super::error::{Error, Result};
 use color::Color;
-use address::{Address, Group};
+use address::{Address, Group, 
+	PageCount, LineCount, ColumnCount, 
+	PAGE_MAX, LINE_MAX, COLUMN_MAX
+};
 
 use std::rc::Rc;
 use std::collections::BTreeMap;
-use std::u8;
-use std::u16;
 use std::fmt;
 use std::result;
 use std::mem;
@@ -58,11 +59,11 @@ pub struct PaletteData {
 	/// address.
 	pub address_cursor: Address,
 	/// The number of pages in the palette.
-	pub page_count: u16,
+	pub page_count: PageCount,
 	/// The number of lines in each page.
-	pub line_count: u8,
+	pub line_count: LineCount,
 	/// The number of columns in each line.
-	pub column_count: u8,
+	pub column_count: ColumnCount,
 	/// Called before an element is added to a new page in the palette. The 
 	/// expectation is that this will add the appropriate meta data to the 
 	/// palette. This will be called before the prepare_new_line function is 
@@ -363,12 +364,12 @@ impl PaletteData {
 impl fmt::Debug for PaletteData {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
 		write!(f, "PaletteData {{ \
-			slotmap: {:?}, \
-			metadata: {:?}, \
-			address_cursor: {:?}, \
-			page_count: {:?}, \
-			line_count: {:?}, \
-			column_count: {:?} }}",
+			slotmap: {:#?}, \
+			metadata: {:#?}, \
+			address_cursor: {:#?}, \
+			page_count: {:#?}, \
+			line_count: {:#?}, \
+			column_count: {:#?} }}",
 			self.slotmap,
 			self.metadata,
 			self.address_cursor,
@@ -413,9 +414,9 @@ impl Default for PaletteData {
 			slotmap: BTreeMap::new(),
 			metadata: BTreeMap::new(),
 			address_cursor: Default::default(),
-			page_count: u16::MAX,
-			line_count: u8::MAX,
-			column_count: u8::MAX,
+			page_count: PAGE_MAX,
+			line_count: LINE_MAX,
+			column_count: COLUMN_MAX,
 			prepare_new_page: no_op,
 			prepare_new_line: no_op,
 		}

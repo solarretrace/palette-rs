@@ -25,6 +25,8 @@
 //! Defines a metadata object for tracking information about palette data.
 //!
 ////////////////////////////////////////////////////////////////////////////////
+use address::{LineCount, ColumnCount};
+
 use std::fmt;
 use std::result;
 
@@ -38,6 +40,10 @@ pub struct Metadata {
 	pub format_label: Option<String>,
 	/// A user-provided name for the item.
 	pub name: Option<String>,
+	/// An override to the default line count for this group.
+	pub line_count_override: LineCount,
+	/// An override to the default column count for this group.
+	pub column_count_override: ColumnCount,
 	/// Identifies whether the format's preparatory functions have been called 
 	/// for this item already.
 	pub initialized: bool,
@@ -45,11 +51,14 @@ pub struct Metadata {
 
 impl fmt::Display for Metadata {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		match (self.name.as_ref(), self.format_label.as_ref()) {
+		try!(match (self.name.as_ref(), self.format_label.as_ref()) {
 			(Some(name), Some(label)) => write!(f, "\"{}\" ({})", name, label),
 			(None, Some(label)) => write!(f, "({})", label),
 			(Some(name), None) => write!(f, "\"{}\"", name),
 			_ => Ok(())
-		}
+		});
+		write!(f, " [Lines: {}] [Columns: {}]", 
+			self.line_count_override, 
+			self.column_count_override)
 	}
 }
