@@ -414,6 +414,13 @@ impl PaletteData {
 			)
 	}
 
+	pub fn set_line_count(&mut self, group: Group, line_count: LineCount) {
+		self.metadata
+			.entry(group)
+			.or_insert(Default::default())
+			.line_count = line_count;
+	}
+
 	/// Calls the prepare_new_line function and returns the current column count 
 	/// for the given group.
 	#[inline]
@@ -427,6 +434,13 @@ impl PaletteData {
 				self.default_column_count, 
 				|ref meta| meta.column_count
 			)
+	}
+
+	pub fn set_column_count(&mut self, group: Group, column_count: LineCount) {
+		self.metadata
+			.entry(group)
+			.or_insert(Default::default())
+			.column_count = column_count;
 	}
 
 	/// Returns whether the give address lies within the bounds defined by the 

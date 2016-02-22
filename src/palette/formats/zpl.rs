@@ -97,12 +97,42 @@ pub struct ZplPalette {
 impl ZplPalette {
 	#[allow(unused_variables)]
 	fn prepare_new_page(data: &mut PaletteData, group: Group) {
-		data.set_label(group, "Hello");
+		if let Group::Page {page} = group {
+			if page < 0x200 {
+				data.set_label(group, format!("Level {}", page));
+				if page != 0 {
+					data.set_line_count(group, 13);
+				}
+			}
+
+		}
 	}
 
 	#[allow(unused_variables)]
 	fn prepare_new_line(data: &mut PaletteData, group: Group) {
-		data.set_label(group, "Hello");
+		if let Group::Line {page, line} = group {
+			if page == 0 {
+				data.set_label(group, format!("Main CSET {}", line));
+			} else {
+				data.set_label(group, 
+					ZplPalette::get_level_label_for_line(line)
+				);
+			}
+		}
+	}
+
+	fn get_level_label_for_line(line: LineCount) -> String {
+		format!("CSET {} ({})", line,
+			if line == 0 || line == 4 || line == 7 || line == 10 {
+				"2"
+			} else if line == 1 || line == 5 || line == 8 || line == 11 {
+				"3"
+			} else if line == 2 || line == 6 || line == 9 || line == 12 {
+				"4"
+			} else {
+				"9"
+			}
+		)
 	}
 }
 

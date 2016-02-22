@@ -36,5 +36,4 @@ fn main() {
 
 	// pal.remove_slot(Address::new(0,0,0));
 	println!("{:#?}", pal);
-	
 }
