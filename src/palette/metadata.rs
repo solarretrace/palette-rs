@@ -41,12 +41,9 @@ pub struct Metadata {
 	/// A user-provided name for the item.
 	pub name: Option<String>,
 	/// An override to the default line count for this group.
-	pub line_count_override: LineCount,
+	pub line_count: LineCount,
 	/// An override to the default column count for this group.
-	pub column_count_override: ColumnCount,
-	/// Identifies whether the format's preparatory functions have been called 
-	/// for this item already.
-	pub initialized: bool,
+	pub column_count: ColumnCount,
 }
 
 impl fmt::Display for Metadata {
@@ -58,7 +55,7 @@ impl fmt::Display for Metadata {
 			_ => Ok(())
 		});
 		write!(f, " [Lines: {}] [Columns: {}]", 
-			self.line_count_override, 
-			self.column_count_override)
+			self.line_count, 
+			self.column_count)
 	}
 }

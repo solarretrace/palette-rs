@@ -111,7 +111,6 @@ impl Palette for ZplPalette {
 		let mut pal = ZplPalette {core: Default::default()};
 		pal.core.set_label(Group::All, "ZplPalette 1.0.0");
 		pal.core.set_name(Group::All, name.into());
-		pal.core.set_initialized(Group::All, true);
 		pal.core.page_count = ZPL_PAGE_LIMIT;
 		pal.core.default_line_count = ZPL_LONG_LINE_LIMIT;
 		pal.core.default_column_count = ZPL_COLUMN_LIMIT;

@@ -178,7 +178,6 @@ impl PaletteData {
 		-> Result<Option<Color>>
 	{
 		if self.check_address(address) {
-			self.prepare_address(address);
 			let new_element = ColorElement::ZerothOrder {color: new_color};
 			if self.slotmap.contains_key(&address) {
 				if let Some(slot) = self.slotmap.get(&address) {
@@ -217,7 +216,6 @@ impl PaletteData {
 		-> Result<Option<ColorElement>> 
 	{
 		if self.check_address(address) {
-			self.prepare_address(address);
 			if self.slotmap.contains_key(&address) {
 				if let Some(slot) = self.slotmap.get(&address) {
 					let old_element = &mut*slot.borrow_mut();
@@ -238,7 +236,6 @@ impl PaletteData {
 	pub fn add_slot(&mut self, new_slot: Slot) -> Result<Address> {
 		let address = try!(self.next_free_address_advance_cursor());
 		self.slotmap.insert(address, Rc::new(new_slot));
-		self.prepare_address(address);
 		Ok(address)
 	}
 
@@ -283,22 +280,6 @@ impl PaletteData {
 			.name = Some(name.into());
 	}
 
-	/// Returns whether the format's prepare function has been called for the 
-	/// given group.
-	fn is_initialized(&self, group: Group) -> bool {
-		self.metadata
-			.get(&group)
-			.map_or(false, |ref slotmap| slotmap.initialized)
-	}
-
-	/// Sets the format preparation flag for the group.
-	pub fn set_initialized(&mut self, group: Group, value: bool) {
-		self.metadata
-			.entry(group)
-			.or_insert(Default::default())
-			.initialized = value;
-	}
-
 	/// Returns the next available address after the cursor, and also advances
 	/// the cursor to the next (wrapped) address. Returns an error and fails to 
 	/// advance the cursor if there are no free addresses.
@@ -317,46 +298,56 @@ impl PaletteData {
 	/// Returns the next available address after the cursor. Returns an error if
 	/// there are no free addresses.
 	#[inline]
-	fn next_free_address(&self) -> Result<Address> {
-		if self.len() >= (self.page_count as usize * 
-			self.default_line_count as usize * self.default_column_count as usize)
-		{
-			return Err(Error::MaxSlotLimitExceeded);
-		}
-
+	fn next_free_address(&mut self) -> Result<Address> {
 		let mut address = self.address_cursor;
 		while self.slotmap.get(&address).and_then(|s| s.get_color()).is_some() {
+			
 			address = address.wrapped_next(
 				self.page_count,
-				self.default_line_count, 
-				self.default_column_count
+				self.get_line_count(address.page_group()), 
+				self.get_column_count(address.line_group())
 			);
+			// Return an error if we've looped all the way around.
+			if address == self.address_cursor {
+				return Err(Error::MaxSlotLimitExceeded);
+			}
 		}
 		Ok(address)
+	}
+
+	/// Returns the current line count for the given group.
+	fn get_line_count(&mut self, group: Group) -> LineCount {
+		if !self.metadata.contains_key(&group) {
+			(self.prepare_new_page)(self);
+		}
+		self.metadata
+			.get(&group)
+			.map_or(
+				self.default_line_count, 
+				|ref meta| meta.line_count
+			)
+	}
+
+	/// Returns the current column count for the given group.
+	fn get_column_count(&mut self, group: Group) -> LineCount {
+		if !self.metadata.contains_key(&group) {
+			(self.prepare_new_line)(self);
+		}
+		self.metadata
+			.get(&group)
+			.map_or(
+				self.default_column_count, 
+				|ref meta| meta.column_count
+			)
 	}
 
 	/// Returns whether the give address lies within the bounds defined by the 
 	/// wrapping and max page settings for the palette.
 	#[inline]
-	fn check_address(&self, address: Address) -> bool {
+	fn check_address(&mut self, address: Address) -> bool {
 		address.page < self.page_count &&
-		address.line < self.default_line_count &&
-		address.column < self.default_column_count
-	}
-
-	/// Checks if the groups containing the given addresses have been 
-	/// initialized by the Palette format yet, and if not, initializes them.
-	#[inline]
-	fn prepare_address(&mut self, address: Address) {
-		if !self.is_initialized(address.page_group()) {
-			(self.prepare_new_page)(self);
-			self.set_initialized(address.page_group(), true);
-		}
-		if !self.is_initialized(address.line_group()) {
-			(self.prepare_new_line)(self);
-			self.set_initialized(address.line_group(), true);
-		}
-
+		address.line < self.get_line_count(address.page_group()) &&
+		address.column < self.get_column_count(address.line_group())
 	}
 }
 
