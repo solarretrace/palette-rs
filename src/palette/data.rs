@@ -402,7 +402,7 @@ impl PaletteData {
 	/// Calls the prepare_new_page function and returns the current line count 
 	/// for the given group.
 	#[inline]
-	fn prepare_and_get_line_count(&mut self, group: Group) -> LineCount {
+	pub fn prepare_and_get_line_count(&mut self, group: Group) -> LineCount {
 		if !self.metadata.contains_key(&group) {
 			(self.prepare_new_page)(self, group);
 		}
@@ -414,6 +414,7 @@ impl PaletteData {
 			)
 	}
 
+	/// Sets the line count for a group.
 	pub fn set_line_count(&mut self, group: Group, line_count: LineCount) {
 		self.metadata
 			.entry(group)
@@ -424,7 +425,7 @@ impl PaletteData {
 	/// Calls the prepare_new_line function and returns the current column count 
 	/// for the given group.
 	#[inline]
-	fn prepare_and_get_column_count(&mut self, group: Group) -> LineCount {
+	pub fn prepare_and_get_column_count(&mut self, group: Group) -> LineCount {
 		if !self.metadata.contains_key(&group) {
 			(self.prepare_new_line)(self, group);
 		}
@@ -436,6 +437,7 @@ impl PaletteData {
 			)
 	}
 
+	/// Sets the column count for a group.
 	pub fn set_column_count(&mut self, group: Group, column_count: LineCount) {
 		self.metadata
 			.entry(group)
@@ -446,7 +448,7 @@ impl PaletteData {
 	/// Returns whether the give address lies within the bounds defined by the 
 	/// wrapping and max page settings for the palette.
 	#[inline]
-	fn check_address(&mut self, address: Address) -> bool {
+	pub fn check_address(&mut self, address: Address) -> bool {
 		address.page < self.page_count &&
 		address.line < self.prepare_and_get_line_count(address.page_group()) &&
 		address.column < self.prepare_and_get_column_count(address.line_group())
