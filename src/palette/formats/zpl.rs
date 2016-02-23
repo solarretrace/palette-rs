@@ -79,11 +79,12 @@ const ZPL_FOOTER_E : [u8;36] = [
 ];
 
 const ZPL_PAGE_LIMIT: PageCount =  0x203;
-const ZPL_LONG_LINES_BEGIN: PageCount = 0x200;
-const ZPL_LONG_LINE_LIMIT: LineCount =  16;
-const ZPL_SHORT_LINE_LIMIT: LineCount =  14;
-const ZPL_COLUMN_LIMIT: ColumnCount =  16;
+const ZPL_DEFAULT_LINE_LIMIT: LineCount =  16;
+const ZPL_DEFAULT_COLUMN_LIMIT: ColumnCount =  16;
 
+const MAIN_PAGE_LIMIT: PageCount = 0;
+const LEVEL_PAGE_LIMIT: PageCount = 512;
+const SPRITE_PAGE_LIMIT: PageCount = 515;
 
 ////////////////////////////////////////////////////////////////////////////////
 // ZplPalette
@@ -98,11 +99,13 @@ impl ZplPalette {
 	#[allow(unused_variables)]
 	fn prepare_new_page(data: &mut PaletteData, group: Group) {
 		if let Group::Page {page} = group {
-			if page < 0x200 {
+			if page <= MAIN_PAGE_LIMIT {
+				data.set_label(group, "Main / Level 0");
+				data.set_line_count(group, 14);
+			} else if page <= LEVEL_PAGE_LIMIT {
 				data.set_label(group, format!("Level {}", page));
-				if page != 0 {
-					data.set_line_count(group, 13);
-				}
+			} else {
+				data.set_label(group, format!("Sprite Page {}", page));
 			}
 
 		}
@@ -111,11 +114,19 @@ impl ZplPalette {
 	#[allow(unused_variables)]
 	fn prepare_new_line(data: &mut PaletteData, group: Group) {
 		if let Group::Line {page, line} = group {
-			if page == 0 {
+			if page <= MAIN_PAGE_LIMIT {
 				data.set_label(group, format!("Main CSET {}", line));
-			} else {
+			} else if page <= LEVEL_PAGE_LIMIT {
 				data.set_label(group, 
 					ZplPalette::get_level_label_for_line(line)
+				);
+			} else {
+				data.set_label(group, 
+					format!("CSET {}", 
+						page as usize 
+						- LEVEL_PAGE_LIMIT as usize
+						+ line as usize
+					)
 				);
 			}
 		}
@@ -142,8 +153,8 @@ impl Palette for ZplPalette {
 		pal.core.set_label(Group::All, "ZplPalette 1.0.0");
 		pal.core.set_name(Group::All, name.into());
 		pal.core.page_count = ZPL_PAGE_LIMIT;
-		pal.core.default_line_count = ZPL_LONG_LINE_LIMIT;
-		pal.core.default_column_count = ZPL_COLUMN_LIMIT;
+		pal.core.default_line_count = ZPL_DEFAULT_LINE_LIMIT;
+		pal.core.default_column_count = ZPL_DEFAULT_COLUMN_LIMIT;
 		pal.core.prepare_new_page = ZplPalette::prepare_new_page;
 		pal.core.prepare_new_line = ZplPalette::prepare_new_line;
 		pal

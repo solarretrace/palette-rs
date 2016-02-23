@@ -88,7 +88,7 @@ pub enum ColorElement {
 
 	/// An element with a single dependency. Generates a color from another.
 	Mixed {
-		/// The function that mixs the color from its dependencies.
+		/// The function that mixes the color from its dependencies.
 		mix: Box<Fn(Vec<Color>) -> Color>,
 		/// The `Slot`s to use for mixing a color.
 		sources: Vec<Weak<Slot>>,
@@ -136,12 +136,12 @@ impl fmt::Debug for ColorElement {
 		match *self {
 			ColorElement::Pure {ref color} => 
 				write!(f, 
-					"ColorElement::ZerothOrder {{ color: {:?} }}", 
+					"ColorElement::Pure {{ color: {:?} }}", 
 					color),
 
 			ColorElement::Mixed {ref sources, ..} =>
 				write!(f, 
-					"ColorElement::FirstOrder {{ sources: {:?}, mix: {:?} }}", 
+					"ColorElement::Mixed {{ sources: {:?}, mix: {:?} }}", 
 					sources, 
 					self.get_color()),
 		}
