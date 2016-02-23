@@ -133,7 +133,7 @@ impl PaletteData {
 		new_color: Color) 
 		-> Result<Address> 
 	{
-		self.add_element(ColorElement::ZerothOrder {color: new_color})
+		self.add_element(ColorElement::Pure {color: new_color})
 	}
 
 	/// Returns the color located at the given address, or None if the address 
@@ -197,7 +197,7 @@ impl PaletteData {
 		-> Result<Option<Color>>
 	{
 		if self.check_address(address) {
-			let new_element = ColorElement::ZerothOrder {color: new_color};
+			let new_element = ColorElement::Pure {color: new_color};
 			if self.slotmap.contains_key(&address) {
 				if let Some(slot) = self.slotmap.get(&address) {
 					if slot.get_order() != 0 {
@@ -226,7 +226,7 @@ impl PaletteData {
 	/// 
 	/// let mut dat: PaletteData = Default::default();
 	/// let fst = Address::new(0, 0, 0);
-	/// let elem = ColorElement::ZerothOrder {color: Color(50, 50, 50)};
+	/// let elem = ColorElement::Pure {color: Color(50, 50, 50)};
 	/// dat.add_element(elem);
 	///
 	/// assert_eq!(dat.get_color(fst), Some(Color(50, 50, 50)));
@@ -276,7 +276,7 @@ impl PaletteData {
 	/// 
 	/// let mut dat: PaletteData = Default::default();
 	/// let fst = Address::new(0, 0, 0);
-	/// let elem = ColorElement::ZerothOrder {color: Color(50, 50, 50)};
+	/// let elem = ColorElement::Pure {color: Color(50, 50, 50)};
 	/// let slot = Slot::new(elem);
 	/// dat.add_slot(slot);
 	///
