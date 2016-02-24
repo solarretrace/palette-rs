@@ -47,7 +47,7 @@ pub enum Error {
 	CannotSetDerivedColor,
 	/// An address was provided that lies outside of the range defined for the 
 	/// palette.
-	InvalidAddress,
+	InvalidAddress(Address),
 	/// An empty address was provided for an operation that requires a color.
 	EmptyAddress(Address),
 	/// An operation dependency would be overwritten by the operation.
@@ -79,8 +79,8 @@ impl error::Error for Error {
 				"cannot assign color to a location containing a derived color \
 				value",
 
-			Error::InvalidAddress => 
-				"address provided is outside allowed range for palette",
+			Error::InvalidAddress(..) => 
+				"address lies outside of allowed range",
 
 			Error::EmptyAddress(..) => 
 				"empty address provided to an operation requiring a color",

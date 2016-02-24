@@ -34,7 +34,7 @@ use address::{Address, Group,
 	PAGE_MAX, LINE_MAX, COLUMN_MAX
 };
 
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 use std::collections::BTreeMap;
 use std::fmt;
 use std::result;
@@ -241,7 +241,7 @@ impl PaletteData {
 				} 
 			}
 		} 
-		Err(Error::InvalidAddress)
+		Err(Error::InvalidAddress(address))
 	}
 
 
@@ -292,7 +292,7 @@ impl PaletteData {
 			self.slotmap.insert(address, Rc::new(Slot::new(new_element)));
 			return Ok(None)
 		}
-		Err(Error::InvalidAddress)
+		Err(Error::InvalidAddress(address))
 	}
 
 	/// Adds a new slot to the palette in the nearest valid location after the 
@@ -319,6 +319,49 @@ impl PaletteData {
 		let address = try!(self.next_free_address_advance_cursor());
 		self.slotmap.insert(address, Rc::new(new_slot));
 		Ok(address)
+	}
+
+	/// Returns a weak reference to the slot located at the given address, or 
+	/// None if the address is invalid or empty.
+	pub fn get_slot(&self, address: Address) -> Option<Weak<Slot>> {
+		self.slotmap.get(&address).map(|slot| Rc::downgrade(slot))
+	}
+
+	/// Returns a weak reference to the slot located at the given address. If 
+	/// the address is empty, a new slot will be created an a weak reference 
+	/// will be returned. Returns None if the address is invalid.
+	///
+	/// # Example
+	///
+	/// ```rust
+	/// use rampeditor::palette::PaletteData;
+	/// use rampeditor::{Address, Color};
+	/// 
+	/// let mut dat: PaletteData = Default::default();
+	/// let slot = dat.get_or_create_slot(Address::new(1, 1, 1))
+	/// 	.ok()
+	/// 	.unwrap()
+	///		.upgrade()
+	///		.unwrap(); // Create slot with default Color and unwrap weak ref.
+	///
+	/// assert_eq!(slot.get_color(), Some(Default::default()));
+	/// ```
+	pub fn get_or_create_slot(
+		&mut self, 
+		address: Address) 
+		-> Result<Weak<Slot>> 
+	{
+		if let Some(slot) = self.get_slot(address) {
+			Ok(slot)
+		} else {
+			let new_slot = Rc::new(Slot::new(Default::default()));
+			if self.check_address(address) {
+				self.slotmap.insert(address, new_slot.clone());
+				Ok(Rc::downgrade(&new_slot))
+			} else {
+				Err(Error::InvalidAddress(address))
+			}
+		}
 	}
 
 	/// Returns the label associated with the given group, or

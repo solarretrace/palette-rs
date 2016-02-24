@@ -26,10 +26,37 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 use super::data::*;
-use super::error::Result;
-// use color::Color;
+use super::error::{Result, Error};
+use super::element::{Slot, ColorElement};
 use address::Address;
-// use address;
+
+use std::rc::Rc;
+
+fn retrieve_source(
+	palette: &mut PaletteData, 
+	address: Address, 
+	make_sources: bool) 
+	-> Result<Rc<Slot>> 
+{
+	if make_sources {
+		palette.get_or_create_slot(address)
+			.map(|slot| slot
+				.upgrade()
+				.expect("upgrade valid slot reference"))
+	} else {
+		palette
+			.get_slot(address)
+			.map(|slot| slot
+				.upgrade()
+				.expect("upgrade valid slot reference"))
+			.ok_or_else(|| if palette.check_address(address) {
+					Error::EmptyAddress(address)
+				} else {
+					Error::InvalidAddress(address)
+				})
+	}
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // PaletteOperation
@@ -58,7 +85,7 @@ pub struct CreateRamp {
 	// Whether to overwrite existing elements when generating new ones.
 	overwrite: bool,
 	// Whether to generate placeholder slots when an invalid reference is given.
-	generate_placeholders: bool,
+	make_sources: bool,
 }
 
 
@@ -73,7 +100,7 @@ impl CreateRamp {
 			to: to,
 			count: count,
 			overwrite: false,
-			generate_placeholders: false,
+			make_sources: false,
 		}
 	}
 
@@ -94,12 +121,12 @@ impl CreateRamp {
 
 	/// Configures the operation to generate placeholder colors instead of 
 	/// producing an error when empty addresses are provided. 
-	pub fn generate_placeholders(
+	pub fn make_sources(
 		mut self, 
-		generate_placeholders: bool) 
+		make_sources: bool) 
 		-> CreateRamp 
 	{
-		self.generate_placeholders = generate_placeholders;
+		self.make_sources = make_sources;
 		self
 	}
 }
@@ -108,6 +135,49 @@ impl CreateRamp {
 impl PaletteOperation for CreateRamp {
 	fn apply(&self, palette: &mut PaletteData) -> Result<()> {
 		
+		// Validate source addresses.
+		if !palette.check_address(self.from) {
+			return Err(Error::InvalidAddress(self.from));
+		}
+		if !palette.check_address(self.to) {
+			return Err(Error::InvalidAddress(self.to));
+		}
+
+		// Retrieve or create sources.
+		let from_slot = try!(retrieve_source(
+			palette, 
+			self.from, 
+			self.make_sources
+		));
+		let to_slot = try!(retrieve_source(
+			palette, 
+			self.to, 
+			self.make_sources
+		));
+
+
+		// Get and verify sources for mix function.
+		// if palette.check_address(self.from) {
+
+		// } else {
+
+		
+
+		// // Generate new elements.
+		// let mut new_elements = Vec::new();
+		// for i in 0..self.count {
+		// 	new_elements.push(ColorElement::Mixed {
+		// 		mix: Box::new(|sources| {
+		// 			Default::default()
+		// 		}),
+		// 		sources: [
+		// 			palette.slotmap.get(&self.from).downgrade(),
+		// 			palette.slotmap.get(&self.to).downgrade()
+		// 		].into_iter().collect()
+		// 	})
+		// }
+
+		// Add new elements to palette.
 
 		Ok(())
 	}

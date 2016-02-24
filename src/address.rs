@@ -114,6 +114,34 @@ impl Address {
 		next
 	}
 
+	/// Returns the address n steps ahead, assuming the given wrapping 
+	/// parameters.
+	///
+	/// # Example
+	///
+	/// ```rust
+	/// use rampeditor::Address;
+	/// 
+	/// let a = Address::new(0, 9, 9);
+	/// let b = a.wrapped_add(1, 10, 10, 10);
+	/// 
+	/// assert_eq!(b, Address::new(1, 0, 0));
+	///
+	/// let c = Address::new(0, 0, 0).wrapped_add(100, 5, 5, 5);
+	/// assert_eq!(c, Address::new(4, 0, 0));
+	/// ```
+	pub fn wrapped_add(
+		&self, 
+		n: usize,
+		pages: PageCount,
+		lines: LineCount, 
+		columns: ColumnCount) 
+		-> Address
+	{
+		// Look up div rem functions.
+		unimplemented!()
+	}
+
 	/// Returns the page group containing the address.
 	///
 	/// # Example
@@ -170,7 +198,6 @@ impl fmt::LowerHex for Address {
 		write!(f, "{:02x}:{:02x}:{:02x}", self.page, self.line, self.column)
 	}
 }
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -291,7 +318,7 @@ impl Selection {
 		}
 	}
 
-	/// Adds an interval to the selection.
+	/// Unions an interval into the selection.
 	///
 	/// # Example
 	///
@@ -304,11 +331,11 @@ impl Selection {
 	/// 
 	/// assert!(!sel.contains(&Address::new(2, 0, 0)));
 	///
-	/// sel.add(Interval::open(Address::new(1, 0, 0), Address::new(4, 0, 0)));
+	/// sel.union(Interval::open(Address::new(1, 0, 0), Address::new(4, 0, 0)));
 	///
 	/// assert!(sel.contains(&Address::new(2, 0, 0)));
 	/// ```
-	pub fn add(&mut self, interval: Interval<Address>) {
+	pub fn union(&mut self, interval: Interval<Address>) {
 		self.inner.push(interval);
 	}
 
