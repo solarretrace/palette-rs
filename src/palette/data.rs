@@ -27,7 +27,6 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 use super::element::{Slot, ColorElement};
-use super::metadata::Metadata;
 use super::error::{Error, Result};
 use color::Color;
 use address::{Address, Group, 
@@ -45,6 +44,39 @@ use std::mem;
 #[allow(unused_variables)]
 #[inline]
 fn no_op(data: &mut PaletteData, group: Group) {}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Metadata
+////////////////////////////////////////////////////////////////////////////////
+/// Provides metadata about palette data.
+#[derive(Debug, Default)]
+pub struct Metadata {
+	/// A format-generated label for the item.
+	pub format_label: Option<String>,
+	/// A user-provided name for the item.
+	pub name: Option<String>,
+	/// An override to the default line count for this group.
+	pub line_count: LineCount,
+	/// An override to the default column count for this group.
+	pub column_count: ColumnCount,
+}
+
+impl fmt::Display for Metadata {
+	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
+		try!(match (self.name.as_ref(), self.format_label.as_ref()) {
+			(Some(name), Some(label)) => write!(f, "\"{}\" ({})", name, label),
+			(None, Some(label)) => write!(f, "({})", label),
+			(Some(name), None) => write!(f, "\"{}\"", name),
+			_ => Ok(())
+		});
+		write!(f, " [Lines: {}] [Columns: {}]", 
+			self.line_count, 
+			self.column_count)
+	}
+}
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // PaletteData

@@ -100,14 +100,14 @@ impl ZplPalette {
 	fn prepare_new_page(data: &mut PaletteData, group: Group) {
 		if let Group::Page {page} = group {
 			if page <= MAIN_PAGE_LIMIT {
-				data.set_label(group, "Main / Level 0");
+				data.set_name(group, "Main");
+				data.set_label(group, "Level 0");
 				data.set_line_count(group, 14);
 			} else if page <= LEVEL_PAGE_LIMIT {
 				data.set_label(group, format!("Level {}", page));
 			} else {
 				data.set_label(group, format!("Sprite Page {}", page));
 			}
-
 		}
 	}
 
@@ -122,10 +122,8 @@ impl ZplPalette {
 				);
 			} else {
 				data.set_label(group, 
-					format!("CSET {}", 
-						page as usize 
-						- LEVEL_PAGE_LIMIT as usize
-						+ line as usize
+					format!("Sprite CSET {}", page as usize 
+						- LEVEL_PAGE_LIMIT as usize + line as usize
 					)
 				);
 			}

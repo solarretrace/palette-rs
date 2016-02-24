@@ -28,9 +28,6 @@ pub mod element;
 pub mod data;
 
 #[warn(missing_docs)]
-pub mod metadata;
-
-#[warn(missing_docs)]
 pub mod operations;
 
 #[warn(missing_docs)]
