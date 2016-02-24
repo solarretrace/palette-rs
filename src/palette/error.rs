@@ -49,7 +49,9 @@ pub enum Error {
 	/// palette.
 	InvalidAddress,
 	/// An empty address was provided for an operation that requires a color.
-	EmptyAddress(Address)
+	EmptyAddress(Address),
+	/// An operation dependency would be overwritten by the operation.
+	DependencyOverwrite(Address),
 }
 
 
@@ -81,7 +83,10 @@ impl error::Error for Error {
 				"address provided is outside allowed range for palette",
 
 			Error::EmptyAddress(..) => 
-				"empty address provided to an operation requiring a color"
+				"empty address provided to an operation requiring a color",
+
+			Error::DependencyOverwrite(..) =>
+				"overwriting operation would overwrite one of its dependencies",
 		}
 	}
 }
