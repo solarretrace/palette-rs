@@ -112,8 +112,8 @@ impl PaletteData {
 		self.slotmap.len()
 	}
 
-	/// Returns a weak reference to the slot located at the given address, or 
-	/// None if the address is invalid or empty.
+	/// Returns a reference to the slot located at the given address, or None if
+	/// the address is invalid or empty.
 	pub fn get_slot(&self, address: Address) -> Option<Rc<Slot>> {
 		self.slotmap.get(&address).map(|slot| slot.clone())
 	}
@@ -218,7 +218,7 @@ impl PaletteData {
 	/// Returns the next free address after the given address. And error will be
 	/// returned if there are no more free addresses.
 	#[inline]
-	fn first_free_address_after(
+	pub fn first_free_address_after(
 		&mut self, 
 		starting_address: Address) 
 		-> Result<Address> 
@@ -318,8 +318,9 @@ impl PaletteData {
 	}
 
 	/// Retrieves n target addresses after starting_address from the palette. If 
-	/// overwriting, the addresses will be contiguous and possible occupied. 
-	/// Otherwise, they will be in order and empty. 
+	/// overwriting, the addresses will be contiguous and possible occupied 
+	/// otherwise, they will be in order and empty. Returns an error if more 
+	/// targets are requested than are available in the palette.
 	pub fn retrieve_targets(
 		&mut self, 
 		n: usize, 
@@ -331,7 +332,7 @@ impl PaletteData {
 		let mut next = starting_address;
 
 		if overwrite { // Get contiguous block.
-			for _ in 0..n {
+			while targets.len() < n {
 				try!(self.prepare_address(next));
 				if targets.contains(&next) {
 					return Err(Error::MaxSlotLimitExceeded);

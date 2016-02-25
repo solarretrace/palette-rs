@@ -78,7 +78,7 @@ const ZPL_FOOTER_E : [u8;36] = [
 	0x3f, 0x07, 0x07, 0x07
 ];
 
-const ZPL_PAGE_LIMIT: PageCount =  0x203;
+const ZPL_PAGE_LIMIT: PageCount =  1;//0x203;
 const ZPL_DEFAULT_LINE_LIMIT: LineCount =  16;
 const ZPL_DEFAULT_COLUMN_LIMIT: ColumnCount =  16;
 

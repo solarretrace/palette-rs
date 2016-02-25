@@ -27,35 +27,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 use super::data::*;
 use super::error::{Result, Error};
-use super::element::{Slot, ColorElement};
+use super::element::ColorElement;
 use address::Address;
+use color::lerp_rgb;
 
-use std::rc::Rc;
-
-// fn retrieve_source(
-// 	palette: &mut PaletteData, 
-// 	address: Address, 
-// 	make_sources: bool) 
-// 	-> Result<Rc<Slot>> 
-// {
-// 	if make_sources {
-// 		palette.get_or_create_slot(address)
-// 			.map(|slot| slot
-// 				.upgrade()
-// 				.expect("upgrade valid slot reference"))
-// 	} else {
-// 		palette
-// 			.get_slot(address)
-// 			.map(|slot| slot
-// 				.upgrade()
-// 				.expect("upgrade valid slot reference"))
-// 			.ok_or_else(|| if palette.check_address(address) {
-// 					Error::EmptyAddress(address)
-// 				} else {
-// 					Error::InvalidAddress(address)
-// 				})
-// 	}
-// }
+use std::mem;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +40,7 @@ use std::rc::Rc;
 /// Provides the methods for modifying palettes.
 pub trait PaletteOperation {
 	/// Applies the operation to the given palette.
-	fn apply(&self, palette: &mut PaletteData) -> Result<()>;
+	fn apply(&self, data: &mut PaletteData) -> Result<()>;
 }
 
 
@@ -133,59 +109,44 @@ impl CreateRamp {
 
 
 impl PaletteOperation for CreateRamp {
-	fn apply(&self, palette: &mut PaletteData) -> Result<()> {
-		
-		
-		// let target_address = if let Some(address) = self.location {
-		// 	address
-		// } else {
-		// 	palette.address_cursor
-		// };
+	fn apply(&self, data: &mut PaletteData) -> Result<()> {
+		// Get starting address.
+		let starting_address = if let Some(address) = self.location {
+			address
+		} else {
+			try!(data.first_free_address_after(Default::default()))
+		};
 
+		// Get targets.
+		let targets = try!(data.retrieve_targets(
+			self.count, 
+			starting_address,
+			self.overwrite
+		));
 
-		// // Get and check n 'skipped' target addresses.
-		// // Get and check n target addresses.
-		
+		// Check for dependency overwrites.
+		if targets.contains(&self.from) {
+			return Err(Error::DependencyOverwrite(self.from));
+		}
+		if targets.contains(&self.to) {
+			return Err(Error::DependencyOverwrite(self.to));
+		}
 
-		// // Retrieve or create sources.
-		// let from_slot = try!(retrieve_source(
-		// 	palette, 
-		// 	self.from, 
-		// 	self.make_sources
-		// ));
-		// let to_slot = try!(retrieve_source(
-		// 	palette, 
-		// 	self.to, 
-		// 	self.make_sources
-		// ));
+		// Get sources.
+		let src_from = try!(data.retrieve_source(self.from, self.make_sources));
+		let src_to = try!(data.retrieve_source(self.to, self.make_sources));
 
-		// // Set address cursor.
-		// if let Some(address) = self.location {
-		// 	palette.address_cursor = address;
-		// }
+		// Generate ramp.
+		for (i, address) in targets.iter().enumerate() {
+			let am = (1.0 / (self.count + 2) as f32) * (i + 1) as f32;
+			let slot = try!(data.get_or_create_slot(address.clone()));
+			let new_element = ColorElement::Mixed {
+				mix: Box::new(move |colors| lerp_rgb(colors[0], colors[1], am)),
+				sources: vec![src_from.clone(), src_to.clone()]
+			};
 
-		// Get and verify sources for mix function.
-		// if palette.check_address(self.from) {
-
-		// } else {
-
-		
-
-		// // Generate new elements.
-		// let mut new_elements = Vec::new();
-		// for i in 0..self.count {
-		// 	new_elements.push(ColorElement::Mixed {
-		// 		mix: Box::new(|sources| {
-		// 			Default::default()
-		// 		}),
-		// 		sources: [
-		// 			palette.slotmap.get(&self.from).downgrade(),
-		// 			palette.slotmap.get(&self.to).downgrade()
-		// 		].into_iter().collect()
-		// 	})
-		// }
-
-		// Add new elements to palette.
+			mem::replace(&mut *slot.borrow_mut(), new_element);
+		}
 
 		Ok(())
 	}
