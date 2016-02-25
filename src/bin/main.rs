@@ -23,11 +23,12 @@
 extern crate rampeditor;
 
 use rampeditor::*;
-use std::fs::File;
+// use std::fs::File;
 
 fn main() {
 	let pal = ZplPalette::new("Super Duper");
 	
+
 	// pal.add_color(Color(1, 2, 3)).ok().unwrap();
 	// println!("{}", pal);
 

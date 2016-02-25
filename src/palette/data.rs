@@ -26,7 +26,7 @@
 //! formats.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::element::{Slot, ColorElement};
+use super::element::Slot;
 use super::error::{Error, Result};
 use color::Color;
 use address::{Address, Group, 
@@ -34,11 +34,10 @@ use address::{Address, Group,
 	PAGE_MAX, LINE_MAX, COLUMN_MAX
 };
 
-use std::rc::{Rc, Weak};
+use std::rc::Rc;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::result;
-use std::mem;
 
 /// Default function for prepare_new_page and prepare_new_line triggers.
 #[allow(unused_variables)]
@@ -87,9 +86,6 @@ pub struct PaletteData {
 	pub slotmap: BTreeMap<Address, Rc<Slot>>,
 	/// Provided metadata for various parts of the palette.
 	pub metadata: BTreeMap<Group, Metadata>,
-	/// The internal address cursor that is used to track the next available 
-	/// address.
-	pub address_cursor: Address,
 	/// The number of pages in the palette.
 	pub page_count: PageCount,
 	/// The default number of lines in each page.
@@ -128,203 +124,10 @@ impl PaletteData {
 		self.slotmap.len()
 	}
 
-	/// Adds a new color to the palette in the nearest valid location after 
-	/// the selection cursor and returns its address. Returns an error if the 
-	/// palette is full.
-	///
-	/// # Example
-	///
-	/// ```rust
-	/// use rampeditor::palette::PaletteData;
-	/// use rampeditor::Color;
-	/// 
-	/// let mut dat: PaletteData = Default::default();
-	/// dat.add_color(Color(255, 0, 0));
-	/// dat.add_color(Color(0, 255, 0));
-	/// dat.add_color(Color(0, 0, 255));
-	///
-	/// assert_eq!(dat.len(), 3);
-	/// ```
-	///
-	/// # Errors
-	///
-	/// ```rust
-	/// # use rampeditor::palette::PaletteData;
-	/// # use rampeditor::Color;
-	/// let mut dat: PaletteData = Default::default();
-	/// dat.page_count = 1;
-	/// dat.default_line_count = 1;
-	/// dat.default_column_count = 1;
-	/// dat.add_color(Color(0, 0, 0));
-	/// let result = dat.add_color(Color(0, 0, 0)); // fails...
-	/// assert!(result.is_err()); 
-	/// ```
-	#[inline]
-	pub fn add_color(
-		&mut self, 
-		new_color: Color) 
-		-> Result<Address> 
-	{
-		self.add_element(ColorElement::Pure {color: new_color})
-	}
-
-	/// Returns the color located at the given address, or None if the address 
-	/// is invalid or empty.
-	///
-	/// # Examples
-	///
-	/// ```rust
-	/// use rampeditor::palette::PaletteData;
-	/// use rampeditor::{Address, Color};
-	/// 
-	/// let mut dat: PaletteData = Default::default();
-	/// dat.add_color(Color(255, 0, 0));
-	/// dat.add_color(Color(0, 255, 0));
-	/// dat.add_color(Color(0, 0, 255));
-	///
-	/// let red = dat.get_color(Address::new(0, 0, 0)).unwrap();
-	/// let blue = dat.get_color(Address::new(0, 0, 1)).unwrap();
-	/// let green = dat.get_color(Address::new(0, 0, 2)).unwrap();
-	///
-	/// assert_eq!(red, Color(255, 0, 0));
-	/// assert_eq!(blue, Color(0, 255, 0));
-	/// assert_eq!(green, Color(0, 0, 255));
-	/// ```
-	///
-	/// Empty slots are return None:
-	///
-	/// ```rust
-	/// # use rampeditor::palette::PaletteData;
-	/// # use rampeditor::{Address, Color};
-	/// let dat: PaletteData = Default::default();
-	/// assert!(dat.get_color(Address::new(0, 2, 4)).is_none())
-	/// ```
-	#[inline]
-	pub fn get_color(&self, address: Address) -> Option<Color> {
-		self.slotmap.get(&address).and_then(|slot| slot.get_color())
-	}
-
-	/// Sets the color at the located address. Returns the old color if it 
-	/// succeeds, or none if there was no color at the location. Returns an 
-	/// error if the address is invalid, or if the element at the address is a
-	/// derived color value.
-	///
-	/// # Example
-	///
-	/// ```rust
-	/// use rampeditor::palette::PaletteData;
-	/// use rampeditor::{Address, Color};
-	/// 
-	/// let mut dat: PaletteData = Default::default();
-	/// let fst = Address::new(0, 0, 0);
-	/// dat.add_color(Color(255, 0, 0));
-	/// dat.set_color(fst, Color(50, 50, 50));
-	///
-	/// assert_eq!(dat.get_color(fst), Some(Color(50, 50, 50)));
-	/// ```
-	pub fn set_color(
-		&mut self, 
-		address: Address,
-		new_color: Color) 
-		-> Result<Option<Color>>
-	{
-		if self.check_address(address) {
-			let new_element = ColorElement::Pure {color: new_color};
-			if self.slotmap.contains_key(&address) {
-				if let Some(slot) = self.slotmap.get(&address) {
-					if slot.get_order() != 0 {
-						return Err(Error::CannotSetDerivedColor)
-					}
-					let old_element = &mut*slot.borrow_mut();
-					let old = mem::replace(old_element, new_element);
-					return Ok(old.get_color())
-				} 
-			}
-		} 
-		Err(Error::InvalidAddress(address))
-	}
-
-
-	/// Adds a new element to the palette in the nearest valid location after 
-	/// the group cursor and returns its address. Returns an error if the 
-	/// palette is full.
-	///
-	/// # Example
-	///
-	/// ```rust
-	/// use rampeditor::palette::PaletteData;
-	/// use rampeditor::palette::element::ColorElement;
-	/// use rampeditor::{Address, Color};
-	/// 
-	/// let mut dat: PaletteData = Default::default();
-	/// let fst = Address::new(0, 0, 0);
-	/// let elem = ColorElement::Pure {color: Color(50, 50, 50)};
-	/// dat.add_element(elem);
-	///
-	/// assert_eq!(dat.get_color(fst), Some(Color(50, 50, 50)));
-	/// ```
-	#[inline]
-	pub fn add_element(
-		&mut self, 
-		new_element: ColorElement) 
-		-> Result<Address> 
-	{
-		self.add_slot(Slot::new(new_element))
-	}
-
-	/// Sets the element at the located address. Returns the old element if it 
-	/// succeeds, or none if there was no element at the location. Returns an 
-	/// error if the address is invalid.
-	pub fn set_element(
-		&mut self, 
-		address: Address, 
-		new_element: ColorElement) 
-		-> Result<Option<ColorElement>> 
-	{
-		if self.check_address(address) {
-			if self.slotmap.contains_key(&address) {
-				if let Some(slot) = self.slotmap.get(&address) {
-					let old_element = &mut*slot.borrow_mut();
-					let old = mem::replace(old_element, new_element);
-					return Ok(Some(old));
-				}
-			}
-			self.slotmap.insert(address, Rc::new(Slot::new(new_element)));
-			return Ok(None)
-		}
-		Err(Error::InvalidAddress(address))
-	}
-
-	/// Adds a new slot to the palette in the nearest valid location after the 
-	/// group cursor and returns its address. Returns an error if the 
-	/// palette is full.
-	///
-	/// # Example
-	///
-	/// ```rust
-	/// use rampeditor::palette::PaletteData;
-	/// use rampeditor::palette::element::{ColorElement, Slot};
-	/// use rampeditor::{Address, Color};
-	/// 
-	/// let mut dat: PaletteData = Default::default();
-	/// let fst = Address::new(0, 0, 0);
-	/// let elem = ColorElement::Pure {color: Color(50, 50, 50)};
-	/// let slot = Slot::new(elem);
-	/// dat.add_slot(slot);
-	///
-	/// assert_eq!(dat.get_color(fst), Some(Color(50, 50, 50)));
-	/// ```
-	#[inline]
-	pub fn add_slot(&mut self, new_slot: Slot) -> Result<Address> {
-		let address = try!(self.next_free_address_advance_cursor());
-		self.slotmap.insert(address, Rc::new(new_slot));
-		Ok(address)
-	}
-
 	/// Returns a weak reference to the slot located at the given address, or 
 	/// None if the address is invalid or empty.
-	pub fn get_slot(&self, address: Address) -> Option<Weak<Slot>> {
-		self.slotmap.get(&address).map(|slot| Rc::downgrade(slot))
+	pub fn get_slot(&self, address: Address) -> Option<Rc<Slot>> {
+		self.slotmap.get(&address).map(|slot| slot.clone())
 	}
 
 	/// Returns a weak reference to the slot located at the given address. If 
@@ -349,18 +152,15 @@ impl PaletteData {
 	pub fn get_or_create_slot(
 		&mut self, 
 		address: Address) 
-		-> Result<Weak<Slot>> 
+		-> Result<Rc<Slot>> 
 	{
 		if let Some(slot) = self.get_slot(address) {
 			Ok(slot)
 		} else {
+			try!(self.prepare_address(address));
 			let new_slot = Rc::new(Slot::new(Default::default()));
-			if self.check_address(address) {
-				self.slotmap.insert(address, new_slot.clone());
-				Ok(Rc::downgrade(&new_slot))
-			} else {
-				Err(Error::InvalidAddress(address))
-			}
+			self.slotmap.insert(address, new_slot.clone());
+			Ok(new_slot)
 		}
 	}
 
@@ -429,32 +229,16 @@ impl PaletteData {
 			.name = Some(name.into());
 	}
 
-	/// Returns the next available address after the cursor, and also advances
-	/// the cursor to the next (wrapped) address. Returns an error and fails to 
-	/// advance the cursor if there are no free addresses.
+	/// Returns the next free address after the given address. And error will be
+	/// returned if there are no more free addresses.
 	#[inline]
-	fn next_free_address_advance_cursor(&mut self) -> Result<Address> {
-		let address = try!(self.next_free_address());
-		// Update the cursor.
-		self.address_cursor = address.wrapping_add(
-			1,
-			self.page_count,
-			self.default_line_count, 
-			self.default_column_count
-		);
-		Ok(address)
-	}
-
-	/// Returns the next available address after the cursor. Returns an error if
-	/// there are no free addresses.
-	#[inline]
-	fn next_free_address(&mut self) -> Result<Address> {
-		let mut address = self.address_cursor;
-
-		// Ensure that the current address has been prepared in case the cursor
-		// was moved.
-		self.prepare_and_get_line_count(address.page_group());
-		self.prepare_and_get_column_count(address.line_group());
+	fn first_free_address_after(
+		&mut self, 
+		starting_address: Address) 
+		-> Result<Address> 
+	{
+		let mut address = starting_address;
+		try!(self.prepare_address(address));
 
 		// Loop until we don't see a color.
 		while self.slotmap
@@ -465,11 +249,11 @@ impl PaletteData {
 			address = address.wrapping_add(
 				1,
 				self.page_count,
-				self.prepare_and_get_line_count(address.page_group()), 
-				self.prepare_and_get_column_count(address.line_group())
+				self.get_line_count(address.page_group()), 
+				self.get_column_count(address.line_group())
 			);
 			// Return an error if we've looped all the way around.
-			if address == self.address_cursor {
+			if address == starting_address {
 				return Err(Error::MaxSlotLimitExceeded);
 			}
 		}
@@ -479,10 +263,7 @@ impl PaletteData {
 	/// Calls the prepare_new_page function and returns the current line count 
 	/// for the given group.
 	#[inline]
-	pub fn prepare_and_get_line_count(&mut self, group: Group) -> LineCount {
-		if !self.metadata.contains_key(&group) {
-			(self.prepare_new_page)(self, group);
-		}
+	fn get_line_count(&mut self, group: Group) -> LineCount {
 		self.metadata
 			.get(&group)
 			.map_or(
@@ -502,10 +283,7 @@ impl PaletteData {
 	/// Calls the prepare_new_line function and returns the current column count 
 	/// for the given group.
 	#[inline]
-	pub fn prepare_and_get_column_count(&mut self, group: Group) -> LineCount {
-		if !self.metadata.contains_key(&group) {
-			(self.prepare_new_line)(self, group);
-		}
+	fn get_column_count(&mut self, group: Group) -> ColumnCount {
 		self.metadata
 			.get(&group)
 			.map_or(
@@ -515,7 +293,11 @@ impl PaletteData {
 	}
 
 	/// Sets the column count for a group.
-	pub fn set_column_count(&mut self, group: Group, column_count: LineCount) {
+	pub fn set_column_count(
+		&mut self, 
+		group: Group, 
+		column_count: ColumnCount) 
+	{
 		self.metadata
 			.entry(group)
 			.or_insert(Default::default())
@@ -525,10 +307,80 @@ impl PaletteData {
 	/// Returns whether the give address lies within the bounds defined by the 
 	/// wrapping and max page settings for the palette.
 	#[inline]
-	pub fn check_address(&mut self, address: Address) -> bool {
+	fn check_address(&mut self, address: Address) -> bool {
 		address.page < self.page_count &&
-		address.line < self.prepare_and_get_line_count(address.page_group()) &&
-		address.column < self.prepare_and_get_column_count(address.line_group())
+		address.line < self.get_line_count(address.page_group()) &&
+		address.column < self.get_column_count(address.line_group())
+	}
+
+
+	pub fn prepare_address(&mut self, address: Address) -> Result<()> {
+		let default_line_count = self.default_line_count;
+		let default_column_count = self.default_column_count;
+		let page_group = address.page_group();
+		let line_group = address.line_group();
+		if !self.metadata.contains_key(&page_group) {
+			self.set_line_count(page_group, default_line_count);
+			(self.prepare_new_page)(self, page_group);
+		}
+		if !self.metadata.contains_key(&line_group) {
+			self.set_column_count(line_group, default_column_count);
+			(self.prepare_new_line)(self, line_group);
+		}
+		
+		if self.check_address(address) {
+			Ok(())
+		} else {
+			Err(Error::InvalidAddress(address))
+		}
+	}
+
+	/// Retrieves n target addresses after starting_address from the palette. If 
+	/// overwriting, the addresses will be contiguous and possible occupied. 
+	/// Otherwise, they will be in order and empty. 
+	pub fn retrieve_targets(
+		&mut self, 
+		n: usize, 
+		starting_address: Address,
+		overwrite: bool)
+		-> Result<Vec<Address>>
+	{
+		let mut targets = Vec::new();
+		let mut next = starting_address;
+
+		if overwrite { // Get contiguous block.
+			for i in 0..n {
+				try!(self.prepare_address(next));
+				targets.push(next);
+				next = next.wrapping_add(
+					1,
+					self.page_count,
+					self.get_line_count(next.page_group()),
+					self.get_column_count(next.line_group()),
+				);
+			}
+		} else { // Find n free addresses.
+			try!(self.prepare_address(next));
+
+			// Check if the starting address is empty.
+			if next == starting_address && 
+				self.slotmap.get(&next).and_then(|s| s.get_color()).is_none() 
+			{
+				targets.push(next);
+			}
+			while targets.len() < n {
+				next = next.wrapping_add(
+					1,
+					self.page_count,
+					self.get_line_count(next.page_group()),
+					self.get_column_count(next.line_group()),
+				);
+				next = try!(self.first_free_address_after(next));
+				targets.push(next);
+			}
+		}
+
+		Ok(targets)
 	}
 }
 
@@ -538,13 +390,11 @@ impl fmt::Debug for PaletteData {
 		write!(f, "PaletteData {{ \
 			slotmap: {:#?}, \
 			metadata: {:#?}, \
-			address_cursor: {:#?}, \
 			page_count: {:#?}, \
 			default_line_count: {:#?}, \
 			default_column_count: {:#?} }}",
 			self.slotmap,
 			self.metadata,
-			self.address_cursor,
 			self.page_count,
 			self.default_line_count,
 			self.default_column_count
@@ -559,11 +409,10 @@ impl fmt::Display for PaletteData {
 			try!(write!(f, " {}\n", data));
 		}
 		try!(write!(f, 
-			" [{} pages] [default wrap {}:{}] [cursor {}]",
+			" [{} pages] [default wrap {}:{}]",
 			self.page_count,
 			self.default_line_count,
-			self.default_column_count,
-			self.address_cursor
+			self.default_column_count
 		));
 
 		try!(write!(f, "\n\tAddress   Color    Order  Name\n"));
@@ -600,7 +449,6 @@ impl Default for PaletteData {
 		PaletteData {
 			slotmap: BTreeMap::new(),
 			metadata: BTreeMap::new(),
-			address_cursor: Default::default(),
 			page_count: PAGE_MAX,
 			default_line_count: LINE_MAX,
 			default_column_count: COLUMN_MAX,

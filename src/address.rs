@@ -102,8 +102,8 @@ impl Address {
 	{
 		let (l, c) = (lines as usize, columns as usize);
 		let n2 = n 
-			+ (self.page as usize * l * c) 
-			+ (self.line as usize * c) 
+			+ self.page as usize * l * c
+			+ self.line as usize * c
 			+ self.column as usize;
 		let d = n2 / (l * c);
 		let m = n2 % (l * c);

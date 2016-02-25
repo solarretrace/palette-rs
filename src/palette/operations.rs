@@ -32,30 +32,30 @@ use address::Address;
 
 use std::rc::Rc;
 
-fn retrieve_source(
-	palette: &mut PaletteData, 
-	address: Address, 
-	make_sources: bool) 
-	-> Result<Rc<Slot>> 
-{
-	if make_sources {
-		palette.get_or_create_slot(address)
-			.map(|slot| slot
-				.upgrade()
-				.expect("upgrade valid slot reference"))
-	} else {
-		palette
-			.get_slot(address)
-			.map(|slot| slot
-				.upgrade()
-				.expect("upgrade valid slot reference"))
-			.ok_or_else(|| if palette.check_address(address) {
-					Error::EmptyAddress(address)
-				} else {
-					Error::InvalidAddress(address)
-				})
-	}
-}
+// fn retrieve_source(
+// 	palette: &mut PaletteData, 
+// 	address: Address, 
+// 	make_sources: bool) 
+// 	-> Result<Rc<Slot>> 
+// {
+// 	if make_sources {
+// 		palette.get_or_create_slot(address)
+// 			.map(|slot| slot
+// 				.upgrade()
+// 				.expect("upgrade valid slot reference"))
+// 	} else {
+// 		palette
+// 			.get_slot(address)
+// 			.map(|slot| slot
+// 				.upgrade()
+// 				.expect("upgrade valid slot reference"))
+// 			.ok_or_else(|| if palette.check_address(address) {
+// 					Error::EmptyAddress(address)
+// 				} else {
+// 					Error::InvalidAddress(address)
+// 				})
+// 	}
+// }
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -135,26 +135,34 @@ impl CreateRamp {
 impl PaletteOperation for CreateRamp {
 	fn apply(&self, palette: &mut PaletteData) -> Result<()> {
 		
-		// Validate source addresses.
-		if !palette.check_address(self.from) {
-			return Err(Error::InvalidAddress(self.from));
-		}
-		if !palette.check_address(self.to) {
-			return Err(Error::InvalidAddress(self.to));
-		}
+		
+		// let target_address = if let Some(address) = self.location {
+		// 	address
+		// } else {
+		// 	palette.address_cursor
+		// };
 
-		// Retrieve or create sources.
-		let from_slot = try!(retrieve_source(
-			palette, 
-			self.from, 
-			self.make_sources
-		));
-		let to_slot = try!(retrieve_source(
-			palette, 
-			self.to, 
-			self.make_sources
-		));
 
+		// // Get and check n 'skipped' target addresses.
+		// // Get and check n target addresses.
+		
+
+		// // Retrieve or create sources.
+		// let from_slot = try!(retrieve_source(
+		// 	palette, 
+		// 	self.from, 
+		// 	self.make_sources
+		// ));
+		// let to_slot = try!(retrieve_source(
+		// 	palette, 
+		// 	self.to, 
+		// 	self.make_sources
+		// ));
+
+		// // Set address cursor.
+		// if let Some(address) = self.location {
+		// 	palette.address_cursor = address;
+		// }
 
 		// Get and verify sources for mix function.
 		// if palette.check_address(self.from) {
