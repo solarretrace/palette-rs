@@ -29,10 +29,10 @@ fn main() {
 	let pal = ZplPalette::new("Super Duper");
 	
 	// pal.add_color(Color(1, 2, 3)).ok().unwrap();
-	println!("{}", pal);
+	// println!("{}", pal);
 
-	let mut file = File::create("testpal.zpl").ok().unwrap();
-	pal.write_palette(&mut file).ok().unwrap();
+	// let mut file = File::create("testpal.zpl").ok().unwrap();
+	// pal.write_palette(&mut file).ok().unwrap();
 
 	// pal.remove_slot(Address::new(0,0,0));
 	println!("{:#?}", pal);

@@ -76,44 +76,6 @@ impl Address {
 		}
 	}
 
-	/// Returns the next address, assuming the given wrapping parameters.
-	///
-	/// # Example
-	///
-	/// ```rust
-	/// use rampeditor::Address;
-	/// 
-	/// let a = Address::new(0, 9, 9);
-	/// let b = a.wrapped_next(10, 10, 10);
-	/// 
-	/// assert_eq!(b, Address::new(1, 0, 0));
-	/// ```
-	pub fn wrapped_next(
-		&self, 
-		pages: PageCount,
-		lines: LineCount, 
-		columns: ColumnCount) 
-		-> Address
-	{
-		let mut next = Address::new(
-			self.page,
-			self.line,
-			self.column.wrapping_add(1)
-		);
-		// Check for column wrap.
-		if next.column % columns == 0 { 
-			next.column = 0;
-			next.line = next.line.wrapping_add(1);
-			// Check for line wrap.
-			if next.line % lines == 0 {
-				next.line = 0;
-				next.page = next.page.wrapping_add(1);
-				if next.page >= pages {next.page = 0;}
-			}
-		}
-		next
-	}
-
 	/// Returns the address n steps ahead, assuming the given wrapping 
 	/// parameters.
 	///
@@ -123,14 +85,14 @@ impl Address {
 	/// use rampeditor::Address;
 	/// 
 	/// let a = Address::new(0, 9, 9);
-	/// let b = a.wrapped_add(1, 10, 10, 10);
+	/// let b = a.wrapping_add(1, 10, 10, 10);
 	/// 
 	/// assert_eq!(b, Address::new(1, 0, 0));
 	///
-	/// let c = Address::new(0, 0, 0).wrapped_add(100, 5, 5, 5);
-	/// assert_eq!(c, Address::new(4, 0, 0));
+	/// let c = Address::new(0, 0, 0).wrapping_add(200, 5, 5, 5);
+	/// assert_eq!(c, Address::new(3, 0, 0));
 	/// ```
-	pub fn wrapped_add(
+	pub fn wrapping_add(
 		&self, 
 		n: usize,
 		pages: PageCount,
@@ -138,8 +100,18 @@ impl Address {
 		columns: ColumnCount) 
 		-> Address
 	{
-		// Look up div rem functions.
-		unimplemented!()
+		let (l, c) = (lines as usize, columns as usize);
+		let n2 = n 
+			+ (self.page as usize * l * c) 
+			+ (self.line as usize * c) 
+			+ self.column as usize;
+		let d = n2 / (l * c);
+		let m = n2 % (l * c);
+		Address::new(
+			d as PageCount % pages,
+			(m / c) as LineCount,
+			(m % c) as ColumnCount
+		)
 	}
 
 	/// Returns the page group containing the address.

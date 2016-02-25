@@ -436,7 +436,8 @@ impl PaletteData {
 	fn next_free_address_advance_cursor(&mut self) -> Result<Address> {
 		let address = try!(self.next_free_address());
 		// Update the cursor.
-		self.address_cursor = address.wrapped_next(
+		self.address_cursor = address.wrapping_add(
+			1,
 			self.page_count,
 			self.default_line_count, 
 			self.default_column_count
@@ -461,7 +462,8 @@ impl PaletteData {
 			.and_then(|s| s.get_color())
 			.is_some() 
 		{
-			address = address.wrapped_next(
+			address = address.wrapping_add(
+				1,
 				self.page_count,
 				self.prepare_and_get_line_count(address.page_group()), 
 				self.prepare_and_get_column_count(address.line_group())
