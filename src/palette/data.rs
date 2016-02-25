@@ -34,8 +34,8 @@ use address::{Address, Group,
 	PAGE_MAX, LINE_MAX, COLUMN_MAX
 };
 
-use std::rc::Rc;
-use std::collections::BTreeMap;
+use std::rc::{Rc, Weak};
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::result;
 
@@ -71,7 +71,8 @@ impl fmt::Display for Metadata {
 		});
 		write!(f, " [Lines: {}] [Columns: {}]", 
 			self.line_count, 
-			self.column_count)
+			self.column_count
+		)
 	}
 }
 
@@ -106,19 +107,6 @@ pub struct PaletteData {
 
 impl PaletteData {
 	/// Returns the number of colors in the PaletteData.
-	///
-	/// # Example
-	///
-	/// ```rust
-	/// use rampeditor::palette::PaletteData;
-	/// use rampeditor::Color;
-	////
-	/// let mut dat: PaletteData = Default::default();
-	/// assert_eq!(dat.len(), 0);
-	///
-	/// dat.add_color(Color(1, 2, 3));
-	/// assert_eq!(dat.len(), 1);
-	/// ```
 	#[inline]
 	pub fn len(&self) -> usize {
 		self.slotmap.len()
@@ -143,9 +131,7 @@ impl PaletteData {
 	/// let mut dat: PaletteData = Default::default();
 	/// let slot = dat.get_or_create_slot(Address::new(1, 1, 1))
 	/// 	.ok()
-	/// 	.unwrap()
-	///		.upgrade()
-	///		.unwrap(); // Create slot with default Color and unwrap weak ref.
+	/// 	.unwrap(); // Create slot with default Color and unwrap weak ref.
 	///
 	/// assert_eq!(slot.get_color(), Some(Default::default()));
 	/// ```
@@ -266,10 +252,7 @@ impl PaletteData {
 	fn get_line_count(&mut self, group: Group) -> LineCount {
 		self.metadata
 			.get(&group)
-			.map_or(
-				self.default_line_count, 
-				|ref meta| meta.line_count
-			)
+			.map_or(self.default_line_count, |ref meta| meta.line_count)
 	}
 
 	/// Sets the line count for a group.
@@ -286,10 +269,7 @@ impl PaletteData {
 	fn get_column_count(&mut self, group: Group) -> ColumnCount {
 		self.metadata
 			.get(&group)
-			.map_or(
-				self.default_column_count, 
-				|ref meta| meta.column_count
-			)
+			.map_or(self.default_column_count, |ref meta| meta.column_count)
 	}
 
 	/// Sets the column count for a group.
@@ -313,8 +293,10 @@ impl PaletteData {
 		address.column < self.get_column_count(address.line_group())
 	}
 
-
-	pub fn prepare_address(&mut self, address: Address) -> Result<()> {
+	/// Prepares an address by calling the palette format's metadata functions.
+	/// This function must be called on any address that is first in a new line
+	/// in order to ensure the palette wraps properly.
+	fn prepare_address(&mut self, address: Address) -> Result<()> {
 		let default_line_count = self.default_line_count;
 		let default_column_count = self.default_column_count;
 		let page_group = address.page_group();
@@ -345,13 +327,16 @@ impl PaletteData {
 		overwrite: bool)
 		-> Result<Vec<Address>>
 	{
-		let mut targets = Vec::new();
+		let mut targets = BTreeSet::new();
 		let mut next = starting_address;
 
 		if overwrite { // Get contiguous block.
-			for i in 0..n {
+			for _ in 0..n {
 				try!(self.prepare_address(next));
-				targets.push(next);
+				if targets.contains(&next) {
+					return Err(Error::MaxSlotLimitExceeded);
+				}
+				targets.insert(next);
 				next = next.wrapping_add(
 					1,
 					self.page_count,
@@ -366,7 +351,7 @@ impl PaletteData {
 			if next == starting_address && 
 				self.slotmap.get(&next).and_then(|s| s.get_color()).is_none() 
 			{
-				targets.push(next);
+				targets.insert(next);
 			}
 			while targets.len() < n {
 				next = next.wrapping_add(
@@ -376,11 +361,31 @@ impl PaletteData {
 					self.get_column_count(next.line_group()),
 				);
 				next = try!(self.first_free_address_after(next));
-				targets.push(next);
+				targets.insert(next);
 			}
 		}
 
-		Ok(targets)
+		Ok(targets.into_iter().collect())
+	}
+
+	/// Retrieves a weak slot reference from the given address to use as a 
+	/// source in a color mix function.
+	pub fn retrieve_source(
+		&mut self, 
+		source_address: Address, 
+		make_sources: bool) 
+		-> Result<Weak<Slot>> 
+	{
+		if make_sources {
+			self.get_or_create_slot(source_address)
+				.map(|slot| Rc::downgrade(&slot))
+		} else {
+			try!(self.prepare_address(source_address));
+			self.get_slot(source_address)
+				.map(|slot| Rc::downgrade(&slot))
+				.ok_or(Error::EmptyAddress(source_address))
+
+		}
 	}
 }
 
