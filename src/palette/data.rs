@@ -423,6 +423,7 @@ impl fmt::Display for PaletteData {
 
 		try!(write!(f, "\n\tAddress   Color    Order  Name\n"));
 		let mut cur_page_group = Group::All;
+		let mut cur_line_group = Group::All;
 		for (&address, ref slot) in self.slotmap.iter() {
 			if cur_page_group != address.page_group() {
 				match self.metadata.get(&address.page_group()) {
@@ -436,10 +437,14 @@ impl fmt::Display for PaletteData {
 				}
 			};
 			cur_page_group = address.page_group();
-			if let Some(meta) = self.metadata.get(&address.line_group()) {
-				try!(write!(f, "\t{}", meta));
+			if cur_line_group != address.line_group() {
+				if let Some(meta) = self.metadata.get(&address.line_group()) {
+					try!(write!(f, "\t{}\n", meta));
+				}
+				cur_line_group = address.line_group();
 			}
-			try!(write!(f, "\t{:X}  {:X}  {:<5}  ",
+
+			try!(writeln!(f, "\t{:X}  {:X}  {:<5}  ",
 				address,
 				slot.borrow().get_color().unwrap_or(Color(0,0,0)),
 				slot.borrow().get_order()

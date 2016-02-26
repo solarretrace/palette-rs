@@ -29,7 +29,7 @@ use super::data::*;
 use super::error::{Result, Error};
 use super::element::ColorElement;
 use address::Address;
-use color::lerp_rgb;
+use color::{Color, lerp_rgb};
 
 use std::mem;
 
@@ -140,11 +140,13 @@ impl PaletteOperation for CreateRamp {
 		for (i, address) in targets.iter().enumerate() {
 			let am = (1.0 / (self.count + 2) as f32) * (i + 1) as f32;
 			let slot = try!(data.get_or_create_slot(address.clone()));
+
 			let new_element = ColorElement::Mixed {
 				mix: Box::new(move |colors| lerp_rgb(colors[0], colors[1], am)),
 				sources: vec![src_from.clone(), src_to.clone()]
 			};
 
+			// Insert new element into palette, returning the old one.
 			mem::replace(&mut *slot.borrow_mut(), new_element);
 		}
 

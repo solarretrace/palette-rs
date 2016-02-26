@@ -26,15 +26,19 @@ use rampeditor::*;
 // use std::fs::File;
 
 fn main() {
-	let pal = ZplPalette::new("Super Duper");
+	let mut pal = ZplPalette::new("Super Duper");
 	
-
+	pal.apply(CreateRamp::new(
+		Address::new(0, 1, 0),
+		Address::new(0, 1, 1),
+		6
+	).make_sources(true)).ok();
 	// pal.add_color(Color(1, 2, 3)).ok().unwrap();
-	// println!("{}", pal);
+	println!("{}", pal);
 
 	// let mut file = File::create("testpal.zpl").ok().unwrap();
 	// pal.write_palette(&mut file).ok().unwrap();
 
 	// pal.remove_slot(Address::new(0,0,0));
-	println!("{:#?}", pal);
+	// println!("{:#?}", pal);
 }

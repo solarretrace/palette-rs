@@ -26,7 +26,8 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 use palette::format::Palette;
-use palette::PaletteData;
+use palette::{PaletteData, PaletteOperation};
+use palette;
 use address::Group;
 
 use std::fmt;
@@ -48,6 +49,12 @@ impl Palette for DefaultPalette {
 		pal.core.set_label(Group::All, "DefaultPalette 1.0.0");
 		pal.core.set_name(Group::All, name.into());
 		pal
+	}
+
+	fn apply<O>(&mut self, operation: O)  -> palette::Result<()> 
+		where O: PaletteOperation 
+	{
+		operation.apply(&mut self.core)
 	}
 }
 

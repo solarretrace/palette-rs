@@ -25,6 +25,9 @@
 //! Provides common definitions for format specifiers.
 //!
 ////////////////////////////////////////////////////////////////////////////////
+use super::PaletteOperation;
+use palette;
+
 use std::fmt;
 
 use std::io;
@@ -37,6 +40,10 @@ use std::io::{Result, Write, Read};
 pub trait Palette : fmt::Debug {
 	/// Creates a new palette with the given name.
 	fn new<S>(name: S) -> Self where S: Into<String>, Self: Sized;
+
+
+	fn apply<O>(&mut self, operation: O)  -> palette::Result<()> 
+		where O: PaletteOperation;
 
 	/// Writes the palette to the given buffer.
 	#[allow(unused_variables)]

@@ -26,7 +26,8 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 use palette::format::Palette;
-use palette::PaletteData;
+use palette::{PaletteData, PaletteOperation};
+use palette;
 use address::{Group, PageCount, LineCount, ColumnCount};
 
 use std::fmt;
@@ -156,6 +157,12 @@ impl Palette for ZplPalette {
 		pal.core.prepare_new_page = ZplPalette::prepare_new_page;
 		pal.core.prepare_new_line = ZplPalette::prepare_new_line;
 		pal
+	}
+
+	fn apply<O>(&mut self, operation: O)  -> palette::Result<()> 
+		where O: PaletteOperation 
+	{
+		operation.apply(&mut self.core)
 	}
 
 	fn write_palette<W>(&self, out_buf: &mut W) -> io::Result<()> 
