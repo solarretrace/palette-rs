@@ -28,10 +28,37 @@
 ////////////////////////////////////////////////////////////////////////////////
 use palette::data::PaletteData;
 use palette::history::HistoryEntry;
+use palette::operations::Undo;
+use palette::element::Slot;
+use palette::{Error, Result};
 use palette;
+use address::Address;
 
 use std::fmt;
+use std::rc::{Rc, Weak};
 
+
+/// Gets a weak reference to the source element located at the given address 
+/// from the given palette. If the slot is empty, it will be created if 
+/// make_sources is true. If the source is created, its creation will be logged 
+/// in the provided Undo operation.
+pub fn get_source(
+	data: &mut PaletteData, 
+	address: Address, 
+	make_sources: bool,
+	undo: &mut Undo) 
+	-> Result<Weak<Slot>>
+{
+	if let Some(slot) = data.get_slot(address) {
+		Ok(Rc::downgrade(&slot))
+	} else if make_sources {
+		let slot = Rc::downgrade(&try!(data.create_slot(address)));
+		undo.record(address, None);
+		Ok(slot)
+	} else {
+		Err(Error::InvalidAddress(address))
+	}
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////

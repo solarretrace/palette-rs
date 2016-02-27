@@ -372,6 +372,7 @@ impl PaletteData {
 			{
 				targets.insert(next);
 			}
+			
 			while targets.len() < n {
 				next = next.wrapping_add(
 					1,
