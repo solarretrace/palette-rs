@@ -82,7 +82,7 @@ impl PaletteOperation for Undo {
 				},
 
 				(false, true) => { // The slot was added.
-					let cur = try!(data.remove_element(address));
+					let cur = try!(data.remove_slot(address));
 					redo.record(address, Some(cur));
 					continue;
 				},

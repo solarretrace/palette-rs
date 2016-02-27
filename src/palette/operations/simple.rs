@@ -93,7 +93,7 @@ impl PaletteOperation for CreateColor {
 		};
 
 		// Get targets.
-		let target = try!(data.retrieve_targets(
+		let target = try!(data.find_targets(
 			1, 
 			starting_address,
 			self.overwrite,

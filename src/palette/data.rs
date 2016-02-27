@@ -34,7 +34,7 @@ use address::{Address, Group,
 	PAGE_MAX, LINE_MAX, COLUMN_MAX
 };
 
-use std::rc::{Rc, Weak};
+use std::rc::Rc;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::result;
@@ -136,12 +136,8 @@ impl PaletteData {
 	///
 	/// assert_eq!(slot.get_color(), Some(Default::default()));
 	/// ```
-	pub fn create_slot(
-		&mut self, 
-		address: Address) 
-		-> Result<Rc<Slot>> 
-	{
-		if let Some(slot) = self.get_slot(address) {
+	pub fn create_slot(&mut self, address: Address) -> Result<Rc<Slot>> {
+		if self.slotmap.contains_key(&address) {
 			Err(Error::AddressInUse(address))
 		} else {
 			try!(self.prepare_address(address));
@@ -154,7 +150,7 @@ impl PaletteData {
 
 	/// Removes the element at the given address from the palette. Returns the 
 	/// removed element, or an error if the given address is empty.
-	pub fn remove_element(&mut self, address: Address) -> Result<ColorElement> {
+	pub fn remove_slot(&mut self, address: Address) -> Result<ColorElement> {
 		// Remove slot from slotmap.
 		let slot = try!(self.slotmap
 			.remove(&address)
@@ -338,7 +334,7 @@ impl PaletteData {
 	/// Otherwise, they will be empty. Addresses provided in the exclude list 
 	/// will be skipped. Returns an error if more targets are requested than are
 	/// available in the palette.
-	pub fn retrieve_targets(
+	pub fn find_targets(
 		&mut self, 
 		n: usize, 
 		starting_address: Address,
@@ -392,30 +388,6 @@ impl PaletteData {
 		}
 
 		Ok(targets.into_iter().collect())
-	}
-
-	/// Retrieves a weak slot reference from the given address to use as a 
-	/// source in a color mix function.
-	pub fn retrieve_source(
-		&mut self, 
-		source_address: Address, 
-		make_sources: bool) 
-		-> Result<Weak<Slot>> 
-	{
-		if make_sources {
-			if let Some(ref slot) = self.get_slot(source_address) {
-				Ok(Rc::downgrade(slot))
-			} else {
-				self.create_slot(source_address)
-					.map(|slot| Rc::downgrade(&slot))
-			}
-		} else {
-			try!(self.prepare_address(source_address));
-			self.get_slot(source_address)
-				.map(|slot| Rc::downgrade(&slot))
-				.ok_or(Error::EmptyAddress(source_address))
-
-		}
 	}
 }
 
