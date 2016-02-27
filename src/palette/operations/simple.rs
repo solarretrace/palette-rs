@@ -100,7 +100,12 @@ impl PaletteOperation for CreateColor {
 			None
 		))[0];
 
-		let slot = try!(data.get_or_create_slot(target.clone())); // Wrong!
+		let slot = if let Some(slot) = data.get_slot(target) {
+			slot
+		} else {
+			try!(data.create_slot(target))
+		};
+
 		let new_element = ColorElement::Pure {color: self.color};
 
 		if self.overwrite || slot.get_order() == 1 {

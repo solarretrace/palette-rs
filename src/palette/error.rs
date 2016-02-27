@@ -50,7 +50,7 @@ pub enum Error {
 	InvalidAddress(Address),
 	/// An empty address was provided for an operation that requires a color.
 	EmptyAddress(Address),
-	/// An element could not be unwrapped because other references still exist.
+	/// An element could not be created because the address was occupied.
 	AddressInUse(Address),
 }
 

@@ -130,19 +130,19 @@ impl PaletteData {
 	/// use rampeditor::{Address, Color};
 	/// 
 	/// let mut dat: PaletteData = Default::default();
-	/// let slot = dat.get_or_create_slot(Address::new(1, 1, 1))
+	/// let slot = dat.create_slot(Address::new(1, 1, 1))
 	/// 	.ok()
 	/// 	.unwrap(); // Create slot with default Color and unwrap weak ref.
 	///
 	/// assert_eq!(slot.get_color(), Some(Default::default()));
 	/// ```
-	pub fn get_or_create_slot(
+	pub fn create_slot(
 		&mut self, 
 		address: Address) 
 		-> Result<Rc<Slot>> 
 	{
 		if let Some(slot) = self.get_slot(address) {
-			Ok(slot)
+			Err(Error::AddressInUse(address))
 		} else {
 			try!(self.prepare_address(address));
 			let new_slot = Rc::new(Slot::new(Default::default()));
@@ -403,8 +403,12 @@ impl PaletteData {
 		-> Result<Weak<Slot>> 
 	{
 		if make_sources {
-			self.get_or_create_slot(source_address)
-				.map(|slot| Rc::downgrade(&slot))
+			if let Some(ref slot) = self.get_slot(source_address) {
+				Ok(Rc::downgrade(slot))
+			} else {
+				self.create_slot(source_address)
+					.map(|slot| Rc::downgrade(&slot))
+			}
 		} else {
 			try!(self.prepare_address(source_address));
 			self.get_slot(source_address)
@@ -421,9 +425,9 @@ impl fmt::Debug for PaletteData {
 		write!(f, "PaletteData {{ \
 			slotmap: {:#?}, \
 			metadata: {:#?}, \
-			page_count: {:#?}, \
-			default_line_count: {:#?}, \
-			default_column_count: {:#?} }}",
+			page_count: {}, \
+			default_line_count: {}, \
+			default_column_count: {} }}",
 			self.slotmap,
 			self.metadata,
 			self.page_count,

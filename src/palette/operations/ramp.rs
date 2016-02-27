@@ -127,7 +127,11 @@ impl PaletteOperation for CreateRamp {
 		// Generate ramp.
 		for (i, address) in targets.iter().enumerate() {
 			let am = (1.0 / (self.count + 2) as f32) * (i + 1) as f32;
-			let slot = try!(data.get_or_create_slot(address.clone())); // Wrong!
+			let slot = if let Some(slot) = data.get_slot(address.clone()) {
+				slot
+			} else {
+				try!(data.create_slot(address.clone()))
+			};
 
 			let new_element = ColorElement::Mixed {
 				mix: Box::new(move |colors| lerp_rgb(colors[0], colors[1], am)),

@@ -64,6 +64,7 @@ impl PaletteOperation for Undo {
 
 		for (address, item) in self.saved.into_iter() {
 			match (item.is_some(), data.get_slot(address).is_some()) {
+
 				(true, true) => { // The slot was modified.
 					let elem = item.unwrap();
 					let slot = data.get_slot(address).unwrap();
@@ -74,7 +75,7 @@ impl PaletteOperation for Undo {
 
 				(true, false) => { // The slot was deleted.
 					let elem = item.unwrap();
-					let slot = data.get_or_create_slot(address).unwrap();
+					let slot = data.create_slot(address).unwrap();
 					mem::replace(&mut *slot.borrow_mut(), elem);
 					redo.record(address, None);
 					continue;
