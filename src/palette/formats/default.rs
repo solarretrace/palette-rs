@@ -25,8 +25,8 @@
 //! Provides components for interacting with the default palette format.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use palette::format::Palette;
-use palette::{PaletteData, PaletteOperation};
+use palette::data::PaletteData;
+use palette::format::{Palette, PaletteOperation};
 use palette;
 use address::Group;
 

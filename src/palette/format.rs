@@ -25,14 +25,14 @@
 //! Provides common definitions for format specifiers.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::PaletteOperation;
+use palette::data::PaletteData;
+use palette::history::HistoryEntry;
 use palette;
 
+
 use std::fmt;
-
-use std::io;
 use std::io::{Result, Write, Read};
-
+use std::io;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Palette
@@ -63,3 +63,12 @@ pub trait Palette : fmt::Debug {
 	}
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+// PaletteOperation
+////////////////////////////////////////////////////////////////////////////////
+/// Provides the methods for modifying palettes.
+pub trait PaletteOperation: fmt::Debug {
+	/// Applies the operation to the given palette.
+	fn apply(self, data: &mut PaletteData) -> palette::Result<HistoryEntry>;
+}

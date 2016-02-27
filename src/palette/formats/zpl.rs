@@ -25,8 +25,8 @@
 //! Provides components for interacting with the ZPL palette format.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use palette::{PaletteData, PaletteOperation};
-use palette::format::Palette;
+use palette::data::PaletteData;
+use palette::format::{Palette, PaletteOperation};
 use palette::history::OperationHistory;
 use palette;
 use address::{Group, PageCount, LineCount, ColumnCount};

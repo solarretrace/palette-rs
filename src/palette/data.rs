@@ -125,7 +125,7 @@ impl PaletteData {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::palette::PaletteData;
+	/// use rampeditor::palette::data::PaletteData;
 	/// use rampeditor::{Address, Color};
 	/// 
 	/// let mut dat: PaletteData = Default::default();
@@ -156,7 +156,7 @@ impl PaletteData {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::palette::PaletteData;
+	/// use rampeditor::palette::data::PaletteData;
 	/// use rampeditor::Group;
 	/// 
 	/// let mut dat: PaletteData = Default::default();
@@ -190,7 +190,7 @@ impl PaletteData {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::palette::PaletteData;
+	/// use rampeditor::palette::data::PaletteData;
 	/// use rampeditor::Group;
 	/// 
 	/// let mut dat: PaletteData = Default::default();

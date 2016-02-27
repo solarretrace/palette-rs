@@ -22,27 +22,20 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! Defines wrapper structs for common palette operations.
+//! Defines ramp creation operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::data::*;
-use super::error::{Result, Error};
-use super::element::ColorElement;
-use super::history::HistoryEntry;
+
+use palette::{Result, Error};
+use palette::data::PaletteData;
+use palette::element::ColorElement;
+use palette::history::HistoryEntry;
+use palette::format::PaletteOperation;
 use address::Address;
 use color::{Color, lerp_rgb};
 
 use std::mem;
-use std::fmt::Debug;
 
-////////////////////////////////////////////////////////////////////////////////
-// PaletteOperation
-////////////////////////////////////////////////////////////////////////////////
-/// Provides the methods for modifying palettes.
-pub trait PaletteOperation: Debug {
-	/// Applies the operation to the given palette.
-	fn apply(self, data: &mut PaletteData) -> Result<HistoryEntry>;
-}
 
 
 
