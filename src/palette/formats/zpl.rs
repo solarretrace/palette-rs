@@ -25,8 +25,9 @@
 //! Provides components for interacting with the ZPL palette format.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use palette::format::Palette;
 use palette::{PaletteData, PaletteOperation};
+use palette::format::Palette;
+use palette::history::OperationHistory;
 use palette;
 use address::{Group, PageCount, LineCount, ColumnCount};
 
@@ -79,7 +80,7 @@ const ZPL_FOOTER_E : [u8;36] = [
 	0x3f, 0x07, 0x07, 0x07
 ];
 
-const ZPL_PAGE_LIMIT: PageCount =  1;//0x203;
+const ZPL_PAGE_LIMIT: PageCount =  0x203;
 const ZPL_DEFAULT_LINE_LIMIT: LineCount =  16;
 const ZPL_DEFAULT_COLUMN_LIMIT: ColumnCount =  16;
 
@@ -94,6 +95,7 @@ const SPRITE_PAGE_LIMIT: PageCount = 515;
 #[derive(Debug)]
 pub struct ZplPalette {
 	core: PaletteData,
+	history: OperationHistory,
 }
 
 impl ZplPalette {
@@ -148,7 +150,10 @@ impl ZplPalette {
 
 impl Palette for ZplPalette {
 	fn new<S>(name: S) -> Self where S: Into<String> {
-		let mut pal = ZplPalette {core: Default::default()};
+		let mut pal = ZplPalette {
+			core: Default::default(),
+			history: OperationHistory::new(),
+		};
 		pal.core.set_label(Group::All, "ZplPalette 1.0.0");
 		pal.core.set_name(Group::All, name.into());
 		pal.core.page_count = ZPL_PAGE_LIMIT;
@@ -162,7 +167,9 @@ impl Palette for ZplPalette {
 	fn apply<O>(&mut self, operation: O)  -> palette::Result<()> 
 		where O: PaletteOperation 
 	{
-		operation.apply(&mut self.core)
+		let entry = try!(operation.apply(&mut self.core));
+		self.history.push(entry);
+		Ok(())
 	}
 
 	fn write_palette<W>(&self, out_buf: &mut W) -> io::Result<()> 

@@ -415,8 +415,9 @@ impl fmt::Display for PaletteData {
 			try!(write!(f, " {}\n", data));
 		}
 		try!(write!(f, 
-			" [{} pages] [default wrap {}:{}]",
+			" [{} pages] [{} elements] [default wrap {}:{}]",
 			self.page_count,
+			self.len(),
 			self.default_line_count,
 			self.default_column_count
 		));

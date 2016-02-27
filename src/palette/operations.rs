@@ -28,19 +28,20 @@
 use super::data::*;
 use super::error::{Result, Error};
 use super::element::ColorElement;
+use super::history::HistoryEntry;
 use address::Address;
 use color::{Color, lerp_rgb};
 
 use std::mem;
-
+use std::fmt::Debug;
 
 ////////////////////////////////////////////////////////////////////////////////
 // PaletteOperation
 ////////////////////////////////////////////////////////////////////////////////
 /// Provides the methods for modifying palettes.
-pub trait PaletteOperation {
+pub trait PaletteOperation: Debug {
 	/// Applies the operation to the given palette.
-	fn apply(&self, data: &mut PaletteData) -> Result<()>;
+	fn apply(self, data: &mut PaletteData) -> Result<HistoryEntry>;
 }
 
 
@@ -49,6 +50,7 @@ pub trait PaletteOperation {
 // CreateRamp
 ////////////////////////////////////////////////////////////////////////////////
 /// Creates a linear RGB color ramp using second-order elements in the palette.
+#[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone, Copy, Default)]
 pub struct CreateRamp {
 	// The location to start placing the ramp elements.
 	location: Option<Address>,
@@ -109,7 +111,7 @@ impl CreateRamp {
 
 
 impl PaletteOperation for CreateRamp {
-	fn apply(&self, data: &mut PaletteData) -> Result<()> {
+	fn apply(self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		// Get starting address.
 		let starting_address = if let Some(address) = self.location {
 			address
@@ -150,6 +152,9 @@ impl PaletteOperation for CreateRamp {
 			mem::replace(&mut *slot.borrow_mut(), new_element);
 		}
 
-		Ok(())
+		Ok(HistoryEntry {
+			apply: Box::new(self),
+			undo: unimplemented!()
+		})
 	}
 }

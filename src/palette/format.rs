@@ -33,15 +33,16 @@ use std::fmt;
 use std::io;
 use std::io::{Result, Write, Read};
 
+
 ////////////////////////////////////////////////////////////////////////////////
-// PalettePalette
+// Palette
 ////////////////////////////////////////////////////////////////////////////////
 /// Specifies the interface for using a specific palette format.
 pub trait Palette : fmt::Debug {
 	/// Creates a new palette with the given name.
 	fn new<S>(name: S) -> Self where S: Into<String>, Self: Sized;
 
-
+	/// Applies the given operation to the palette.
 	fn apply<O>(&mut self, operation: O)  -> palette::Result<()> 
 		where O: PaletteOperation;
 

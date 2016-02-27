@@ -31,6 +31,9 @@ pub mod data;
 pub mod operations;
 
 #[warn(missing_docs)]
+pub mod history;
+
+#[warn(missing_docs)]
 pub mod format;
 
 #[warn(missing_docs)]

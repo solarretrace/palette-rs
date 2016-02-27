@@ -22,48 +22,52 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! Provides components for interacting with the default palette format.
+//! Provides definitions relevant to maintaining an operation history.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use palette::format::Palette;
-use palette::{PaletteData, PaletteOperation};
-use palette;
-use address::Group;
+use super::PaletteOperation;
 
-use std::fmt;
-use std::result;
 
 ////////////////////////////////////////////////////////////////////////////////
-// DefaultPalette
+// OperationHistory
 ////////////////////////////////////////////////////////////////////////////////
-/// The default palette format with no special configuration.
+/// Maintains a history of operations applied to a palette and their associated
+/// undo operations.
 #[derive(Debug)]
-pub struct DefaultPalette {
-	core: PaletteData,
+pub struct OperationHistory {
+	/// The record of applied operations an undo operations.
+	records: Vec<HistoryEntry>,
 }
 
-impl Palette for DefaultPalette {
 
-	fn new<S>(name: S) -> Self where S: Into<String> {
-		let mut pal = DefaultPalette {core: Default::default()};
-		pal.core.set_label(Group::All, "DefaultPalette 1.0.0");
-		pal.core.set_name(Group::All, name.into());
-		pal
+impl OperationHistory {
+	/// Creates a new, empty OperationHistory
+	pub fn new() -> OperationHistory {
+		OperationHistory {records: Vec::new()}
 	}
 
-	fn apply<O>(&mut self, operation: O)  -> palette::Result<()> 
-		where O: PaletteOperation 
-	{
-		try!(operation.apply(&mut self.core));
-		Ok(())
+	/// Pushes a new operation history entry onto the operation stack.
+	pub fn push(&mut self, entry: HistoryEntry)	{
+		self.records.push(entry);
+	}
+
+	/// pops the last operation history entry off the operation stack and 
+	/// returns it. Returns None if the history is empty.
+	pub fn pop(&mut self) -> Option<HistoryEntry> {
+		self.records.pop()
 	}
 }
 
-impl fmt::Display for DefaultPalette {
-	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		write!(f, "{} {}",
-			self.core.get_label(Group::All).unwrap_or(""),
-			self.core
-		)
-	}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// HistoryEntry
+////////////////////////////////////////////////////////////////////////////////
+/// Encapsulates a single entry in the operation history.
+#[derive(Debug)]
+pub struct HistoryEntry {
+	/// The operation that was applied to the palette.
+	pub apply: Box<PaletteOperation>,
+	/// The operation that undoes the applied operation.
+	pub undo: Box<PaletteOperation>,
 }
