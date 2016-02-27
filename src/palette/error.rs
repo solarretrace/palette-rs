@@ -50,6 +50,8 @@ pub enum Error {
 	InvalidAddress(Address),
 	/// An empty address was provided for an operation that requires a color.
 	EmptyAddress(Address),
+	/// An element could not be unwrapped because other references still exist.
+	AddressInUse(Address),
 }
 
 
@@ -82,6 +84,9 @@ impl error::Error for Error {
 
 			Error::EmptyAddress(..) => 
 				"empty address provided to an operation requiring a color",
+
+			Error::AddressInUse(..) =>
+				"the address is in use",
 		}
 	}
 }

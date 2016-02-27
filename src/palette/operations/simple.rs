@@ -29,7 +29,7 @@
 use palette::{Result, Error};
 use palette::data::PaletteData;
 use palette::element::ColorElement;
-use palette::history::HistoryEntry;
+use palette::history::{HistoryEntry, EntryInfo};
 use palette::format::PaletteOperation;
 use address::Address;
 use color::Color;
@@ -43,7 +43,7 @@ use std::mem;
 // CreateColor
 ////////////////////////////////////////////////////////////////////////////////
 /// Creates a new color in the palette.
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct CreateColor {
 	/// The Color to add to the paletee.
 	color: Color,
@@ -112,7 +112,7 @@ impl PaletteOperation for CreateColor {
 		}
 
 		Ok(HistoryEntry {
-			apply: Box::new(self),
+			info: EntryInfo::Apply {operation: Box::new(self)},
 			undo: unimplemented!()
 		})
 	}

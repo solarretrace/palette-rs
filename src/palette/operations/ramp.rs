@@ -29,7 +29,7 @@
 use palette::Result;
 use palette::data::PaletteData;
 use palette::element::ColorElement;
-use palette::history::HistoryEntry;
+use palette::history::{HistoryEntry, EntryInfo};
 use palette::format::PaletteOperation;
 use address::Address;
 use color::lerp_rgb;
@@ -43,7 +43,7 @@ use std::mem;
 // CreateRamp
 ////////////////////////////////////////////////////////////////////////////////
 /// Creates a linear RGB color ramp using second-order elements in the palette.
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct CreateRamp {
 	/// The location to start placing the ramp elements.
 	location: Option<Address>,
@@ -117,7 +117,7 @@ impl PaletteOperation for CreateRamp {
 			self.count, 
 			starting_address,
 			self.overwrite,
-			Some(vec![self.from, self.to])
+			Some(vec![self.from, self.to]) // Exclude the source locations.
 		));
 
 		// Get sources.
@@ -139,8 +139,9 @@ impl PaletteOperation for CreateRamp {
 		}
 
 		Ok(HistoryEntry {
-			apply: Box::new(self),
+			info: EntryInfo::Apply {operation: Box::new(self)},
 			undo: unimplemented!()
 		})
 	}
 }
+

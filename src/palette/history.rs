@@ -66,8 +66,25 @@ impl OperationHistory {
 /// Encapsulates a single entry in the operation history.
 #[derive(Debug)]
 pub struct HistoryEntry {
-	/// The operation that was applied to the palette.
-	pub apply: Box<PaletteOperation>,
+	/// Information about the operation that was applied to the palette.
+	pub info: EntryInfo,
 	/// The operation that undoes the applied operation.
 	pub undo: Box<PaletteOperation>,
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// EntryInfo
+////////////////////////////////////////////////////////////////////////////////
+/// Encapsulates information about the operation that was performed.
+#[derive(Debug)]
+pub enum EntryInfo {
+	/// An undo uperation was applied.
+	Undo,
+	/// The given operation was applied.
+	Apply {
+		/// The operation that was applied.
+		operation: Box<PaletteOperation>,
+	}
 }

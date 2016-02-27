@@ -19,8 +19,12 @@ pub mod sequence;
 #[warn(missing_docs)]
 pub mod simple;
 
+#[warn(missing_docs)]
+pub mod undo;
+
 pub use palette::operations::arrange::*;
 pub use palette::operations::duplicate::*;
 pub use palette::operations::ramp::*;
 pub use palette::operations::sequence::*;
 pub use palette::operations::simple::*;
+pub use palette::operations::undo::*;

@@ -26,7 +26,7 @@
 //! formats.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::element::Slot;
+use super::element::{Slot, ColorElement};
 use super::error::{Error, Result};
 use color::Color;
 use address::{Address, Group, 
@@ -38,6 +38,7 @@ use std::rc::{Rc, Weak};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::result;
+use std::mem;
 
 /// Default function for prepare_new_page and prepare_new_line triggers.
 #[allow(unused_variables)]
@@ -148,6 +149,21 @@ impl PaletteData {
 			self.slotmap.insert(address, new_slot.clone());
 			Ok(new_slot)
 		}
+	}
+
+
+	/// Removes the element at the given address from the palette. Returns the 
+	/// removed element, or an error if the given address is empty.
+	pub fn remove_element(&mut self, address: Address) -> Result<ColorElement> {
+		// Remove slot from slotmap.
+		let slot = try!(self.slotmap
+			.remove(&address)
+			.ok_or(Error::EmptyAddress(address))
+		);
+
+		// Extract ColorElement and discard wrappers.
+		let element = mem::replace(&mut *slot.borrow_mut(), Default::default());
+		Ok(element)
 	}
 
 	/// Returns the label associated with the given group, or
