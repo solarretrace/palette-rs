@@ -22,17 +22,17 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! Defines ramp creation operations.
+//! Defines simple color creation operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
-use palette::Result;
+use palette::{Result, Error};
 use palette::data::PaletteData;
 use palette::element::ColorElement;
 use palette::history::HistoryEntry;
 use palette::format::PaletteOperation;
 use address::Address;
-use color::lerp_rgb;
+use color::Color;
 
 use std::mem;
 
@@ -40,43 +40,34 @@ use std::mem;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// CreateRamp
+// CreateColor
 ////////////////////////////////////////////////////////////////////////////////
-/// Creates a linear RGB color ramp using second-order elements in the palette.
+/// Creates a new color in the palette.
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Default)]
-pub struct CreateRamp {
-	/// The location to start placing the ramp elements.
+pub struct CreateColor {
+	/// The Color to add to the paletee.
+	color: Color,
+	/// The location to start placing the colors.
 	location: Option<Address>,
-	/// The address of the starting color of the ramp.
-	from: Address,
-	/// The address of the ending color of the ramp.
-	to: Address,
-	/// The number of elements to create.
-	count: usize,
 	/// Whether to overwrite existing elements when generating new ones.
 	overwrite: bool,
-	/// Whether to generate placeholder slots when an invalid reference is given.
-	make_sources: bool,
 }
 
 
-impl CreateRamp {
+impl CreateColor {
 
-	/// Creates a new CreateRamp operation.
+	/// Creates a new CreateColor operation.
 	#[inline]
-	pub fn new(from: Address, to: Address, count: usize) -> CreateRamp {
-		CreateRamp {
+	pub fn new(color: Color) -> CreateColor {
+		CreateColor {
+			color: color,
 			location: None,
-			from: from,
-			to: to,
-			count: count,
 			overwrite: false,
-			make_sources: false,
 		}
 	}
 
 	/// Sets the location to start placing elements for the operation.
-	pub fn located_at(mut self, location: Address) -> CreateRamp {
+	pub fn located_at(mut self, location: Address) -> CreateColor {
 		self.location = Some(location);
 		self
 	}
@@ -85,25 +76,14 @@ impl CreateRamp {
 	/// new elements. This will ensure that the generated ramp is contiguous in
 	/// the palette, but will produce an error if it would overwrite a 
 	/// dependency.
-	pub fn overwrite(mut self, overwrite: bool) -> CreateRamp {
+	pub fn overwrite(mut self, overwrite: bool) -> CreateColor {
 		self.overwrite = overwrite;
-		self
-	}
-
-	/// Configures the operation to generate placeholder colors instead of 
-	/// producing an error when empty addresses are provided. 
-	pub fn make_sources(
-		mut self, 
-		make_sources: bool) 
-		-> CreateRamp 
-	{
-		self.make_sources = make_sources;
 		self
 	}
 }
 
 
-impl PaletteOperation for CreateRamp {
+impl PaletteOperation for CreateColor {
 	fn apply(self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		// Get starting address.
 		let starting_address = if let Some(address) = self.location {
@@ -113,29 +93,22 @@ impl PaletteOperation for CreateRamp {
 		};
 
 		// Get targets.
-		let targets = try!(data.retrieve_targets(
-			self.count, 
+		let target = try!(data.retrieve_targets(
+			1, 
 			starting_address,
 			self.overwrite,
-			Some(vec![self.from, self.to])
-		));
+			None
+		))[0];
 
-		// Get sources.
-		let src_from = try!(data.retrieve_source(self.from, self.make_sources));
-		let src_to = try!(data.retrieve_source(self.to, self.make_sources));
+		let slot = try!(data.get_or_create_slot(target.clone())); // Wrong!
+		let new_element = ColorElement::Pure {color: self.color};
 
-		// Generate ramp.
-		for (i, address) in targets.iter().enumerate() {
-			let am = (1.0 / (self.count + 2) as f32) * (i + 1) as f32;
-			let slot = try!(data.get_or_create_slot(address.clone())); // Wrong!
-
-			let new_element = ColorElement::Mixed {
-				mix: Box::new(move |colors| lerp_rgb(colors[0], colors[1], am)),
-				sources: vec![src_from.clone(), src_to.clone()]
-			};
-
+		if self.overwrite || slot.get_order() == 1 {
 			// Insert new element into palette, returning the old one.
 			mem::replace(&mut *slot.borrow_mut(), new_element);
+		} else {
+			return Err(Error::CannotSetDerivedColor);
+			// We've already mutated here...
 		}
 
 		Ok(HistoryEntry {

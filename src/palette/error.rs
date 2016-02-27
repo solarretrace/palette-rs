@@ -50,8 +50,6 @@ pub enum Error {
 	InvalidAddress(Address),
 	/// An empty address was provided for an operation that requires a color.
 	EmptyAddress(Address),
-	/// An operation dependency would be overwritten by the operation.
-	DependencyOverwrite(Address),
 }
 
 
@@ -84,9 +82,6 @@ impl error::Error for Error {
 
 			Error::EmptyAddress(..) => 
 				"empty address provided to an operation requiring a color",
-
-			Error::DependencyOverwrite(..) =>
-				"overwriting operation would overwrite one of its dependencies",
 		}
 	}
 }

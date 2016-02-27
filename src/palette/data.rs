@@ -118,7 +118,7 @@ impl PaletteData {
 		self.slotmap.get(&address).map(|slot| slot.clone())
 	}
 
-	/// Returns a weak reference to the slot located at the given address. If 
+	/// Returns a reference to the slot located at the given address. If 
 	/// the address is empty, a new slot will be created an a weak reference 
 	/// will be returned. Returns None if the address is invalid.
 	///
@@ -318,26 +318,31 @@ impl PaletteData {
 	}
 
 	/// Retrieves n target addresses after starting_address from the palette. If 
-	/// overwriting, the addresses will be contiguous and possible occupied 
-	/// otherwise, they will be in order and empty. Returns an error if more 
-	/// targets are requested than are available in the palette.
+	/// overwrite is true, the addresses may potentially contain elements. 
+	/// Otherwise, they will be empty. Addresses provided in the exclude list 
+	/// will be skipped. Returns an error if more targets are requested than are
+	/// available in the palette.
 	pub fn retrieve_targets(
 		&mut self, 
 		n: usize, 
 		starting_address: Address,
-		overwrite: bool)
+		overwrite: bool,
+		exclude: Option<Vec<Address>>)
 		-> Result<Vec<Address>>
 	{
 		let mut targets = BTreeSet::new();
 		let mut next = starting_address;
 
-		if overwrite { // Get contiguous block.
+		if overwrite { // Get overwrite block.
 			while targets.len() < n {
 				try!(self.prepare_address(next));
 				if targets.contains(&next) {
 					return Err(Error::MaxSlotLimitExceeded);
 				}
-				targets.insert(next);
+				// Add the target if it's not in the exclude list.
+				if !exclude.clone().map_or(false, |ex| ex.contains(&next)) {
+					targets.insert(next);
+				}
 				next = next.wrapping_add(
 					1,
 					self.page_count,
@@ -350,7 +355,8 @@ impl PaletteData {
 
 			// Check if the starting address is empty.
 			if next == starting_address && 
-				self.slotmap.get(&next).and_then(|s| s.get_color()).is_none() 
+				self.slotmap.get(&next).and_then(|s| s.get_color()).is_none() &&
+				!exclude.clone().map_or(false, |ex| ex.contains(&next))
 			{
 				targets.insert(next);
 			}
@@ -362,7 +368,10 @@ impl PaletteData {
 					self.get_column_count(next.line_group()),
 				);
 				next = try!(self.first_free_address_after(next));
-				targets.insert(next);
+				// Add the target if it's not in the exclude list.
+				if !exclude.clone().map_or(false, |ex| ex.contains(&next)) {
+					targets.insert(next);
+				}
 			}
 		}
 
