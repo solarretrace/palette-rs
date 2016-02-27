@@ -5,6 +5,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #[warn(missing_docs)]
+pub mod common;
+
+#[warn(missing_docs)]
 pub mod arrange;
 
 #[warn(missing_docs)]
@@ -21,6 +24,8 @@ pub mod simple;
 
 #[warn(missing_docs)]
 pub mod undo;
+
+pub use palette::operations::common::*;
 
 pub use palette::operations::arrange::*;
 pub use palette::operations::duplicate::*;

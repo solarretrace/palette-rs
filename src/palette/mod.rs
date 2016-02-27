@@ -39,7 +39,7 @@ pub mod format;
 #[warn(missing_docs)]
 pub mod formats;
 
-pub use palette::format::{Palette, PaletteOperation};
+pub use palette::format::{Palette};
 pub use palette::formats::{DefaultPalette, ZplPalette};
 pub use palette::error::{Error, Result};
 pub use palette::operations::CreateRamp;

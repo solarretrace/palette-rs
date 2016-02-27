@@ -25,8 +25,7 @@
 //! Provides common definitions for format specifiers.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use palette::data::PaletteData;
-use palette::history::HistoryEntry;
+use palette::operations::PaletteOperation;
 use palette;
 
 
@@ -61,14 +60,4 @@ pub trait Palette : fmt::Debug {
 	{
 		unimplemented!()
 	}
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-// PaletteOperation
-////////////////////////////////////////////////////////////////////////////////
-/// Provides the methods for modifying palettes.
-pub trait PaletteOperation: fmt::Debug {
-	/// Applies the operation to the given palette.
-	fn apply(self, data: &mut PaletteData) -> palette::Result<HistoryEntry>;
 }

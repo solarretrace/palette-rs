@@ -26,7 +26,8 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 use palette::data::PaletteData;
-use palette::format::{Palette, PaletteOperation};
+use palette::format::Palette;
+use palette::operations::PaletteOperation;
 use palette::history::OperationHistory;
 use palette;
 use address::{Group, PageCount, LineCount, ColumnCount};

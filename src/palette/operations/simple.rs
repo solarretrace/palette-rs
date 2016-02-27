@@ -26,11 +26,12 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
+use super::common::PaletteOperation;
+
 use palette::{Result, Error};
 use palette::data::PaletteData;
 use palette::element::ColorElement;
 use palette::history::{HistoryEntry, EntryInfo};
-use palette::format::PaletteOperation;
 use address::Address;
 use color::Color;
 

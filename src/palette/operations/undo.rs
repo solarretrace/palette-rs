@@ -25,12 +25,12 @@
 //! Defines an undo operation to be returned by other operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
+use super::common::PaletteOperation;
 
 use palette::Result;
 use palette::data::PaletteData;
 use palette::element::ColorElement;
 use palette::history::{HistoryEntry, EntryInfo};
-use palette::format::PaletteOperation;
 use address::Address;
 
 use std::mem;

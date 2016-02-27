@@ -25,12 +25,12 @@
 //! Defines ramp creation operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
+use super::common::PaletteOperation;
 
 use palette::Result;
 use palette::data::PaletteData;
 use palette::element::ColorElement;
 use palette::history::{HistoryEntry, EntryInfo};
-use palette::format::PaletteOperation;
 use palette::operations::Undo;
 use palette::error::Error;
 use address::Address;
@@ -125,19 +125,24 @@ impl PaletteOperation for CreateRamp {
 			Some(vec![self.from, self.to]) // Exclude the source locations.
 		));
 
-		// Get sources.
+		// Get 'from' slot.
 		let src_from = if let Some(slot) = data.get_slot(self.from) {
 			Rc::downgrade(&slot)
 		} else if self.make_sources {
-			Rc::downgrade(&try!(data.create_slot(self.from)))
+			let slot = Rc::downgrade(&try!(data.create_slot(self.from)));
+			undo.record(self.from, None);
+			slot
 		} else {
 			return Err(Error::InvalidAddress(self.from));
 		};
 
+		// Get 'to' slot.
 		let src_to = if let Some(slot) = data.get_slot(self.to) {
 			Rc::downgrade(&slot)
 		} else if self.make_sources {
-			Rc::downgrade(&try!(data.create_slot(self.to)))
+			let slot = Rc::downgrade(&try!(data.create_slot(self.to)));
+			undo.record(self.to, None);
+			slot
 		} else {
 			return Err(Error::InvalidAddress(self.to));
 		};

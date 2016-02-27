@@ -1,3 +1,4 @@
+
 // The MIT License (MIT)
 // 
 // Copyright (c) 2016 Skylor R. Schermer
@@ -22,49 +23,22 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! Provides components for interacting with the default palette format.
+//! Defines functionality common to all operation modules.
 //!
 ////////////////////////////////////////////////////////////////////////////////
 use palette::data::PaletteData;
-use palette::format::Palette;
-use palette::operations::PaletteOperation;
+use palette::history::HistoryEntry;
 use palette;
-use address::Group;
 
 use std::fmt;
-use std::result;
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
-// DefaultPalette
+// PaletteOperation
 ////////////////////////////////////////////////////////////////////////////////
-/// The default palette format with no special configuration.
-#[derive(Debug)]
-pub struct DefaultPalette {
-	core: PaletteData,
-}
-
-impl Palette for DefaultPalette {
-
-	fn new<S>(name: S) -> Self where S: Into<String> {
-		let mut pal = DefaultPalette {core: Default::default()};
-		pal.core.set_label(Group::All, "DefaultPalette 1.0.0");
-		pal.core.set_name(Group::All, name.into());
-		pal
-	}
-
-	fn apply<O>(&mut self, operation: O)  -> palette::Result<()> 
-		where O: PaletteOperation 
-	{
-		try!(operation.apply(&mut self.core));
-		Ok(())
-	}
-}
-
-impl fmt::Display for DefaultPalette {
-	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		write!(f, "{} {}",
-			self.core.get_label(Group::All).unwrap_or(""),
-			self.core
-		)
-	}
+/// Provides the methods for modifying palettes.
+pub trait PaletteOperation: fmt::Debug {
+	/// Applies the operation to the given palette.
+	fn apply(self, data: &mut PaletteData) -> palette::Result<HistoryEntry>;
 }
