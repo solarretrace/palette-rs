@@ -40,6 +40,16 @@ fn main() {
 			.overwrite(true)
 	));
 
+	println!("{:?}", pal.apply(
+		InsertColor::new(Color(10, 230, 55))
+			.located_at(Address::new(0, 1, 1))
+			.overwrite(true)
+	));
+
+	println!("{:?}", pal.apply(
+		InsertWatcher::new(Address::new(1, 0, 3))
+	));
+
 	// pal.add_color(Color(1, 2, 3)).ok().unwrap();
 	println!("{}", pal);
 

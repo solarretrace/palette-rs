@@ -41,7 +41,7 @@ use color::Color;
 ////////////////////////////////////////////////////////////////////////////////
 // InsertColor
 ////////////////////////////////////////////////////////////////////////////////
-/// Creates a new color in the palette.
+/// Inserts a new color into the palette.
 /// 
 /// # Example
 ///
@@ -51,6 +51,9 @@ use color::Color;
 /// let mut pal = DefaultPalette::new("Example");
 ///
 /// pal.apply(InsertColor::new(Color(12, 50, 78))).unwrap();
+///
+/// assert_eq!(pal.get_color(Address::new(0, 0, 0)), Some(Color(12, 50, 78)));
+/// 
 /// ```
 #[derive(Debug, Clone, Copy, Default)]
 pub struct InsertColor {
@@ -74,16 +77,13 @@ impl InsertColor {
 		}
 	}
 
-	/// Sets the location to start placing elements for the operation.
+	/// Sets the location to place the color.
 	pub fn located_at(mut self, location: Address) -> InsertColor {
 		self.location = Some(location);
 		self
 	}
 
-	/// Configures the operation to overwrite existing elements as it generates
-	/// new elements. This will ensure that the generated ramp is contiguous in
-	/// the palette, but will produce an error if it would overwrite a 
-	/// dependency.
+	/// Configures the operation to overwrite existing elements when inserted.
 	pub fn overwrite(mut self, overwrite: bool) -> InsertColor {
 		self.overwrite = overwrite;
 		self

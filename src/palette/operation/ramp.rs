@@ -80,9 +80,7 @@ impl CreateRamp {
 	}
 
 	/// Configures the operation to overwrite existing elements as it generates
-	/// new elements. This will ensure that the generated ramp is contiguous in
-	/// the palette, but will produce an error if it would overwrite a 
-	/// dependency.
+	/// new elements.
 	pub fn overwrite(mut self, overwrite: bool) -> CreateRamp {
 		self.overwrite = overwrite;
 		self
@@ -126,7 +124,7 @@ impl PaletteOperation for CreateRamp {
 		let src_to = try!(get_source(data, self.to, make, &mut undo));
 				
 		// Generate ramp.
-		for (i, address) in targets.iter().enumerate() {
+		for (i, &address) in targets.iter().enumerate() {
 			let am = (1.0 / (self.count + 2) as f32) * (i + 1) as f32;
 
 			let new_element = ColorElement::Mixed {
@@ -134,7 +132,7 @@ impl PaletteOperation for CreateRamp {
 				sources: vec![src_from.clone(), src_to.clone()]
 			};
 
-			try!(set_target(data, *address, new_element, &mut undo));
+			try!(set_target(data, address, new_element, &mut undo));
 		}
 
 		Ok(HistoryEntry {

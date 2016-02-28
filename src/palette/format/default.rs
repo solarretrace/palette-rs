@@ -29,7 +29,8 @@ use super::common::Palette;
 use palette::data::PaletteData;
 use palette::operation::PaletteOperation;
 use palette;
-use address::Group;
+use address::{Address, Group};
+use color::Color;
 
 use std::fmt;
 use std::result;
@@ -50,6 +51,10 @@ impl Palette for DefaultPalette {
 		pal.core.set_label(Group::All, "DefaultPalette 1.0.0");
 		pal.core.set_name(Group::All, name.into());
 		pal
+	}
+
+	fn get_color(&self, address: Address) -> Option<Color> {
+		self.core.get_slot(address).and_then(|slot| slot.get_color())
 	}
 
 	fn apply<O>(&mut self, operation: O)  -> palette::Result<()> 

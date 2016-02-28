@@ -27,7 +27,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 use palette::operation::PaletteOperation;
 use palette;
-
+use address::Address;
+use color::Color;
 
 use std::fmt;
 use std::io::{Result, Write, Read};
@@ -40,6 +41,9 @@ use std::io;
 pub trait Palette : fmt::Debug {
 	/// Creates a new palette with the given name.
 	fn new<S>(name: S) -> Self where S: Into<String>, Self: Sized;
+
+	/// Returns the color at the given address, or None if the slot is empty.
+	fn get_color(&self, address: Address) -> Option<Color>;
 
 	/// Applies the given operation to the palette.
 	fn apply<O>(&mut self, operation: O)  -> palette::Result<()> 
