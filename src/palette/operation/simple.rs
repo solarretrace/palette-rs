@@ -39,7 +39,7 @@ use color::Color;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// CreateColor
+// InsertColor
 ////////////////////////////////////////////////////////////////////////////////
 /// Creates a new color in the palette.
 /// 
@@ -50,10 +50,10 @@ use color::Color;
 /// 
 /// let mut pal = DefaultPalette::new("Example");
 ///
-/// pal.apply(CreateColor::new(Color(12, 50, 78))).unwrap();
+/// pal.apply(InsertColor::new(Color(12, 50, 78))).unwrap();
 /// ```
 #[derive(Debug, Clone, Copy, Default)]
-pub struct CreateColor {
+pub struct InsertColor {
 	/// The Color to add to the paletee.
 	color: Color,
 	/// The location to start placing the colors.
@@ -63,11 +63,11 @@ pub struct CreateColor {
 }
 
 
-impl CreateColor {
-	/// Creates a new CreateColor operation.
+impl InsertColor {
+	/// Creates a new InsertColor operation.
 	#[inline]
-	pub fn new(color: Color) -> CreateColor {
-		CreateColor {
+	pub fn new(color: Color) -> InsertColor {
+		InsertColor {
 			color: color,
 			location: None,
 			overwrite: false,
@@ -75,7 +75,7 @@ impl CreateColor {
 	}
 
 	/// Sets the location to start placing elements for the operation.
-	pub fn located_at(mut self, location: Address) -> CreateColor {
+	pub fn located_at(mut self, location: Address) -> InsertColor {
 		self.location = Some(location);
 		self
 	}
@@ -84,14 +84,14 @@ impl CreateColor {
 	/// new elements. This will ensure that the generated ramp is contiguous in
 	/// the palette, but will produce an error if it would overwrite a 
 	/// dependency.
-	pub fn overwrite(mut self, overwrite: bool) -> CreateColor {
+	pub fn overwrite(mut self, overwrite: bool) -> InsertColor {
 		self.overwrite = overwrite;
 		self
 	}
 }
 
 
-impl PaletteOperation for CreateColor {
+impl PaletteOperation for InsertColor {
 	fn apply(self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		// Get starting address.
 		let starting_address = if let Some(address) = self.location {
@@ -110,7 +110,7 @@ impl PaletteOperation for CreateColor {
 
 		// Check for derived color.
 		if !self.overwrite && 
-			data.get_slot(target).map_or(false, |slot| slot.get_order() != 1) 
+			data.get_slot(target).map_or(false, |slot| slot.get_order() != 0) 
 		{
 			return Err(Error::CannotSetDerivedColor);
 		}

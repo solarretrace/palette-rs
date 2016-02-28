@@ -19,4 +19,4 @@ pub use color::Color;
 pub use palette::{Palette, DefaultPalette, ZplPalette};
 pub use address::{Address, Group, Selection};
 pub use interval::{Bound, Interval};
-pub use palette::{CreateRamp, CreateColor};
+pub use palette::{CreateRamp, InsertColor};

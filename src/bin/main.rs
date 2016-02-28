@@ -35,7 +35,7 @@ fn main() {
 	));
 
 	println!("{:?}", pal.apply(
-		CreateColor::new(Color(50, 50, 78))
+		InsertColor::new(Color(50, 50, 78))
 			.located_at(Address::new(0, 1, 0))
 			.overwrite(true)
 	));
