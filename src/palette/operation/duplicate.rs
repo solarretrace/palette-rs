@@ -26,12 +26,106 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 use super::common::{PaletteOperation, set_target, get_source};
-use palette::Result;
+use palette::{Result, Error};
 use palette::data::PaletteData;
 use palette::element::ColorElement;
 use palette::history::{HistoryEntry, EntryInfo};
 use palette::operation::Undo;
 use address::Address;
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// CopyColor
+////////////////////////////////////////////////////////////////////////////////
+/// Inserts a new color into the palette.
+/// 
+/// # Example
+///
+/// ```rust
+/// use rampeditor::*;
+/// 
+/// let mut pal = DefaultPalette::new("Example");
+///
+/// pal.apply(InsertColor::new(Color(12, 50, 78))).unwrap();
+/// pal.apply(CopyColor::new(Address::new(0, 0, 0))).unwrap();
+///
+/// assert_eq!(
+/// 	pal.get_color(Address::new(0, 0, 0)), 
+/// 	pal.get_color(Address::new(0, 0, 1))
+/// );
+/// ```
+#[derive(Debug, Clone, Copy, Default)]
+pub struct CopyColor {
+	/// The address of the element to watch.
+	copying: Address,
+	/// The location to start placing the colors.
+	location: Option<Address>,
+	/// Whether to overwrite existing elements when generating new ones.
+	overwrite: bool,
+}
+
+
+impl CopyColor {
+	/// Creates a new CopyColor operation.
+	#[inline]
+	pub fn new(copying: Address) -> CopyColor {
+		CopyColor {
+			copying: copying,
+			location: None,
+			overwrite: false,
+		}
+	}
+
+	/// Sets the location to place the color.
+	pub fn located_at(mut self, location: Address) -> CopyColor {
+		self.location = Some(location);
+		self
+	}
+
+	/// Configures the operation to overwrite existing elements when inserted.
+	pub fn overwrite(mut self, overwrite: bool) -> CopyColor {
+		self.overwrite = overwrite;
+		self
+	}
+}
+
+
+impl PaletteOperation for CopyColor {
+	fn apply(self, data: &mut PaletteData) -> Result<HistoryEntry> {
+		// Get starting address.
+		let starting_address = if let Some(address) = self.location {
+			address
+		} else {
+			try!(data.first_free_address_after(Default::default()))
+		};
+
+		// Get targets.
+		let target = try!(data.find_targets(
+			1, 
+			starting_address,
+			self.overwrite,
+			None
+		))[0];
+
+		// Create new color.
+		let new_element = ColorElement::Pure {
+			color: try!(data
+				.get_slot(self.copying)
+				.and_then(|slot| slot.get_color())
+				.ok_or(Error::EmptyAddress(self.copying)))
+		};
+
+		// Set target.
+		let mut undo = Undo::new_for(&self);
+		try!(set_target(data, target, new_element, &mut undo));
+		
+		Ok(HistoryEntry {
+			info: EntryInfo::Apply(Box::new(self)),
+			undo: Box::new(undo),
+		})
+	}
+}
 
 
 
@@ -58,7 +152,7 @@ use address::Address;
 /// ```
 #[derive(Debug, Clone, Copy, Default)]
 pub struct InsertWatcher {
-	/// The Color to add to the paletee.
+	/// The address of the element to watch.
 	watching: Address,
 	/// The location to start placing the colors.
 	location: Option<Address>,
@@ -73,9 +167,9 @@ pub struct InsertWatcher {
 impl InsertWatcher {
 	/// Creates a new InsertWatcher operation.
 	#[inline]
-	pub fn new(address: Address) -> InsertWatcher {
+	pub fn new(watching: Address) -> InsertWatcher {
 		InsertWatcher {
-			watching: address,
+			watching: watching,
 			location: None,
 			overwrite: false,
 			make_sources: false,
