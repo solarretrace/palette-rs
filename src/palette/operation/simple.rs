@@ -31,7 +31,7 @@ use palette::{Result, Error};
 use palette::data::PaletteData;
 use palette::element::ColorElement;
 use palette::history::{HistoryEntry, EntryInfo};
-use palette::operations::Undo;
+use palette::operation::Undo;
 use address::Address;
 use color::Color;
 
@@ -54,7 +54,6 @@ pub struct CreateColor {
 
 
 impl CreateColor {
-
 	/// Creates a new CreateColor operation.
 	#[inline]
 	pub fn new(color: Color) -> CreateColor {
@@ -106,16 +105,12 @@ impl PaletteOperation for CreateColor {
 			return Err(Error::CannotSetDerivedColor);
 		}
 
-		
-
 		// Create new color.
 		let new_element = ColorElement::Pure {color: self.color};
-
 		// Set target.
 		let mut undo = Undo::new();
 		try!(set_target(data, target, new_element, &mut undo));
 		
-
 		Ok(HistoryEntry {
 			info: EntryInfo::Apply {operation: Box::new(self)},
 			undo: Box::new(undo),

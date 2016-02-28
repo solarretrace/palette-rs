@@ -25,9 +25,9 @@
 //! Provides components for interacting with the ZPL palette format.
 //!
 ////////////////////////////////////////////////////////////////////////////////
+use super::common::Palette;
 use palette::data::PaletteData;
-use palette::format::Palette;
-use palette::operations::PaletteOperation;
+use palette::operation::PaletteOperation;
 use palette::history::OperationHistory;
 use palette;
 use address::{Group, PageCount, LineCount, ColumnCount};
@@ -179,11 +179,7 @@ impl Palette for ZplPalette {
 		// Write header.
 		try!(out_buf.write(&ZPL_HEADER)); 
 
-		// let mut addresses = self.core.addresses();
-		// let mut next = addresses.next();
-		// // Write all pages in sequence.
-		// for page in 0..ZPL_PAGE_LIMIT {
-		// }
+		// Write all pages in sequence.
 
 		// Write level names.
 

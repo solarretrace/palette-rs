@@ -30,7 +30,7 @@ use palette::Result;
 use palette::data::PaletteData;
 use palette::element::ColorElement;
 use palette::history::{HistoryEntry, EntryInfo};
-use palette::operations::Undo;
+use palette::operation::Undo;
 use address::Address;
 use color::lerp_rgb;
 

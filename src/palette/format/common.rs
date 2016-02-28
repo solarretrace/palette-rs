@@ -22,49 +22,42 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! Provides components for interacting with the default palette format.
+//! Provides common definitions for format specifiers.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use palette::data::PaletteData;
-use palette::format::Palette;
-use palette::operations::PaletteOperation;
+use palette::operation::PaletteOperation;
 use palette;
-use address::Group;
+
 
 use std::fmt;
-use std::result;
+use std::io::{Result, Write, Read};
+use std::io;
 
 ////////////////////////////////////////////////////////////////////////////////
-// DefaultPalette
+// Palette
 ////////////////////////////////////////////////////////////////////////////////
-/// The default palette format with no special configuration.
-#[derive(Debug)]
-pub struct DefaultPalette {
-	core: PaletteData,
-}
+/// Specifies the interface for using a specific palette format.
+pub trait Palette : fmt::Debug {
+	/// Creates a new palette with the given name.
+	fn new<S>(name: S) -> Self where S: Into<String>, Self: Sized;
 
-impl Palette for DefaultPalette {
-
-	fn new<S>(name: S) -> Self where S: Into<String> {
-		let mut pal = DefaultPalette {core: Default::default()};
-		pal.core.set_label(Group::All, "DefaultPalette 1.0.0");
-		pal.core.set_name(Group::All, name.into());
-		pal
-	}
-
+	/// Applies the given operation to the palette.
 	fn apply<O>(&mut self, operation: O)  -> palette::Result<()> 
-		where O: PaletteOperation 
-	{
-		try!(operation.apply(&mut self.core));
-		Ok(())
-	}
-}
+		where O: PaletteOperation;
 
-impl fmt::Display for DefaultPalette {
-	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		write!(f, "{} {}",
-			self.core.get_label(Group::All).unwrap_or(""),
-			self.core
-		)
+	/// Writes the palette to the given buffer.
+	#[allow(unused_variables)]
+	fn write_palette<W>(&self, out_buf: &mut W) -> io::Result<()> 
+		where W: io::Write
+	{
+		unimplemented!()
+	}
+
+	/// Reads a palette from the given buffer.
+	#[allow(unused_variables)]
+	fn read_palette<R>(in_buf: &R) -> io::Result<Self>
+		where R: io::Read, Self: Sized
+	{
+		unimplemented!()
 	}
 }

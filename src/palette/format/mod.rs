@@ -2,11 +2,15 @@
 //! between different formats.
 
 #[warn(missing_docs)]
+pub mod common;
+
+#[warn(missing_docs)]
 pub mod default;
 
 #[warn(missing_docs)]
 #[allow(dead_code)]
 pub mod zpl;
 
-pub use palette::formats::default::*;
-pub use palette::formats::zpl::*;
+pub use palette::format::common::*;
+pub use palette::format::default::*;
+pub use palette::format::zpl::*;

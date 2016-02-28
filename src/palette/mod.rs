@@ -28,7 +28,7 @@ pub mod element;
 pub mod data;
 
 #[warn(missing_docs)]
-pub mod operations;
+pub mod operation;
 
 #[warn(missing_docs)]
 pub mod history;
@@ -36,10 +36,6 @@ pub mod history;
 #[warn(missing_docs)]
 pub mod format;
 
-#[warn(missing_docs)]
-pub mod formats;
-
-pub use palette::format::{Palette};
-pub use palette::formats::{DefaultPalette, ZplPalette};
+pub use palette::format::{Palette, DefaultPalette, ZplPalette};
 pub use palette::error::{Error, Result};
-pub use palette::operations::CreateRamp;
+pub use palette::operation::CreateRamp;

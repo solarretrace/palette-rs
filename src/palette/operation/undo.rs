@@ -40,7 +40,14 @@ use std::collections::HashMap;
 ////////////////////////////////////////////////////////////////////////////////
 // Undo
 ////////////////////////////////////////////////////////////////////////////////
-/// Restores a set of elements in the palette.
+/// Restores a saved set of elements in the palette. 
+/// 
+/// The Undo operations stores ColorElements using a HashMap, which means it can
+/// only store one entry for each address. An create operation will have
+/// priority over any other change recorded. In otherwords, if there is an
+/// "address: None" entry in the Undo,  nothing will overwrite it. This ensures
+/// that the element at that address  will be deleted if the Undo operation is
+/// applied later.
 #[derive(Debug, Default)]
 pub struct Undo {
 	saved: HashMap<Address, Option<ColorElement>>,

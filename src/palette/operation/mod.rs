@@ -25,11 +25,11 @@ pub mod simple;
 #[warn(missing_docs)]
 pub mod undo;
 
-pub use palette::operations::common::*;
+pub use palette::operation::common::*;
 
-pub use palette::operations::arrange::*;
-pub use palette::operations::duplicate::*;
-pub use palette::operations::ramp::*;
-pub use palette::operations::sequence::*;
-pub use palette::operations::simple::*;
-pub use palette::operations::undo::*;
+pub use palette::operation::arrange::*;
+pub use palette::operation::duplicate::*;
+pub use palette::operation::ramp::*;
+pub use palette::operation::sequence::*;
+pub use palette::operation::simple::*;
+pub use palette::operation::undo::*;

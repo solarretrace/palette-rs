@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use palette::data::PaletteData;
 use palette::history::HistoryEntry;
-use palette::operations::Undo;
+use palette::operation::Undo;
 use palette::element::{Slot, ColorElement};
 use palette::{Error, Result};
 use palette;

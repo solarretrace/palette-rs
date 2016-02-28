@@ -22,42 +22,49 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! Provides common definitions for format specifiers.
+//! Provides components for interacting with the default palette format.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use palette::operations::PaletteOperation;
+use super::common::Palette;
+use palette::data::PaletteData;
+use palette::operation::PaletteOperation;
 use palette;
-
+use address::Group;
 
 use std::fmt;
-use std::io::{Result, Write, Read};
-use std::io;
+use std::result;
 
 ////////////////////////////////////////////////////////////////////////////////
-// Palette
+// DefaultPalette
 ////////////////////////////////////////////////////////////////////////////////
-/// Specifies the interface for using a specific palette format.
-pub trait Palette : fmt::Debug {
-	/// Creates a new palette with the given name.
-	fn new<S>(name: S) -> Self where S: Into<String>, Self: Sized;
+/// The default palette format with no special configuration.
+#[derive(Debug)]
+pub struct DefaultPalette {
+	core: PaletteData,
+}
 
-	/// Applies the given operation to the palette.
-	fn apply<O>(&mut self, operation: O)  -> palette::Result<()> 
-		where O: PaletteOperation;
+impl Palette for DefaultPalette {
 
-	/// Writes the palette to the given buffer.
-	#[allow(unused_variables)]
-	fn write_palette<W>(&self, out_buf: &mut W) -> io::Result<()> 
-		where W: io::Write
-	{
-		unimplemented!()
+	fn new<S>(name: S) -> Self where S: Into<String> {
+		let mut pal = DefaultPalette {core: Default::default()};
+		pal.core.set_label(Group::All, "DefaultPalette 1.0.0");
+		pal.core.set_name(Group::All, name.into());
+		pal
 	}
 
-	/// Reads a palette from the given buffer.
-	#[allow(unused_variables)]
-	fn read_palette<R>(in_buf: &R) -> io::Result<Self>
-		where R: io::Read, Self: Sized
+	fn apply<O>(&mut self, operation: O)  -> palette::Result<()> 
+		where O: PaletteOperation 
 	{
-		unimplemented!()
+		try!(operation.apply(&mut self.core));
+		Ok(())
+	}
+}
+
+impl fmt::Display for DefaultPalette {
+	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
+		write!(f, "{} {}",
+			self.core.get_label(Group::All).unwrap_or(""),
+			self.core
+		)
 	}
 }
