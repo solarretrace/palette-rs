@@ -45,6 +45,9 @@ pub trait Palette : fmt::Debug {
 	/// Returns the color at the given address, or None if the slot is empty.
 	fn get_color(&self, address: Address) -> Option<Color>;
 
+	/// Returns the number of elements in the palette.
+	fn len(&self) -> usize;
+
 	/// Applies the given operation to the palette.
 	fn apply<O>(&mut self, operation: O)  -> palette::Result<()> 
 		where O: PaletteOperation;

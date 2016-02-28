@@ -168,6 +168,10 @@ impl Palette for ZplPalette {
 		self.core.get_slot(address).and_then(|slot| slot.get_color())
 	}
 
+	fn len(&self) -> usize {
+		self.core.len()
+	}
+
 	fn apply<O>(&mut self, operation: O)  -> palette::Result<()> 
 		where O: PaletteOperation 
 	{

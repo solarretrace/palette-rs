@@ -25,11 +25,8 @@
 //! Defines operations for duplicating elements.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-
-
-
 use super::common::{PaletteOperation, set_target, get_source};
-use palette::{Result, Error};
+use palette::Result;
 use palette::data::PaletteData;
 use palette::element::ColorElement;
 use palette::history::{HistoryEntry, EntryInfo};
@@ -124,9 +121,8 @@ impl PaletteOperation for InsertWatcher {
 			1, 
 			starting_address,
 			self.overwrite,
-			None
+			Some(vec![self.watching])
 		))[0];
-
 		
 		// Get source slot.
 		let mut undo = Undo::new_for(&self);

@@ -37,7 +37,6 @@ use color::Color;
 
 
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // InsertColor
 ////////////////////////////////////////////////////////////////////////////////
@@ -120,6 +119,54 @@ impl PaletteOperation for InsertColor {
 		// Set target.
 		let mut undo = Undo::new_for(&self);
 		try!(set_target(data, target, new_element, &mut undo));
+		
+		Ok(HistoryEntry {
+			info: EntryInfo::Apply(Box::new(self)),
+			undo: Box::new(undo),
+		})
+	}
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// RemoveElement
+////////////////////////////////////////////////////////////////////////////////
+/// Removes an element from the palette.
+/// 
+/// # Example
+///
+/// ```rust
+/// use rampeditor::*;
+/// 
+/// let mut pal = DefaultPalette::new("Example");
+///
+/// pal.apply(InsertColor::new(Color(12, 50, 78))).unwrap();
+/// pal.apply(RemoveElement::new(Address::new(0, 0, 0))).unwrap();
+/// 
+/// assert_eq!(pal.len(), 0);
+/// ```
+#[derive(Debug, Clone, Copy, Default)]
+pub struct RemoveElement {
+	/// The addres of the element to remove.
+	address: Address,
+}
+
+
+impl RemoveElement {
+	/// Creates a new RemoveElement operation targetting the given address.
+	#[inline]
+	pub fn new(address: Address) -> RemoveElement {
+		RemoveElement {address: address}
+	}
+}
+
+
+impl PaletteOperation for RemoveElement {
+	fn apply(self, data: &mut PaletteData) -> Result<HistoryEntry> {
+
+		let mut undo = Undo::new_for(&self);
+		undo.record(self.address, Some(try!(data.remove_slot(self.address))));
 		
 		Ok(HistoryEntry {
 			info: EntryInfo::Apply(Box::new(self)),

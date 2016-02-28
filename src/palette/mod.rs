@@ -38,4 +38,4 @@ pub mod format;
 
 pub use palette::format::{Palette, DefaultPalette, ZplPalette};
 pub use palette::error::{Error, Result};
-pub use palette::operation::{CreateRamp, InsertColor, InsertWatcher};
+pub use palette::operation::{CreateRamp, InsertColor, RemoveElement, InsertWatcher};
