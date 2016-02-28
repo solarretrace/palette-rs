@@ -34,6 +34,7 @@ use palette::history::{HistoryEntry, EntryInfo};
 use address::Address;
 
 use std::mem;
+use std::collections::HashMap;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -42,7 +43,7 @@ use std::mem;
 /// Restores a set of elements in the palette.
 #[derive(Debug, Default)]
 pub struct Undo {
-	saved: Vec<(Address, Option<ColorElement>)>
+	saved: HashMap<Address, Option<ColorElement>>,
 }
 
 impl Undo {
@@ -53,7 +54,9 @@ impl Undo {
 	/// Records an element change to be replayed by the Undo operation.
 	#[inline]
 	pub fn record(&mut self, address: Address, element: Option<ColorElement>) {
-		self.saved.push((address, element));
+		if self.saved.get(&address).map_or(true, |e| !e.is_none()) {
+			self.saved.insert(address, element);
+		}
 	}
 }
 
@@ -62,7 +65,7 @@ impl PaletteOperation for Undo {
 	fn apply(self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		let mut redo = Undo::new();
 
-		for (address, item) in self.saved.into_iter() {
+		for (address, item) in self.saved {
 			match (item.is_some(), data.get_slot(address).is_some()) {
 
 				(true, true) => { // The slot was modified.

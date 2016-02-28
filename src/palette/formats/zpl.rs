@@ -210,9 +210,10 @@ impl Palette for ZplPalette {
 
 impl fmt::Display for ZplPalette {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		write!(f, "{} {}",
+		write!(f, "{} {}\n\n{:#?}",
 			self.core.get_label(Group::All).unwrap_or(""),
-			self.core
+			self.core,
+			self.history
 		)
 	}
 }
