@@ -38,11 +38,31 @@ use color::lerp_rgb;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// CreateRamp
+// InsertRamp
 ////////////////////////////////////////////////////////////////////////////////
 /// Creates a linear RGB color ramp using second-order elements in the palette.
+/// 
+/// # Example
+///
+/// ```rust
+/// use rampeditor::*;
+/// 
+/// let mut pal = DefaultPalette::new("Example");
+///
+/// pal.apply(InsertColor::new(Color(0, 0, 0))).unwrap();
+/// pal.apply(InsertColor::new(Color(150, 100, 50))).unwrap();
+/// pal.apply(InsertRamp::new(
+/// 	Address::new(0, 0, 0),
+/// 	Address::new(0, 0, 1),
+/// 	5
+/// )).unwrap();
+///
+/// assert_eq!(pal.get_color(Address::new(0, 0, 4)), Some(Color(75, 50, 25)));
+/// assert_eq!(pal.len(), 7);
+/// 
+/// ```
 #[derive(Debug, Clone, Copy, Default)]
-pub struct CreateRamp {
+pub struct InsertRamp {
 	/// The location to start placing the ramp elements.
 	location: Option<Address>,
 	/// The address of the starting color of the ramp.
@@ -58,12 +78,11 @@ pub struct CreateRamp {
 }
 
 
-impl CreateRamp {
-
-	/// Creates a new CreateRamp operation.
+impl InsertRamp {
+	/// Creates a new InsertRamp operation.
 	#[inline]
-	pub fn new(from: Address, to: Address, count: usize) -> CreateRamp {
-		CreateRamp {
+	pub fn new(from: Address, to: Address, count: usize) -> InsertRamp {
+		InsertRamp {
 			location: None,
 			from: from,
 			to: to,
@@ -74,14 +93,14 @@ impl CreateRamp {
 	}
 
 	/// Sets the location to start placing elements for the operation.
-	pub fn located_at(mut self, location: Address) -> CreateRamp {
+	pub fn located_at(mut self, location: Address) -> InsertRamp {
 		self.location = Some(location);
 		self
 	}
 
 	/// Configures the operation to overwrite existing elements as it generates
 	/// new elements.
-	pub fn overwrite(mut self, overwrite: bool) -> CreateRamp {
+	pub fn overwrite(mut self, overwrite: bool) -> InsertRamp {
 		self.overwrite = overwrite;
 		self
 	}
@@ -91,7 +110,7 @@ impl CreateRamp {
 	pub fn make_sources(
 		mut self, 
 		make_sources: bool) 
-		-> CreateRamp 
+		-> InsertRamp 
 	{
 		self.make_sources = make_sources;
 		self
@@ -99,7 +118,7 @@ impl CreateRamp {
 }
 
 
-impl PaletteOperation for CreateRamp {
+impl PaletteOperation for InsertRamp {
 	fn apply(self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		
 		// Get starting address.
@@ -125,7 +144,7 @@ impl PaletteOperation for CreateRamp {
 				
 		// Generate ramp.
 		for (i, &address) in targets.iter().enumerate() {
-			let am = (1.0 / (self.count + 2) as f32) * (i + 1) as f32;
+			let am = (1.0 / (self.count + 1) as f32) * (i + 1) as f32;
 
 			let new_element = ColorElement::Mixed {
 				mix: Box::new(move |colors| lerp_rgb(colors[0], colors[1], am)),

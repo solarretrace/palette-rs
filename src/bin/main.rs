@@ -29,7 +29,7 @@ fn main() {
 	let mut pal = ZplPalette::new("Super Duper");
 	
 	println!("{:?}", pal.apply(
-		CreateRamp::new(Address::new(0, 1, 0), Address::new(0, 1, 1), 6)
+		InsertRamp::new(Address::new(0, 1, 0), Address::new(0, 1, 1), 6)
 			.make_sources(true)
 			.located_at(Address::new(1, 0, 0))
 	));
