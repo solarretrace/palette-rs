@@ -26,16 +26,14 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
-use super::common::PaletteOperation;
-
+use super::common::{PaletteOperation, set_target};
 use palette::{Result, Error};
 use palette::data::PaletteData;
 use palette::element::ColorElement;
 use palette::history::{HistoryEntry, EntryInfo};
+use palette::operations::Undo;
 use address::Address;
 use color::Color;
-
-use std::mem;
 
 
 
@@ -101,25 +99,26 @@ impl PaletteOperation for CreateColor {
 			None
 		))[0];
 
-		let slot = if let Some(slot) = data.get_slot(target) {
-			slot
-		} else {
-			try!(data.create_slot(target))
-		};
+		// Check for derived color.
+		if !self.overwrite && 
+			data.get_slot(target).map_or(true, |slot| slot.get_order() != 1) 
+		{
+			return Err(Error::CannotSetDerivedColor);
+		}
 
+		
+
+		// Create new color.
 		let new_element = ColorElement::Pure {color: self.color};
 
-		if self.overwrite || slot.get_order() == 1 {
-			// Insert new element into palette, returning the old one.
-			mem::replace(&mut *slot.borrow_mut(), new_element);
-		} else {
-			return Err(Error::CannotSetDerivedColor);
-			// We've already mutated here...
-		}
+		// Set target.
+		let mut undo = Undo::new();
+		try!(set_target(data, target, new_element, &mut undo));
+		
 
 		Ok(HistoryEntry {
 			info: EntryInfo::Apply {operation: Box::new(self)},
-			undo: unimplemented!()
+			undo: Box::new(undo),
 		})
 	}
 }

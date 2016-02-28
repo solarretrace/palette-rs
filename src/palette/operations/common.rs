@@ -29,17 +29,18 @@
 use palette::data::PaletteData;
 use palette::history::HistoryEntry;
 use palette::operations::Undo;
-use palette::element::Slot;
+use palette::element::{Slot, ColorElement};
 use palette::{Error, Result};
 use palette;
 use address::Address;
 
 use std::fmt;
 use std::rc::{Rc, Weak};
+use std::mem;
 
 
-/// Gets a weak reference to the source element located at the given address 
-/// from the given palette. If the slot is empty, it will be created if 
+/// Returns a weak reference to the source element located at the given address 
+/// in the given palette. If the slot is empty, it will be created if 
 /// make_sources is true. If the source is created, its creation will be logged 
 /// in the provided Undo operation.
 pub fn get_source(
@@ -59,6 +60,42 @@ pub fn get_source(
 		Err(Error::InvalidAddress(address))
 	}
 }
+
+/// Returns a reference to the target element located at the given address in
+/// the given palette. If the slot is empty, it will be created.
+pub fn get_target(
+	data: &mut PaletteData, 
+	address: Address, 
+	undo: &mut Undo)
+	-> Result<Rc<Slot>>
+{
+	if let Some(slot) = data.get_slot(address) {
+		Ok(slot)
+	} else {
+		let slot = try!(data.create_slot(address));
+		undo.record(address, None);
+		Ok(slot)
+	}
+}
+
+/// Stores the given ColorElement in the slot at the given address in the given 
+/// palette. If the slot is empty, it will be created.
+pub fn set_target(
+	data: &mut PaletteData,
+	address: Address,
+	new_element: ColorElement,
+	undo: &mut Undo)
+	-> Result<()>
+{
+	// Get the target slot.
+	let target = try!(get_target(data, address, undo));
+
+	// Insert new element into palette.
+	let cur = mem::replace(&mut *target.borrow_mut(), new_element);
+	undo.record(address, Some(cur));
+	Ok(())
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////////////

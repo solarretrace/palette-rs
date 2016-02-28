@@ -25,8 +25,7 @@
 //! Defines ramp creation operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::common::{PaletteOperation, get_source};
-
+use super::common::{PaletteOperation, get_source, set_target};
 use palette::Result;
 use palette::data::PaletteData;
 use palette::element::ColorElement;
@@ -34,8 +33,6 @@ use palette::history::{HistoryEntry, EntryInfo};
 use palette::operations::Undo;
 use address::Address;
 use color::lerp_rgb;
-
-use std::mem;
 
 
 
@@ -114,7 +111,7 @@ impl PaletteOperation for CreateRamp {
 			try!(data.first_free_address_after(Default::default()))
 		};
 
-		// Get targets.
+		// Get target addresses.
 		let targets = try!(data.find_targets(
 			self.count, 
 			starting_address,
@@ -128,28 +125,21 @@ impl PaletteOperation for CreateRamp {
 		let src_from = try!(get_source(data, self.from, make, &mut undo));
 		let src_to = try!(get_source(data, self.to, make, &mut undo));
 				
-
 		// Generate ramp.
 		for (i, address) in targets.iter().enumerate() {
 			let am = (1.0 / (self.count + 2) as f32) * (i + 1) as f32;
-			let slot = if let Some(slot) = data.get_slot(address.clone()) {
-				slot
-			} else {
-				try!(data.create_slot(address.clone()))
-			};
 
 			let new_element = ColorElement::Mixed {
 				mix: Box::new(move |colors| lerp_rgb(colors[0], colors[1], am)),
 				sources: vec![src_from.clone(), src_to.clone()]
 			};
 
-			// Insert new element into palette.
-			mem::replace(&mut *slot.borrow_mut(), new_element);
+			try!(set_target(data, *address, new_element, &mut undo));
 		}
 
 		Ok(HistoryEntry {
 			info: EntryInfo::Apply {operation: Box::new(self)},
-			undo: unimplemented!()
+			undo: Box::new(undo)
 		})
 	}
 }
