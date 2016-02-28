@@ -120,7 +120,7 @@ impl PaletteOperation for CreateRamp {
 		));
 
 		// Get source slots.
-		let mut undo = Undo::new();
+		let mut undo = Undo::new_for(&self);
 		let make = self.make_sources;
 		let src_from = try!(get_source(data, self.from, make, &mut undo));
 		let src_to = try!(get_source(data, self.to, make, &mut undo));
@@ -138,7 +138,7 @@ impl PaletteOperation for CreateRamp {
 		}
 
 		Ok(HistoryEntry {
-			info: EntryInfo::Apply {operation: Box::new(self)},
+			info: EntryInfo::Apply(Box::new(self)),
 			undo: Box::new(undo)
 		})
 	}

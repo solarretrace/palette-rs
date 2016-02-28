@@ -48,15 +48,34 @@ use std::collections::HashMap;
 /// "address: None" entry in the Undo,  nothing will overwrite it. This ensures
 /// that the element at that address  will be deleted if the Undo operation is
 /// applied later.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Undo {
+	/// The operation being undone.
+	undoing: Option<Box<PaletteOperation>>,
+	/// The ColorElements to restore when applying the Undo.
 	saved: HashMap<Address, Option<ColorElement>>,
 }
 
 impl Undo {
 	/// Creates a new Undo operation.
 	#[inline]
-	pub fn new() -> Undo {Default::default()}
+	fn new() -> Undo {
+		Undo {
+			undoing: None,
+			saved: Default::default(),
+		}
+	}
+
+	/// Creates a new Undo operation for the given operation.
+	#[inline]
+	pub fn new_for<O>(operation: &O) -> Undo 
+		where O: PaletteOperation + Clone + 'static
+	{
+		Undo {
+			undoing: Some(Box::new(operation.clone())),
+			saved: Default::default(),
+		}
+	}
 
 	/// Records an element change to be replayed by the Undo operation.
 	#[inline]
@@ -65,6 +84,7 @@ impl Undo {
 			self.saved.insert(address, element);
 		}
 	}
+
 }
 
 
@@ -102,7 +122,7 @@ impl PaletteOperation for Undo {
 		}
 
 		Ok(HistoryEntry {
-			info: EntryInfo::Undo,
+			info: EntryInfo::Undo(self.undoing.unwrap()),
 			undo: Box::new(redo),
 		})
 	}

@@ -42,6 +42,16 @@ use color::Color;
 // CreateColor
 ////////////////////////////////////////////////////////////////////////////////
 /// Creates a new color in the palette.
+/// 
+/// # Example
+///
+/// ```rust
+/// use rampeditor::*;
+/// 
+/// let mut pal = DefaultPalette::new("Example");
+///
+/// pal.apply(CreateColor::new(Color(12, 50, 78))).unwrap();
+/// ```
 #[derive(Debug, Clone, Copy, Default)]
 pub struct CreateColor {
 	/// The Color to add to the paletee.
@@ -100,7 +110,7 @@ impl PaletteOperation for CreateColor {
 
 		// Check for derived color.
 		if !self.overwrite && 
-			data.get_slot(target).map_or(true, |slot| slot.get_order() != 1) 
+			data.get_slot(target).map_or(false, |slot| slot.get_order() != 1) 
 		{
 			return Err(Error::CannotSetDerivedColor);
 		}
@@ -108,11 +118,11 @@ impl PaletteOperation for CreateColor {
 		// Create new color.
 		let new_element = ColorElement::Pure {color: self.color};
 		// Set target.
-		let mut undo = Undo::new();
+		let mut undo = Undo::new_for(&self);
 		try!(set_target(data, target, new_element, &mut undo));
 		
 		Ok(HistoryEntry {
-			info: EntryInfo::Apply {operation: Box::new(self)},
+			info: EntryInfo::Apply(Box::new(self)),
 			undo: Box::new(undo),
 		})
 	}

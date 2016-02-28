@@ -100,7 +100,6 @@ pub struct ZplPalette {
 }
 
 impl ZplPalette {
-	#[allow(unused_variables)]
 	fn prepare_new_page(data: &mut PaletteData, group: Group) {
 		if let Group::Page {page} = group {
 			if page <= MAIN_PAGE_LIMIT {
@@ -115,7 +114,6 @@ impl ZplPalette {
 		}
 	}
 
-	#[allow(unused_variables)]
 	fn prepare_new_line(data: &mut PaletteData, group: Group) {
 		if let Group::Line {page, line} = group {
 			if page <= MAIN_PAGE_LIMIT {
@@ -206,10 +204,10 @@ impl Palette for ZplPalette {
 
 impl fmt::Display for ZplPalette {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		write!(f, "{} {}\n\n{:#?}",
+		write!(f, "{} [History: {} items]\n{}",
 			self.core.get_label(Group::All).unwrap_or(""),
+			self.history.len(),
 			self.core,
-			self.history
 		)
 	}
 }

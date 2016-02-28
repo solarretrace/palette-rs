@@ -27,6 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use palette::operation::PaletteOperation;
 
+use std::ops::{Deref, DerefMut};
 
 ////////////////////////////////////////////////////////////////////////////////
 // OperationHistory
@@ -45,19 +46,23 @@ impl OperationHistory {
 	pub fn new() -> OperationHistory {
 		OperationHistory {records: Vec::new()}
 	}
+}
 
-	/// Pushes a new operation history entry onto the operation stack.
-	pub fn push(&mut self, entry: HistoryEntry)	{
-		self.records.push(entry);
-	}
 
-	/// pops the last operation history entry off the operation stack and 
-	/// returns it. Returns None if the history is empty.
-	pub fn pop(&mut self) -> Option<HistoryEntry> {
-		self.records.pop()
+
+impl Deref for OperationHistory {
+	type Target = Vec<HistoryEntry>;
+	fn deref(&self) -> &Self::Target {
+		&self.records
 	}
 }
 
+
+impl DerefMut for OperationHistory {
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		&mut self.records
+	}
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -81,10 +86,7 @@ pub struct HistoryEntry {
 #[derive(Debug)]
 pub enum EntryInfo {
 	/// An undo uperation was applied.
-	Undo,
+	Undo(Box<PaletteOperation>),
 	/// The given operation was applied.
-	Apply {
-		/// The operation that was applied.
-		operation: Box<PaletteOperation>,
-	}
+	Apply(Box<PaletteOperation>),
 }

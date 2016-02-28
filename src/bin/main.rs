@@ -28,12 +28,17 @@ use rampeditor::*;
 fn main() {
 	let mut pal = ZplPalette::new("Super Duper");
 	
-	let res = pal.apply(
+	println!("{:?}", pal.apply(
 		CreateRamp::new(Address::new(0, 1, 0), Address::new(0, 1, 1), 6)
 			.make_sources(true)
 			.located_at(Address::new(1, 0, 0))
-	);
-	println!("{:?}", res);
+	));
+
+	println!("{:?}", pal.apply(
+		CreateColor::new(Color(50, 50, 78))
+			.located_at(Address::new(0, 1, 0))
+			.overwrite(true)
+	));
 
 	// pal.add_color(Color(1, 2, 3)).ok().unwrap();
 	println!("{}", pal);

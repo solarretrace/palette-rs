@@ -414,17 +414,16 @@ impl fmt::Debug for PaletteData {
 impl fmt::Display for PaletteData {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
 		if let Some(data) = self.metadata.get(&Group::All) {
-			try!(write!(f, " {}\n", data));
+			try!(write!(f, "{} ", data));
 		}
 		try!(write!(f, 
-			" [{} pages] [{} elements] [default wrap {}:{}]",
+			"[{} pages] [{} elements] [default wrap {}:{}]\n",
 			self.page_count,
 			self.len(),
 			self.default_line_count,
 			self.default_column_count
 		));
 
-		try!(write!(f, "\n\tAddress   Color    Order  Name\n"));
 		let mut cur_page_group = Group::All;
 		let mut cur_line_group = Group::All;
 		for (&address, ref slot) in self.slotmap.iter() {
@@ -445,12 +444,13 @@ impl fmt::Display for PaletteData {
 					try!(write!(f, "\t{}\n", meta));
 				}
 				cur_line_group = address.line_group();
+				try!(write!(f, "\tAddress   Color    Order\n"));
 			}
 
-			try!(writeln!(f, "\t{:X}  {:X}  {:<5}  ",
+			try!(writeln!(f, "\t{:X}  {:X}  {:<5}",
 				address,
 				slot.borrow().get_color().unwrap_or(Color(0,0,0)),
-				slot.borrow().get_order()
+				slot.borrow().get_order(),
 			));
 		}
 		Ok(())
