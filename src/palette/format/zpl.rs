@@ -145,6 +145,13 @@ impl ZplPalette {
 			}
 		)
 	}
+
+	pub fn undo(&mut self) -> palette::Result<()> {
+		if let Some(entry) = self.history.pop() {
+			self.apply(entry.undo.as_ref());
+		}
+		Ok(())
+	}
 }
 
 impl Palette for ZplPalette {

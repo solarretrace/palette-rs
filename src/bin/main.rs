@@ -51,6 +51,7 @@ fn main() {
 	));
 
 	// pal.add_color(Color(1, 2, 3)).ok().unwrap();
+	pal.undo();
 	println!("{}", pal);
 
 	// let mut file = File::create("testpal.zpl").ok().unwrap();

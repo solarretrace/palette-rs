@@ -38,7 +38,6 @@ use std::rc::{Rc, Weak};
 use std::mem;
 use std::ops::{Deref, DerefMut};
 
-
 /// Returns a weak reference to the source element located at the given address 
 /// in the given palette. If the slot is empty, it will be created if 
 /// make_sources is true. If the source is created, its creation will be logged 
@@ -105,6 +104,13 @@ pub fn set_target(
 pub trait PaletteOperation: fmt::Debug {
 	/// Applies the operation to the given palette.
 	fn apply(self, data: &mut PaletteData) -> palette::Result<HistoryEntry>;
+}
+
+
+impl<'a> PaletteOperation for &'a PaletteOperation {
+	fn apply(self, data: &mut PaletteData) -> palette::Result<HistoryEntry> {
+		(*self).apply(data)
+	}
 }
 
 
