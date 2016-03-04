@@ -50,7 +50,7 @@ use std::collections::HashMap;
 pub struct Undo {
 	/// The operation being undone.
 	undoing: (),
-	/// The ColorElements to restore when applying the Undo.
+	/// The ColorElements to restore when apply_operationing the Undo.
 	saved: HashMap<Address, Option<ColorElement>>,
 }
 
@@ -87,7 +87,7 @@ impl Undo {
 
 
 impl PaletteOperation for Undo {
-	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
+	fn apply_operation(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		let mut redo = Undo::new();
 
 		let saved = mem::replace(&mut self.saved, HashMap::new());

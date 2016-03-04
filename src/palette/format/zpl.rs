@@ -25,7 +25,7 @@
 //! Provides components for interacting with the ZPL palette format.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::common::Palette;
+use super::common::{Palette, PaletteExtensions};
 use palette::data::PaletteData;
 use palette::operation::{PaletteOperation, OperationHistory};
 use palette;
@@ -146,22 +146,6 @@ impl ZplPalette {
 			}
 		)
 	}
-
-	pub fn undo(&mut self) -> palette::Result<()> {
-		if let Some(mut entry) = self.undo_history.pop() {
-			let redo = try!(entry.undo.apply(&mut self.core));
-			self.redo_history.push(redo);
-		}
-		Ok(())
-	}
-
-	pub fn redo(&mut self) -> palette::Result<()> {
-		if let Some(mut entry) = self.redo_history.pop() {
-			let undo = try!(entry.undo.apply(&mut self.core));
-			self.undo_history.push(undo);
-		}
-		Ok(())
-	}
 }
 
 impl Palette for ZplPalette {
@@ -189,9 +173,9 @@ impl Palette for ZplPalette {
 		self.core.len()
 	}
 
-	fn apply(&mut self, mut operation: Box<PaletteOperation>) -> palette::Result<()> 
+	fn apply_operation(&mut self, mut operation: Box<PaletteOperation>) -> palette::Result<()> 
 	{
-		let entry = try!(operation.apply(&mut self.core));
+		let entry = try!(operation.apply_operation(&mut self.core));
 		self.undo_history.push(entry);
 		Ok(())
 	}
@@ -226,6 +210,25 @@ impl Palette for ZplPalette {
 		unimplemented!()
 	}
 }
+
+impl PaletteExtensions for ZplPalette {
+	fn undo(&mut self) -> palette::Result<()> {
+		if let Some(mut entry) = self.undo_history.pop() {
+			let redo = try!(entry.undo.apply_operation(&mut self.core));
+			self.redo_history.push(redo);
+		}
+		Ok(())
+	}
+
+	fn redo(&mut self) -> palette::Result<()> {
+		if let Some(mut entry) = self.redo_history.pop() {
+			let undo = try!(entry.undo.apply_operation(&mut self.core));
+			self.undo_history.push(undo);
+		}
+		Ok(())
+	}
+}
+
 
 impl fmt::Display for ZplPalette {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {

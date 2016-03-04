@@ -48,9 +48,9 @@ use color::lerp_rgb;
 /// 
 /// let mut pal = DefaultPalette::new("Example");
 ///
-/// pal.apply(InsertColor::new(Color(0, 0, 0))).unwrap();
-/// pal.apply(InsertColor::new(Color(150, 100, 50))).unwrap();
-/// pal.apply(InsertRamp::new(
+/// pal.apply_operation(InsertColor::new(Color(0, 0, 0))).unwrap();
+/// pal.apply_operation(InsertColor::new(Color(150, 100, 50))).unwrap();
+/// pal.apply_operation(InsertRamp::new(
 /// 	Address::new(0, 0, 0),
 /// 	Address::new(0, 0, 1),
 /// 	5
@@ -118,7 +118,7 @@ impl InsertRamp {
 
 
 impl PaletteOperation for InsertRamp {
-	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
+	fn apply_operation(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		
 		// Get starting address.
 		let starting_address = if let Some(address) = self.location {

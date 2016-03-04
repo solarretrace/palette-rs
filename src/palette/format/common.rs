@@ -37,6 +37,26 @@ use std::io;
 ////////////////////////////////////////////////////////////////////////////////
 // Palette
 ////////////////////////////////////////////////////////////////////////////////
+/// Specifies the interface for a palette with convenience operations.
+pub trait PaletteExtensions : Palette {
+	/// Reverses the most recently applied operation.
+	fn undo(&mut self) -> palette::Result<()>;
+
+	/// Reverses the most recently applied undo operation.
+	fn redo(&mut self) -> palette::Result<()>;
+
+	/// Applies the given operation to the palette.
+	fn apply<O>(&mut self, operation: O) -> palette::Result<()>
+		where O: PaletteOperation + 'static
+	{
+		self.apply_operation(Box::new(operation))
+	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Palette
+////////////////////////////////////////////////////////////////////////////////
 /// Specifies the interface for using a specific palette format.
 pub trait Palette : fmt::Debug {
 	/// Creates a new palette with the given name.
@@ -49,7 +69,7 @@ pub trait Palette : fmt::Debug {
 	fn len(&self) -> usize;
 
 	/// Applies the given operation to the palette.
-	fn apply(
+	fn apply_operation(
 		&mut self, 
 		mut operation: Box<PaletteOperation>) 
 		-> palette::Result<()>;

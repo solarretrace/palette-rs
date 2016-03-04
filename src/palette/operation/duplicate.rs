@@ -46,8 +46,8 @@ use address::Address;
 /// 
 /// let mut pal = DefaultPalette::new("Example");
 ///
-/// pal.apply(InsertColor::new(Color(12, 50, 78))).unwrap();
-/// pal.apply(CopyColor::new(Address::new(0, 0, 0))).unwrap();
+/// pal.apply_operation(InsertColor::new(Color(12, 50, 78))).unwrap();
+/// pal.apply_operation(CopyColor::new(Address::new(0, 0, 0))).unwrap();
 ///
 /// assert_eq!(
 /// 	pal.get_color(Address::new(0, 0, 0)), 
@@ -91,7 +91,7 @@ impl CopyColor {
 
 
 impl PaletteOperation for CopyColor {
-	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
+	fn apply_operation(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		// Get starting address.
 		let starting_address = if let Some(address) = self.location {
 			address
@@ -141,8 +141,8 @@ impl PaletteOperation for CopyColor {
 /// 
 /// let mut pal = DefaultPalette::new("Example");
 ///
-/// pal.apply(InsertColor::new(Color(12, 50, 78))).unwrap();
-/// pal.apply(InsertWatcher::new(Address::new(0, 0, 0))).unwrap();
+/// pal.apply_operation(InsertColor::new(Color(12, 50, 78))).unwrap();
+/// pal.apply_operation(InsertWatcher::new(Address::new(0, 0, 0))).unwrap();
 ///
 /// assert_eq!(
 /// 	pal.get_color(Address::new(0, 0, 0)),
@@ -201,7 +201,7 @@ impl InsertWatcher {
 
 
 impl PaletteOperation for InsertWatcher {
-	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
+	fn apply_operation(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		// Get starting address.
 		let starting_address = if let Some(address) = self.location {
 			address
