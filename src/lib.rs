@@ -16,7 +16,7 @@ pub mod color;
 
 
 pub use color::Color;
-pub use palette::{Palette, DefaultPalette, ZplPalette};
+pub use palette::{Palette, ZplPalette};
 pub use address::{Address, Group, Selection};
 pub use interval::{Bound, Interval};
 pub use palette::operation::{

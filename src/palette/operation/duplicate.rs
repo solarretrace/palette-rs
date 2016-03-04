@@ -91,7 +91,7 @@ impl CopyColor {
 
 
 impl PaletteOperation for CopyColor {
-	fn apply(self, data: &mut PaletteData) -> Result<HistoryEntry> {
+	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		// Get starting address.
 		let starting_address = if let Some(address) = self.location {
 			address
@@ -116,7 +116,7 @@ impl PaletteOperation for CopyColor {
 		};
 
 		// Set target.
-		let mut undo = Undo::new_for(&self);
+		let mut undo = Undo::new_for(self);
 		try!(set_target(data, target, new_element, &mut undo));
 		
 		Ok(HistoryEntry {
@@ -201,7 +201,7 @@ impl InsertWatcher {
 
 
 impl PaletteOperation for InsertWatcher {
-	fn apply(self, data: &mut PaletteData) -> Result<HistoryEntry> {
+	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		// Get starting address.
 		let starting_address = if let Some(address) = self.location {
 			address
@@ -218,7 +218,7 @@ impl PaletteOperation for InsertWatcher {
 		))[0];
 		
 		// Get source slot.
-		let mut undo = Undo::new_for(&self);
+		let mut undo = Undo::new_for(self);
 		let src = try!(get_source(
 			data, 
 			self.watching, 

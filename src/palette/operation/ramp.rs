@@ -118,7 +118,7 @@ impl InsertRamp {
 
 
 impl PaletteOperation for InsertRamp {
-	fn apply(self, data: &mut PaletteData) -> Result<HistoryEntry> {
+	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		
 		// Get starting address.
 		let starting_address = if let Some(address) = self.location {
@@ -136,7 +136,7 @@ impl PaletteOperation for InsertRamp {
 		));
 
 		// Get source slots.
-		let mut undo = Undo::new_for(&self);
+		let mut undo = Undo::new_for(self);
 		let make = self.make_sources;
 		let src_from = try!(get_source(data, self.from, make, &mut undo));
 		let src_to = try!(get_source(data, self.to, make, &mut undo));

@@ -49,8 +49,10 @@ pub trait Palette : fmt::Debug {
 	fn len(&self) -> usize;
 
 	/// Applies the given operation to the palette.
-	fn apply<O>(&mut self, operation: O)  -> palette::Result<()> 
-		where O: PaletteOperation;
+	fn apply(
+		&mut self, 
+		mut operation: Box<PaletteOperation>) 
+		-> palette::Result<()>;
 
 	/// Writes the palette to the given buffer.
 	#[allow(unused_variables)]

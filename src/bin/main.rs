@@ -28,30 +28,30 @@ use rampeditor::*;
 fn main() {
 	let mut pal = ZplPalette::new("Super Duper");
 	
-	println!("{:?}", pal.apply(
+	println!("InsertRamp: {:?}", pal.apply(Box::new(
 		InsertRamp::new(Address::new(0, 1, 0), Address::new(0, 1, 1), 6)
 			.make_sources(true)
 			.located_at(Address::new(1, 0, 0))
-	));
+	)));
 
-	println!("{:?}", pal.apply(
+	println!("InsertColor: {:?}", pal.apply(Box::new(
 		InsertColor::new(Color(50, 50, 78))
 			.located_at(Address::new(0, 1, 0))
 			.overwrite(true)
-	));
+	)));
 
-	println!("{:?}", pal.apply(
+	println!("InsertColor: {:?}", pal.apply(Box::new(
 		InsertColor::new(Color(10, 230, 55))
 			.located_at(Address::new(0, 1, 1))
 			.overwrite(true)
-	));
+	)));
 
-	println!("{:?}", pal.apply(
+	println!("InsertWatcher: {:?}", pal.apply(Box::new(
 		InsertWatcher::new(Address::new(1, 0, 3))
-	));
+	)));
 
 	// pal.add_color(Color(1, 2, 3)).ok().unwrap();
-	pal.undo();
+	println!("Undo: {:?}", pal.undo());
 	println!("{}", pal);
 
 	// let mut file = File::create("testpal.zpl").ok().unwrap();

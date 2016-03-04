@@ -49,7 +49,7 @@ use std::collections::HashMap;
 #[derive(Debug)]
 pub struct Undo {
 	/// The operation being undone.
-	undoing: Option<Box<PaletteOperation>>,
+	undoing: (),
 	/// The ColorElements to restore when applying the Undo.
 	saved: HashMap<Address, Option<ColorElement>>,
 }
@@ -59,7 +59,7 @@ impl Undo {
 	#[inline]
 	fn new() -> Undo {
 		Undo {
-			undoing: None,
+			undoing: (),
 			saved: Default::default(),
 		}
 	}
@@ -67,10 +67,10 @@ impl Undo {
 	/// Creates a new Undo operation for the given operation.
 	#[inline]
 	pub fn new_for<O>(operation: &O) -> Undo 
-		where O: PaletteOperation + Clone + 'static
+		where O: PaletteOperation
 	{
 		Undo {
-			undoing: Some(Box::new(operation.clone())),
+			undoing: (),
 			saved: Default::default(),
 		}
 	}
@@ -87,10 +87,12 @@ impl Undo {
 
 
 impl PaletteOperation for Undo {
-	fn apply(self, data: &mut PaletteData) -> Result<HistoryEntry> {
+	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		let mut redo = Undo::new();
 
-		for (address, item) in self.saved {
+		let saved = mem::replace(&mut self.saved, HashMap::new());
+
+		for (address, item) in saved {
 			match (item.is_some(), data.get_slot(address).is_some()) {
 
 				(true, true) => { // The slot was modified.

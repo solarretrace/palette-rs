@@ -96,7 +96,8 @@ const SPRITE_PAGE_LIMIT: PageCount = 515;
 #[derive(Debug)]
 pub struct ZplPalette {
 	core: PaletteData,
-	history: OperationHistory,
+	undo_history: OperationHistory,
+	redo_history: OperationHistory,
 }
 
 impl ZplPalette {
@@ -147,8 +148,9 @@ impl ZplPalette {
 	}
 
 	pub fn undo(&mut self) -> palette::Result<()> {
-		if let Some(entry) = self.history.pop() {
-			self.apply(entry.undo.as_ref());
+		if let Some(mut entry) = self.undo_history.pop() {
+			let redo = try!(entry.undo.apply(&mut self.core));
+			self.redo_history.push(redo);
 		}
 		Ok(())
 	}
@@ -158,7 +160,8 @@ impl Palette for ZplPalette {
 	fn new<S>(name: S) -> Self where S: Into<String> {
 		let mut pal = ZplPalette {
 			core: Default::default(),
-			history: OperationHistory::new(),
+			undo_history: OperationHistory::new(),
+			redo_history: OperationHistory::new(),
 		};
 		pal.core.set_label(Group::All, "ZplPalette 1.0.0");
 		pal.core.set_name(Group::All, name.into());
@@ -178,11 +181,10 @@ impl Palette for ZplPalette {
 		self.core.len()
 	}
 
-	fn apply<O>(&mut self, operation: O)  -> palette::Result<()> 
-		where O: PaletteOperation 
+	fn apply(&mut self, mut operation: Box<PaletteOperation>) -> palette::Result<()> 
 	{
 		let entry = try!(operation.apply(&mut self.core));
-		self.history.push(entry);
+		self.undo_history.push(entry);
 		Ok(())
 	}
 
@@ -221,7 +223,7 @@ impl fmt::Display for ZplPalette {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
 		write!(f, "{} [History: {} items]\n{}",
 			self.core.get_label(Group::All).unwrap_or(""),
-			self.history.len(),
+			self.undo_history.len(),
 			self.core,
 		)
 	}
