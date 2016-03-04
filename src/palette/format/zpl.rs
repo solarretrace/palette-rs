@@ -176,7 +176,7 @@ impl Palette for ZplPalette {
 	fn apply_operation(&mut self, mut operation: Box<PaletteOperation>) 
 		-> palette::Result<()> 
 	{
-		let entry = try!(operation.apply_operation(&mut self.core));
+		let entry = try!(operation.apply(&mut self.core));
 		self.undo_history.push(entry);
 		Ok(())
 	}
@@ -215,7 +215,7 @@ impl Palette for ZplPalette {
 impl PaletteExtensions for ZplPalette {
 	fn undo(&mut self) -> palette::Result<()> {
 		if let Some(mut entry) = self.undo_history.pop() {
-			let redo = try!(entry.undo.apply_operation(&mut self.core));
+			let redo = try!(entry.undo.apply(&mut self.core));
 			self.redo_history.push(redo);
 		}
 		Ok(())
@@ -223,7 +223,7 @@ impl PaletteExtensions for ZplPalette {
 
 	fn redo(&mut self) -> palette::Result<()> {
 		if let Some(mut entry) = self.redo_history.pop() {
-			let undo = try!(entry.undo.apply_operation(&mut self.core));
+			let undo = try!(entry.undo.apply(&mut self.core));
 			self.undo_history.push(undo);
 		}
 		Ok(())

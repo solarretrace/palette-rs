@@ -38,7 +38,7 @@ use std::result;
 ////////////////////////////////////////////////////////////////////////////////
 // BasicPalette
 ////////////////////////////////////////////////////////////////////////////////
-/// The default palette format with no special configuration.
+/// A basic palette format with no special configuration or functionality.
 #[derive(Debug)]
 pub struct BasicPalette {
 	core: PaletteData,
@@ -64,8 +64,7 @@ impl Palette for BasicPalette {
 	fn apply_operation(&mut self, mut operation: Box<PaletteOperation>) 
 		-> palette::Result<()> 
 	{
-		let entry = try!(operation.apply_operation(&mut self.core));
-		Ok(())
+		operation.apply(&mut self.core).map(|_| ())
 	}
 }
 

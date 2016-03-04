@@ -103,7 +103,8 @@ pub fn set_target(
 /// Provides the methods for modifying palettes.
 pub trait PaletteOperation: fmt::Debug {
 	/// Applies the operation to the given palette.
-	fn apply_operation(&mut self, data: &mut PaletteData) -> palette::Result<HistoryEntry>;
+	fn apply(&mut self, data: &mut PaletteData) 
+		-> palette::Result<HistoryEntry>;
 }
 
 
