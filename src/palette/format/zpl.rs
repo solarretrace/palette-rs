@@ -173,7 +173,8 @@ impl Palette for ZplPalette {
 		self.core.len()
 	}
 
-	fn apply_operation(&mut self, mut operation: Box<PaletteOperation>) -> palette::Result<()> 
+	fn apply_operation(&mut self, mut operation: Box<PaletteOperation>) 
+		-> palette::Result<()> 
 	{
 		let entry = try!(operation.apply_operation(&mut self.core));
 		self.undo_history.push(entry);

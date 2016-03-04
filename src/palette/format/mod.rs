@@ -5,8 +5,12 @@
 pub mod common;
 
 #[warn(missing_docs)]
+pub mod basic;
+
+#[warn(missing_docs)]
 #[allow(dead_code)]
 pub mod zpl;
 
 pub use palette::format::common::*;
+pub use palette::format::basic::*;
 pub use palette::format::zpl::*;

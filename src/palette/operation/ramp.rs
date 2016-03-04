@@ -46,15 +46,15 @@ use color::lerp_rgb;
 /// ```rust
 /// use rampeditor::*;
 /// 
-/// let mut pal = DefaultPalette::new("Example");
+/// let mut pal = BasicPalette::new("Example");
 ///
-/// pal.apply_operation(InsertColor::new(Color(0, 0, 0))).unwrap();
-/// pal.apply_operation(InsertColor::new(Color(150, 100, 50))).unwrap();
-/// pal.apply_operation(InsertRamp::new(
+/// pal.apply_operation(Box::new(InsertColor::new(Color(0, 0, 0)))).unwrap();
+/// pal.apply_operation(Box::new(InsertColor::new(Color(150, 100, 50)))).unwrap();
+/// pal.apply_operation(Box::new(InsertRamp::new(
 /// 	Address::new(0, 0, 0),
 /// 	Address::new(0, 0, 1),
 /// 	5
-/// )).unwrap();
+/// ))).unwrap();
 ///
 /// assert_eq!(pal.get_color(Address::new(0, 0, 4)), Some(Color(75, 50, 25)));
 /// assert_eq!(pal.len(), 7);

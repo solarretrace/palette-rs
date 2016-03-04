@@ -45,9 +45,9 @@ use color::Color;
 /// ```rust
 /// use rampeditor::*;
 /// 
-/// let mut pal = DefaultPalette::new("Example");
+/// let mut pal = BasicPalette::new("Example");
 ///
-/// pal.apply_operation(InsertColor::new(Color(12, 50, 78))).unwrap();
+/// pal.apply_operation(Box::new(InsertColor::new(Color(12, 50, 78)))).unwrap();
 ///
 /// assert_eq!(pal.get_color(Address::new(0, 0, 0)), Some(Color(12, 50, 78)));
 /// 
@@ -137,10 +137,10 @@ impl PaletteOperation for InsertColor {
 /// ```rust
 /// use rampeditor::*;
 /// 
-/// let mut pal = DefaultPalette::new("Example");
+/// let mut pal = BasicPalette::new("Example");
 ///
-/// pal.apply_operation(InsertColor::new(Color(12, 50, 78))).unwrap();
-/// pal.apply_operation(RemoveElement::new(Address::new(0, 0, 0))).unwrap();
+/// pal.apply_operation(Box::new(InsertColor::new(Color(12, 50, 78)))).unwrap();
+/// pal.apply_operation(Box::new(RemoveElement::new(Address::new(0, 0, 0)))).unwrap();
 /// 
 /// assert_eq!(pal.len(), 0);
 /// ```
