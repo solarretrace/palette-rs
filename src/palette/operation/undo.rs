@@ -25,12 +25,10 @@
 //! Defines an undo operation to be returned by other operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::common::PaletteOperation;
-
+use super::common::{PaletteOperation, HistoryEntry};
 use palette::Result;
 use palette::data::PaletteData;
 use palette::element::ColorElement;
-use palette::history::{HistoryEntry, EntryInfo};
 use address::Address;
 
 use std::mem;
@@ -122,7 +120,7 @@ impl PaletteOperation for Undo {
 		}
 
 		Ok(HistoryEntry {
-			info: EntryInfo::Undo(self.undoing.unwrap()),
+			info: (),
 			undo: Box::new(redo),
 		})
 	}

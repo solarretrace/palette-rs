@@ -25,11 +25,10 @@
 //! Defines operations for duplicating elements.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::common::{PaletteOperation, set_target, get_source};
+use super::common::{PaletteOperation, HistoryEntry, set_target, get_source};
 use palette::{Result, Error};
 use palette::data::PaletteData;
 use palette::element::ColorElement;
-use palette::history::{HistoryEntry, EntryInfo};
 use palette::operation::Undo;
 use address::Address;
 
@@ -121,7 +120,7 @@ impl PaletteOperation for CopyColor {
 		try!(set_target(data, target, new_element, &mut undo));
 		
 		Ok(HistoryEntry {
-			info: EntryInfo::Apply(Box::new(self)),
+			info: (),
 			undo: Box::new(undo),
 		})
 	}
@@ -237,7 +236,7 @@ impl PaletteOperation for InsertWatcher {
 
 
 		Ok(HistoryEntry {
-			info: EntryInfo::Apply(Box::new(self)),
+			info: (),
 			undo: Box::new(undo)
 		})
 	}

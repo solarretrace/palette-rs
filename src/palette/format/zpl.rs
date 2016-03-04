@@ -27,8 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use super::common::Palette;
 use palette::data::PaletteData;
-use palette::operation::PaletteOperation;
-use palette::history::OperationHistory;
+use palette::operation::{PaletteOperation, OperationHistory};
 use palette;
 use address::{Address, Group, PageCount, LineCount, ColumnCount};
 use color::Color;

@@ -26,9 +26,8 @@
 //! Defines functionality common to all operation modules.
 //!
 ////////////////////////////////////////////////////////////////////////////////
+use super::undo::Undo;
 use palette::data::PaletteData;
-use palette::history::HistoryEntry;
-use palette::operation::Undo;
 use palette::element::{Slot, ColorElement};
 use palette::{Error, Result};
 use palette;
@@ -37,6 +36,7 @@ use address::Address;
 use std::fmt;
 use std::rc::{Rc, Weak};
 use std::mem;
+use std::ops::{Deref, DerefMut};
 
 
 /// Returns a weak reference to the source element located at the given address 
@@ -105,4 +105,55 @@ pub fn set_target(
 pub trait PaletteOperation: fmt::Debug {
 	/// Applies the operation to the given palette.
 	fn apply(self, data: &mut PaletteData) -> palette::Result<HistoryEntry>;
+}
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// OperationHistory
+////////////////////////////////////////////////////////////////////////////////
+/// Maintains a history of operations applied to a palette and their associated
+/// undo operations.
+#[derive(Debug)]
+pub struct OperationHistory {
+	/// The record of applied operations an undo operations.
+	records: Vec<HistoryEntry>,
+}
+
+
+impl OperationHistory {
+	/// Creates a new, empty OperationHistory
+	pub fn new() -> OperationHistory {
+		OperationHistory {records: Vec::new()}
+	}
+}
+
+
+
+impl Deref for OperationHistory {
+	type Target = Vec<HistoryEntry>;
+	fn deref(&self) -> &Self::Target {
+		&self.records
+	}
+}
+
+
+impl DerefMut for OperationHistory {
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		&mut self.records
+	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// HistoryEntry
+////////////////////////////////////////////////////////////////////////////////
+/// Encapsulates a single entry in the operation history.
+#[derive(Debug)]
+pub struct HistoryEntry {
+	/// Information about the operation that was applied to the palette.
+	pub info: (),
+	/// The operation that undoes the applied operation.
+	pub undo: Box<PaletteOperation>,
 }

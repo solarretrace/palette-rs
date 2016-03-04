@@ -25,13 +25,11 @@
 //! Defines simple color creation operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-
-use super::common::{PaletteOperation, set_target};
+use super::common::{PaletteOperation, HistoryEntry, set_target};
+use super::undo::Undo;
 use palette::{Result, Error};
 use palette::data::PaletteData;
 use palette::element::ColorElement;
-use palette::history::{HistoryEntry, EntryInfo};
-use palette::operation::Undo;
 use address::Address;
 use color::Color;
 
@@ -121,7 +119,7 @@ impl PaletteOperation for InsertColor {
 		try!(set_target(data, target, new_element, &mut undo));
 		
 		Ok(HistoryEntry {
-			info: EntryInfo::Apply(Box::new(self)),
+			info: (),
 			undo: Box::new(undo),
 		})
 	}
@@ -169,7 +167,7 @@ impl PaletteOperation for RemoveElement {
 		undo.record(self.address, Some(try!(data.remove_slot(self.address))));
 		
 		Ok(HistoryEntry {
-			info: EntryInfo::Apply(Box::new(self)),
+			info: (),
 			undo: Box::new(undo),
 		})
 	}

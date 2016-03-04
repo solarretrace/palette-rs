@@ -31,9 +31,6 @@ pub mod data;
 pub mod operation;
 
 #[warn(missing_docs)]
-pub mod history;
-
-#[warn(missing_docs)]
 pub mod format;
 
 pub use palette::format::{Palette, DefaultPalette, ZplPalette};

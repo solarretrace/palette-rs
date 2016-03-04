@@ -25,11 +25,10 @@
 //! Defines ramp creation operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::common::{PaletteOperation, get_source, set_target};
+use super::common::{PaletteOperation, HistoryEntry, set_target, get_source};
 use palette::Result;
 use palette::data::PaletteData;
 use palette::element::ColorElement;
-use palette::history::{HistoryEntry, EntryInfo};
 use palette::operation::Undo;
 use address::Address;
 use color::lerp_rgb;
@@ -155,7 +154,7 @@ impl PaletteOperation for InsertRamp {
 		}
 
 		Ok(HistoryEntry {
-			info: EntryInfo::Apply(Box::new(self)),
+			info: (),
 			undo: Box::new(undo)
 		})
 	}

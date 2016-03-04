@@ -72,21 +72,7 @@ impl DerefMut for OperationHistory {
 #[derive(Debug)]
 pub struct HistoryEntry {
 	/// Information about the operation that was applied to the palette.
-	pub info: EntryInfo,
+	pub info: (),
 	/// The operation that undoes the applied operation.
 	pub undo: Box<PaletteOperation>,
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-// EntryInfo
-////////////////////////////////////////////////////////////////////////////////
-/// Encapsulates information about the operation that was performed.
-#[derive(Debug)]
-pub enum EntryInfo {
-	/// An undo uperation was applied.
-	Undo(Box<PaletteOperation>),
-	/// The given operation was applied.
-	Apply(Box<PaletteOperation>),
 }
