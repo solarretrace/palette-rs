@@ -40,5 +40,7 @@ pub use palette::operation::{
 	RemoveElement,
 	CopyColor,
 	InsertWatcher,
+	SequenceOperation,
+	RepeatOperation,
 	InsertRamp,
 };

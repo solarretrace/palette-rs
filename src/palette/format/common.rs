@@ -49,6 +49,7 @@ pub trait PaletteExtensions : Palette {
 	fn apply<O>(&mut self, operation: O) -> palette::Result<()>
 		where O: PaletteOperation + 'static
 	{
+		println!("{:?}", operation.get_info());
 		self.apply_operation(Box::new(operation))
 	}
 }

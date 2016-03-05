@@ -40,6 +40,12 @@ fn main() {
 			.overwrite(true)
 	));
 
+	println!("InsertColors: {:?}", pal.apply(
+		RepeatOperation::new(Box::new(
+			InsertColor::new(Color(50, 50, 78))
+		)).repeat(3)
+	));
+
 	println!("InsertColor: {:?}", pal.apply(
 		InsertColor::new(Color(10, 230, 55))
 			.located_at(Address::new(0, 1, 1))

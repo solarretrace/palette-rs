@@ -25,7 +25,13 @@
 //! Defines ramp creation operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::common::{PaletteOperation, HistoryEntry, set_target, get_source};
+use super::common::{
+	PaletteOperation, 
+	HistoryEntry, 
+	OperationInfo, 
+	set_target, 
+	get_source
+};
 use palette::Result;
 use palette::data::PaletteData;
 use palette::element::ColorElement;
@@ -48,9 +54,9 @@ use color::lerp_rgb;
 /// 
 /// let mut pal = BasicPalette::new("Example");
 ///
-/// pal.apply(Box::new(InsertColor::new(Color(0, 0, 0)))).unwrap();
-/// pal.apply(Box::new(InsertColor::new(Color(150, 100, 50)))).unwrap();
-/// pal.apply(Box::new(InsertRamp::new(
+/// pal.apply_operation(Box::new(InsertColor::new(Color(0, 0, 0)))).unwrap();
+/// pal.apply_operation(Box::new(InsertColor::new(Color(150, 100, 50)))).unwrap();
+/// pal.apply_operation(Box::new(InsertRamp::new(
 /// 	Address::new(0, 0, 0),
 /// 	Address::new(0, 0, 1),
 /// 	5
@@ -118,6 +124,13 @@ impl InsertRamp {
 
 
 impl PaletteOperation for InsertRamp {
+	fn get_info(&self) -> OperationInfo {
+		OperationInfo {
+			name: "Insert Ramp",
+			details: Some(format!("{:?}", self))
+		}
+	}
+
 	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		
 		// Get starting address.
@@ -154,7 +167,7 @@ impl PaletteOperation for InsertRamp {
 		}
 
 		Ok(HistoryEntry {
-			info: (),
+			info: self.get_info(),
 			undo: Box::new(undo)
 		})
 	}

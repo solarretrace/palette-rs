@@ -25,7 +25,7 @@
 //! Defines simple color creation operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::common::{PaletteOperation, HistoryEntry, set_target};
+use super::common::{PaletteOperation, HistoryEntry, OperationInfo, set_target};
 use super::undo::Undo;
 use palette::{Result, Error};
 use palette::data::PaletteData;
@@ -47,7 +47,7 @@ use color::Color;
 /// 
 /// let mut pal = BasicPalette::new("Example");
 ///
-/// pal.apply(Box::new(InsertColor::new(Color(12, 50, 78)))).unwrap();
+/// pal.apply_operation(Box::new(InsertColor::new(Color(12, 50, 78)))).unwrap();
 ///
 /// assert_eq!(pal.get_color(Address::new(0, 0, 0)), Some(Color(12, 50, 78)));
 /// 
@@ -89,6 +89,13 @@ impl InsertColor {
 
 
 impl PaletteOperation for InsertColor {
+	fn get_info(&self) -> OperationInfo {
+		OperationInfo {
+			name: "Insert Color",
+			details: Some(format!("{:?}", self))
+		}
+	}
+
 	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		// Get starting address.
 		let starting_address = if let Some(address) = self.location {
@@ -119,7 +126,7 @@ impl PaletteOperation for InsertColor {
 		try!(set_target(data, target, new_element, &mut undo));
 		
 		Ok(HistoryEntry {
-			info: (),
+			info: self.get_info(),
 			undo: Box::new(undo),
 		})
 	}
@@ -139,8 +146,8 @@ impl PaletteOperation for InsertColor {
 /// 
 /// let mut pal = BasicPalette::new("Example");
 ///
-/// pal.apply(Box::new(InsertColor::new(Color(12, 50, 78)))).unwrap();
-/// pal.apply(Box::new(RemoveElement::new(Address::new(0, 0, 0)))).unwrap();
+/// pal.apply_operation(Box::new(InsertColor::new(Color(12, 50, 78)))).unwrap();
+/// pal.apply_operation(Box::new(RemoveElement::new(Address::new(0, 0, 0)))).unwrap();
 /// 
 /// assert_eq!(pal.len(), 0);
 /// ```
@@ -161,13 +168,20 @@ impl RemoveElement {
 
 
 impl PaletteOperation for RemoveElement {
+	fn get_info(&self) -> OperationInfo {
+		OperationInfo {
+			name: "Remove Element",
+			details: Some(format!("{:?}", self))
+		}
+	}
+
 	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
 
 		let mut undo = Undo::new_for(self);
 		undo.record(self.address, Some(try!(data.remove_slot(self.address))));
 		
 		Ok(HistoryEntry {
-			info: (),
+			info: self.get_info(),
 			undo: Box::new(undo),
 		})
 	}

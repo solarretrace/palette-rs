@@ -25,7 +25,13 @@
 //! Defines operations for duplicating elements.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::common::{PaletteOperation, HistoryEntry, set_target, get_source};
+use super::common::{
+	PaletteOperation, 
+	HistoryEntry, 
+	OperationInfo, 
+	set_target, 
+	get_source
+};
 use palette::{Result, Error};
 use palette::data::PaletteData;
 use palette::element::ColorElement;
@@ -46,8 +52,8 @@ use address::Address;
 /// 
 /// let mut pal = BasicPalette::new("Example");
 ///
-/// pal.apply(Box::new(InsertColor::new(Color(12, 50, 78)))).unwrap();
-/// pal.apply(Box::new(CopyColor::new(Address::new(0, 0, 0)))).unwrap();
+/// pal.apply_operation(Box::new(InsertColor::new(Color(12, 50, 78)))).unwrap();
+/// pal.apply_operation(Box::new(CopyColor::new(Address::new(0, 0, 0)))).unwrap();
 ///
 /// assert_eq!(
 /// 	pal.get_color(Address::new(0, 0, 0)), 
@@ -91,6 +97,13 @@ impl CopyColor {
 
 
 impl PaletteOperation for CopyColor {
+	fn get_info(&self) -> OperationInfo {
+		OperationInfo {
+			name: "Copy Color",
+			details: Some(format!("{:?}", self))
+		}
+	}
+
 	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		// Get starting address.
 		let starting_address = if let Some(address) = self.location {
@@ -120,7 +133,7 @@ impl PaletteOperation for CopyColor {
 		try!(set_target(data, target, new_element, &mut undo));
 		
 		Ok(HistoryEntry {
-			info: (),
+			info: self.get_info(),
 			undo: Box::new(undo),
 		})
 	}
@@ -141,8 +154,8 @@ impl PaletteOperation for CopyColor {
 /// 
 /// let mut pal = BasicPalette::new("Example");
 ///
-/// pal.apply(Box::new(InsertColor::new(Color(12, 50, 78)))).unwrap();
-/// pal.apply(Box::new(InsertWatcher::new(Address::new(0, 0, 0)))).unwrap();
+/// pal.apply_operation(Box::new(InsertColor::new(Color(12, 50, 78)))).unwrap();
+/// pal.apply_operation(Box::new(InsertWatcher::new(Address::new(0, 0, 0)))).unwrap();
 ///
 /// assert_eq!(
 /// 	pal.get_color(Address::new(0, 0, 0)),
@@ -201,6 +214,13 @@ impl InsertWatcher {
 
 
 impl PaletteOperation for InsertWatcher {
+	fn get_info(&self) -> OperationInfo {
+		OperationInfo {
+			name: "Insert Watcher",
+			details: Some(format!("{:?}", self))
+		}
+	}
+
 	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		// Get starting address.
 		let starting_address = if let Some(address) = self.location {
@@ -236,7 +256,7 @@ impl PaletteOperation for InsertWatcher {
 
 
 		Ok(HistoryEntry {
-			info: (),
+			info: self.get_info(),
 			undo: Box::new(undo)
 		})
 	}

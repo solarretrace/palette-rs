@@ -25,7 +25,7 @@
 //! Defines an undo operation to be returned by other operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::common::{PaletteOperation, HistoryEntry};
+use super::common::{PaletteOperation, HistoryEntry, OperationInfo};
 use palette::Result;
 use palette::data::PaletteData;
 use palette::element::ColorElement;
@@ -49,7 +49,7 @@ use std::collections::HashMap;
 #[derive(Debug)]
 pub struct Undo {
 	/// The operation being undone.
-	undoing: (),
+	undoing: OperationInfo,
 	/// The ColorElements to restore when applying the Undo.
 	saved: HashMap<Address, Option<ColorElement>>,
 }
@@ -59,7 +59,10 @@ impl Undo {
 	#[inline]
 	fn new() -> Undo {
 		Undo {
-			undoing: (),
+			undoing: OperationInfo {
+				name: "Undo",
+				details: None,
+			},
 			saved: Default::default(),
 		}
 	}
@@ -70,7 +73,7 @@ impl Undo {
 		where O: PaletteOperation
 	{
 		Undo {
-			undoing: (),
+			undoing: operation.get_info(),
 			saved: Default::default(),
 		}
 	}
@@ -87,6 +90,13 @@ impl Undo {
 
 
 impl PaletteOperation for Undo {
+	fn get_info(&self) -> OperationInfo {
+		OperationInfo {
+			name: "Undo",
+			details: Some(format!("{:?}", self))
+		}
+	}
+
 	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
 		let mut redo = Undo::new();
 
@@ -122,7 +132,7 @@ impl PaletteOperation for Undo {
 		}
 
 		Ok(HistoryEntry {
-			info: (),
+			info: self.get_info(),
 			undo: Box::new(redo),
 		})
 	}

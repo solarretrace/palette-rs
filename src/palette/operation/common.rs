@@ -102,6 +102,9 @@ pub fn set_target(
 ////////////////////////////////////////////////////////////////////////////////
 /// Provides the methods for modifying palettes.
 pub trait PaletteOperation: fmt::Debug {
+	/// Returns information about the operation.
+	fn get_info(&self) -> OperationInfo;
+
 	/// Applies the operation to the given palette.
 	fn apply(&mut self, data: &mut PaletteData) 
 		-> palette::Result<HistoryEntry>;
@@ -153,7 +156,20 @@ impl DerefMut for OperationHistory {
 #[derive(Debug)]
 pub struct HistoryEntry {
 	/// Information about the operation that was applied to the palette.
-	pub info: (),
+	pub info: OperationInfo,
 	/// The operation that undoes the applied operation.
 	pub undo: Box<PaletteOperation>,
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// OperationInfo
+////////////////////////////////////////////////////////////////////////////////
+/// Describes an applied operation.
+#[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone)]
+pub struct OperationInfo {
+	/// The name of the operation.
+	pub name: &'static str,
+	/// The details of the operation.
+	pub details: Option<String>,
 }
