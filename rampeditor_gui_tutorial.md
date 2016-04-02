@@ -1,7 +1,7 @@
 
 
-Building a GUI application in Rust.
-===================================
+Building a Simple GUI Application in Rust
+=========================================
 
 Our goal is to build a GUI around an existing rust application. This tutorial will be an unscripted journey toward making that happen, and it will be as long as it needs to be. So I suppose it will also be a kind of journal where I keep track of everything I'm trying, why I'm trying it, and what my thought process is throughout. Hopefully it will be useful to you. Or at least provide some valuable, if incidental, insight.
 
@@ -13,7 +13,7 @@ Furthermore, I have a bit of an interest in game design, and have spent some tim
 
 ## Piston 
 
-Piston is a game engine written in Rust and designed to be a pluggable, platform-agnostic library. Looking at the repository sources, it appears that the 'Piston' library is really just a set of traits that provide an interface to the supported libraries. Thus to use Piston, you'll have to also grab these libraries (which are conveniently listed [here]()). To do this, you only have to include them as dependencies in cargo.
+Piston is a game engine written in Rust and designed to be a pluggable, platform-agnostic library. Looking at the repository sources, it appears that the 'Piston' library is really just a set of traits that provide an interface to the supported libraries. Thus to use Piston, you'll have to also grab these libraries (which are conveniently listed [here](https://github.com/PistonDevelopers/piston/wiki/Piston-overview)). To do this, you only have to include them as dependencies in Cargo.
 
 ## Conrod
 
@@ -23,7 +23,7 @@ If this doesn't work out for some reason, I would next look into finding a rust 
 
 # First steps.
 
-I followed the directions on the Conrod repo, which had me clone the repo and use cargo to build it. This went fairly quickly, and aside from some depricated lints, there were no errors.
+I followed the directions on the Conrod repo, which had me clone the repo and use cargo to build it. This went fairly quickly, and aside from some deprecated lints, there were no errors. (For reference, I am working on a Macbook Pro running OS X 10.10.5)
 
 Next, I ran the provided examples to make sure everything works and to see what I'm actually working with here.
 
@@ -35,7 +35,7 @@ Reading the Documentation
 
 There isn't any documentation... :)  Well, that's a lie, but it's a good first-order approximation to the truth, So lets read some of the examples instead. 
 
-Looking at [all_widgets.rd](https://github.com/PistonDevelopers/conrod/blob/master/examples/all_widgets.rs), The code is broken into a number of different sections:
+Looking at [all_widgets.rs](https://github.com/PistonDevelopers/conrod/blob/master/examples/all_widgets.rs), The code is broken into a number of different sections:
 
   + Imports
   + Type aliases
@@ -79,7 +79,7 @@ use piston_window::{EventLoop, Glyphs, PistonWindow, UpdateEvent, WindowSettings
 use std::sync::mpsc;
 ```
 
-The `extern crate conrod` line should let our program use conrod's functionality, and the `#[macro_use]` attribute will let us use the `widget_ids!` macro that we'll use later. The `find_folder` crate is being used to locate an assets directory for the UI font. 
+The `extern crate conrod` line should let our program use conrod's functionality, and the `#[macro_use]` attribute will let us use the `widget_ids!` macro later on. The `find_folder` crate is being used to locate an assets directory for the UI font. 
 
 The `piston_window` crate defines a basic window configuration. This looks to be part of the configurable backend that piston advertises. The [Piston] crate itself seems to only provide an interface, while crates like `piston_window` provide implementations.
 
