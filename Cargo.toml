@@ -6,6 +6,9 @@ authors = ["Skylor R Schermer <skyschermer@gmail.com>"]
 [lib]
 name = "rampeditor"
 
+[dependencies]
+conrod = "*"
+
 # The development profile, used for `cargo build`
 [profile.dev]
 opt-level = 0  # Controls the --opt-level the compiler builds with

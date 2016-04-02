@@ -26,44 +26,30 @@ use rampeditor::*;
 // use std::fs::File;
 
 fn main() {
-	let mut pal = ZplPalette::new("Super Duper");
+	let mut pal = ZplPalette::new("Test Palette");
 	
-	println!("InsertRamp: {:?}", pal.apply(
-		InsertRamp::new(Address::new(0, 1, 0), Address::new(0, 1, 1), 6)
-			.make_sources(true)
-			.located_at(Address::new(1, 0, 0))
-	));
-
-	println!("InsertColor: {:?}", pal.apply(
+	pal.apply(
 		InsertColor::new(Color(50, 50, 78))
+			.located_at(Address::new(0, 0, 0))
+	).ok();
+
+	pal.apply(
+		InsertColor::new(Color(0, 0, 255))
+			.located_at(Address::new(0, 0, 1))
+	).ok();
+
+	pal.apply(
+		InsertRamp::new(Address::new(0, 0, 0), Address::new(0, 0, 1), 6)
 			.located_at(Address::new(0, 1, 0))
-			.overwrite(true)
-	));
+	).ok();
 
-	println!("InsertColors: {:?}", pal.apply(
-		RepeatOperation::new(Box::new(
-			InsertColor::new(Color(50, 50, 78))
-		)).repeat(3)
-	));
-
-	println!("InsertColor: {:?}", pal.apply(
-		InsertColor::new(Color(10, 230, 55))
-			.located_at(Address::new(0, 1, 1))
-			.overwrite(true)
-	));
-
-	println!("InsertWatcher: {:?}", pal.apply(
-		InsertWatcher::new(Address::new(1, 0, 3))
-	));
-
-	// pal.add_color(Color(1, 2, 3)).ok().unwrap();
-	println!("Undo: {:?}", pal.undo());
-	println!("Redo: {:?}", pal.redo());
 	println!("{}", pal);
 
-	// let mut file = File::create("testpal.zpl").ok().unwrap();
-	// pal.write_palette(&mut file).ok().unwrap();
+	pal.apply(
+		InsertColor::new(Color(0, 100, 100))
+			.located_at(Address::new(0, 0, 0))
+			.overwrite(true)
+	).ok();
 
-	// pal.remove_slot(Address::new(0,0,0));
-	// println!("{:#?}", pal);
+	println!("{}", pal);
 }
