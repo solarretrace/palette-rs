@@ -30,6 +30,19 @@
 pub mod rgb;
 #[warn(missing_docs)]
 pub mod hsl;
+#[warn(missing_docs)]
+pub mod cmyk;
 
 pub use color::rgb::*;
 pub use color::hsl::*;
+pub use color::cmyk::*;
+
+
+/// Standard SRGB gamma correction matrix. This gives the relative intensities 
+/// of each RGB color component.
+#[allow(dead_code)]
+const SRGB_GAMMA_CORRECTION: [[f32; 3]; 3] = [
+	[0.2125, 0.0,	  0.0	],
+	[0.0,	  0.7154, 0.0	],
+	[0.0,	  0.0,	  0.0721]
+];

@@ -16,7 +16,7 @@ pub mod color;
 
 
 
-pub use color::{Rgb, Hsl};
+pub use color::{Rgb, Hsl, Cmyk};
 pub use palette::{Palette, PaletteExtensions, BasicPalette, ZplPalette};
 pub use address::{Address, Group, Selection};
 pub use interval::{Bound, Interval};
