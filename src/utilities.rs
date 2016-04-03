@@ -76,20 +76,20 @@ pub fn clamped(value: f32, lower_bound: f32, upper_bound: f32) -> f32 {
 /// # Examples
 ///
 /// ```rust
-/// # use rampeditor::utilities::lerp;
-/// let a = lerp(50, 100, 0.5);
+/// # use rampeditor::utilities::lerp_u8;
+/// let a = lerp_u8(50, 100, 0.5);
 ///
 /// assert_eq!(a, 75); // a is 50% between 50 and 100.
 /// ```
 ///
 /// ```rust
-/// # use rampeditor::utilities::lerp;
-/// let a = lerp(15, 5, 0.2);
-/// let b = lerp(5, 15, 0.8);
+/// # use rampeditor::utilities::lerp_u8;
+/// let a = lerp_u8(15, 5, 0.2);
+/// let b = lerp_u8(5, 15, 0.8);
 ///
 /// assert_eq!(a, b); // Reversed argument order inverts the ratio.
 /// ```
-pub fn lerp(start: u8, end:u8, amount: f32) -> u8 {
+pub fn lerp_u8(start: u8, end:u8, amount: f32) -> u8 {
 	let a = if start > end {
 		1.0 - clamped(amount, 0.0, 1.0)
 	} else {
@@ -99,4 +99,37 @@ pub fn lerp(start: u8, end:u8, amount: f32) -> u8 {
 	let s = if start > end {end} else {start};
 	let e = if start > end {start} else {end};
 	(((e-s) as f32) * a) as u8 + s
+}
+
+
+/// Performs a linear interpolation between `start` and `end`, returning the 
+/// value located at the ratio given by `amount`, which is clamped between 0 and
+/// 1. 
+///
+/// # Examples
+///
+/// ```rust
+/// # use rampeditor::utilities::{lerp_f32, nearly_equal};
+/// let a = lerp_f32(50.0, 100.0, 0.5);
+///
+/// assert!(nearly_equal(a, 75.0)); // a is 50% between 50 and 100.
+/// ```
+///
+/// ```rust
+/// # use rampeditor::utilities::{lerp_f32, nearly_equal};
+/// let a = lerp_f32(15.0, 5.0, 0.2);
+/// let b = lerp_f32(5.0, 15.0, 0.8);
+///
+/// assert!(nearly_equal(a, b)); // Reversed argument order inverts the ratio.
+/// ```
+pub fn lerp_f32(start: f32, end:f32, amount: f32) -> f32 {
+	let a = if start > end {
+		1.0 - clamped(amount, 0.0, 1.0)
+	} else {
+		clamped(amount, 0.0, 1.0)
+	};
+
+	let s = if start > end {end} else {start};
+	let e = if start > end {start} else {end};
+	(((e-s) as f32) * a) as f32 + s
 }

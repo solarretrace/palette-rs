@@ -25,10 +25,12 @@
 //! Defines a 24-bit RGB color space.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use utilities::lerp;
+use super::Hsl;
+use utilities::lerp_u8;
 
 use std::convert::From;
 use std::fmt;
+use std::u8;
 
 ////////////////////////////////////////////////////////////////////////////////
 // RgbChannel
@@ -36,6 +38,7 @@ use std::fmt;
 /// The type of a single RGB channel.
 pub type RgbChannel = u8;
 
+const RGB_CHANNEL_MAX: RgbChannel = u8::MAX;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Rgb
@@ -63,9 +66,9 @@ impl Rgb {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::color::Rgb;
+	/// # use rampeditor::color::Rgb;
 	/// 
-	/// let c = Rgb::new(10, 20, 30);
+	/// let c = Rgb {r: 10, g: 20, b: 30};
 	///
 	/// assert_eq!(c.red(), 10);
 	/// ```
@@ -78,9 +81,9 @@ impl Rgb {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::color::Rgb;
+	/// # use rampeditor::color::Rgb;
 	/// 
-	/// let c = Rgb::new(10, 20, 30);
+	/// let c = Rgb {r: 10, g: 20, b: 30};
 	///
 	/// assert_eq!(c.green(), 20);
 	/// ```
@@ -93,9 +96,9 @@ impl Rgb {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::color::Rgb;
+	/// # use rampeditor::color::Rgb;
 	/// 
-	/// let c = Rgb::new(10, 20, 30);
+	/// let c = Rgb {r: 10, g: 20, b: 30};
 	///
 	/// assert_eq!(c.blue(), 30);
 	/// ```
@@ -108,9 +111,9 @@ impl Rgb {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::color::Rgb;
+	/// # use rampeditor::color::Rgb;
 	/// 
-	/// let mut c = Rgb::new(10, 20, 30);
+	/// let mut c = Rgb {r: 10, g: 20, b: 30};
 	/// c.set_red(99);
 	///
 	/// assert_eq!(c.red(), 99);
@@ -124,9 +127,9 @@ impl Rgb {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::color::Rgb;
+	/// # use rampeditor::color::Rgb;
 	/// 
-	/// let mut c = Rgb::new(10, 20, 30);
+	/// let mut c = Rgb {r: 10, g: 20, b: 30};
 	/// c.set_green(99);
 	///
 	/// assert_eq!(c.green(), 99);
@@ -141,15 +144,20 @@ impl Rgb {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::color::Rgb;
+	/// # use rampeditor::color::Rgb;
 	/// 
-	/// let mut c = Rgb::new(10, 20, 30);
+	/// let mut c = Rgb {r: 10, g: 20, b: 30};
 	/// c.set_blue(99);
 	///
 	/// assert_eq!(c.blue(), 99);
 	/// ```
 	pub fn set_blue(&mut self, value: RgbChannel) {
 		self.b = value;
+	}
+
+	/// Returns an array containing the [R, G, B] component channels.
+	pub fn components(&self) -> [RgbChannel; 3] {
+		[self.r, self.g, self.b]
 	}
 
 	/// Performs an RGB component-wise linear interpolation between the colors 
@@ -160,17 +168,17 @@ impl Rgb {
 	///
 	/// ```rust
 	/// # use rampeditor::color::Rgb;
-	/// let c1 = Rgb::new(0, 10, 20);
-	/// let c2 = Rgb::new(100, 0, 80);
+	/// let c1 = Rgb {r: 0, g: 10, b: 20};
+	/// let c2 = Rgb {r: 100, g: 0, b: 80};
 	///
 	/// let c = Rgb::lerp(c1, c2, 0.5);
-	/// assert_eq!(c, Rgb::new(50, 5, 50));
+	/// assert_eq!(c, Rgb {r: 50, g: 5, b: 50});
 	/// ```
 	///
 	/// ```rust
-	/// # use rampeditor::color::Rgb;;
-	/// let c1 = Rgb::new(189, 44, 23);
-	/// let c2 = Rgb::new(35, 255, 180);
+	/// # use rampeditor::color::Rgb;
+	/// let c1 = Rgb {r: 189, g: 44, b: 23};
+	/// let c2 = Rgb {r: 35, g: 255, b: 180};
 	///
 	/// let a = Rgb::lerp(c1, c2, 0.42);
 	/// let b = Rgb::lerp(c2, c1, 0.58);
@@ -182,23 +190,27 @@ impl Rgb {
 		let s = start.into();
 		let e = end.into();
 		Rgb {
-			r: lerp(s.r, e.r, amount),
-			g: lerp(s.g, e.g, amount),
-			b: lerp(s.b, e.b, amount),
+			r: lerp_u8(s.r, e.r, amount),
+			g: lerp_u8(s.g, e.g, amount),
+			b: lerp_u8(s.b, e.b, amount),
 		}
+	}
+
+	/// Returns the distance between the given colors in RGB color space.
+	pub fn distance<C>(start: C, end: C) -> f32 
+		where C: Into<Self> + Sized
+	{
+		let s = start.into();
+		let e = end.into();
+		
+		let r = (s.r - e.r) as f32;
+		let g = (s.g - e.g) as f32;
+		let b = (s.b - e.b) as f32;
+
+		(r*r + g*g + b*b).sqrt()
 	}
 }
 
-
-impl From<u32> for Rgb {
-	fn from(hex: u32) -> Rgb {
-		Rgb {
-			r: ((hex & 0xFF0000) >> 16) as RgbChannel,
-			g: ((hex & 0x00FF00) >> 8) as RgbChannel,
-			b: ((hex & 0x0000FF)) as RgbChannel,
-		}
-	}
-}
 
 
 impl fmt::Display for Rgb {
@@ -218,3 +230,49 @@ impl fmt::LowerHex for Rgb {
 		write!(f, "#{:02x}{:02x}{:02x}", self.r, self.g, self.b)
 	}
 }
+
+
+
+impl From<u32> for Rgb {
+	fn from(hex: u32) -> Rgb {
+		Rgb {
+			r: ((hex & 0xFF0000) >> 16) as RgbChannel,
+			g: ((hex & 0x00FF00) >> 8) as RgbChannel,
+			b: ((hex & 0x0000FF)) as RgbChannel,
+		}
+	}
+}
+
+impl From<[RgbChannel; 3]> for Rgb {
+	fn from(components: [RgbChannel; 3]) -> Rgb {
+		Rgb {
+			r: components[0],
+			g: components[1],
+			b: components[2],
+		}
+	}
+}
+
+impl From<Hsl> for Rgb {
+	fn from(hsl: Hsl) -> Rgb {
+		let (h, s, l) = (hsl.hue(), hsl.saturation(), hsl.lightness());
+
+		let ci: f32 = s * (1.0 - (2.0 * l - 1.0).abs());
+		let xi: f32 = ci * (1.0 - (h / 60.0 % 2.0 - 1.0).abs());
+		let mi: f32 = l - ci / 2.0;
+
+		let c = ((RGB_CHANNEL_MAX as f32) * ci) as RgbChannel;
+		let x = ((RGB_CHANNEL_MAX as f32) * xi) as RgbChannel;
+		let m = ((RGB_CHANNEL_MAX as f32) * mi) as RgbChannel;
+
+		match h {
+			h if   0.0 <= h && h <  60.0 => Rgb::new(c+m, x+m,   m),
+			h if  60.0 <= h && h < 120.0 => Rgb::new(x+m, c+m,   m),
+			h if 120.0 <= h && h < 180.0 => Rgb::new(  m, c+m, x+m),
+			h if 180.0 <= h && h < 240.0 => Rgb::new(  m, x+m, c+m),
+			h if 240.0 <= h && h < 300.0 => Rgb::new(x+m,   m, c+m),
+			_ => Rgb::new(c+m, m, x+m),
+		}
+	}
+}
+

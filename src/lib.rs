@@ -11,11 +11,12 @@ pub mod utilities;
 #[warn(missing_docs)]
 pub mod interval;
 
+#[warn(missing_docs)]
 pub mod color;
 
 
 
-pub use color::Color;
+pub use color::{Rgb, Hsl};
 pub use palette::{Palette, PaletteExtensions, BasicPalette, ZplPalette};
 pub use address::{Address, Group, Selection};
 pub use interval::{Bound, Interval};

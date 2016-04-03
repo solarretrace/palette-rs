@@ -25,7 +25,11 @@
 //! Defines the color space that the Palette is compatable with.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-pub mod rgb;
 
+#[warn(missing_docs)]
+pub mod rgb;
+#[warn(missing_docs)]
+pub mod hsl;
 
 pub use color::rgb::*;
+pub use color::hsl::*;
