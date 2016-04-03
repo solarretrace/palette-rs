@@ -46,6 +46,16 @@ use std::mem;
 /// use rampeditor::*;
 /// 
 /// let mut pal = BasicPalette::new("Example");
+///
+/// pal.apply_operation(Box::new(
+/// 	SequenceOperation::new(vec![
+///			Box::new(InsertColor::new(Rgb::new(10, 10, 10))),
+///			Box::new(InsertColor::new(Rgb::new(20, 20, 20)))
+///		])
+/// )).unwrap();
+///
+/// assert_eq!(pal.get_color(Address::new(0, 0, 0)), Some(Rgb::new(10, 10, 10)));
+/// assert_eq!(pal.get_color(Address::new(0, 0, 1)), Some(Rgb::new(20, 20, 20)));
 /// ```
 #[derive(Debug)]
 pub struct SequenceOperation {
@@ -98,6 +108,16 @@ impl PaletteOperation for SequenceOperation {
 /// use rampeditor::*;
 /// 
 /// let mut pal = BasicPalette::new("Example");
+///
+/// pal.apply_operation(Box::new(
+/// 	RepeatOperation::new(Box::new(
+///			InsertColor::new(Rgb::new(50, 50, 78))
+///		)).repeat(3)
+/// )).unwrap();
+///
+/// assert_eq!(pal.get_color(Address::new(0, 0, 0)), Some(Rgb::new(50, 50, 78)));
+/// assert_eq!(pal.get_color(Address::new(0, 0, 1)), Some(Rgb::new(50, 50, 78)));
+/// assert_eq!(pal.get_color(Address::new(0, 0, 2)), Some(Rgb::new(50, 50, 78)));
 /// ```
 #[derive(Debug)]
 pub struct RepeatOperation {

@@ -28,7 +28,7 @@
 use palette::operation::PaletteOperation;
 use palette;
 use address::Address;
-use color::Color;
+use color::Rgb;
 
 use std::fmt;
 use std::io::{Result, Write, Read};
@@ -49,7 +49,8 @@ pub trait PaletteExtensions : Palette {
 	fn apply<O>(&mut self, operation: O) -> palette::Result<()>
 		where O: PaletteOperation + 'static
 	{
-		println!("{:?}", operation.get_info());
+		// Defer to the Palette implementation, but box the operation for 
+		// convenience.
 		self.apply_operation(Box::new(operation))
 	}
 }
@@ -64,12 +65,15 @@ pub trait Palette : fmt::Debug {
 	fn new<S>(name: S) -> Self where S: Into<String>, Self: Sized;
 
 	/// Returns the color at the given address, or None if the slot is empty.
-	fn get_color(&self, address: Address) -> Option<Color>;
+	fn get_color(&self, address: Address) -> Option<Rgb>;
 
 	/// Returns the number of elements in the palette.
 	fn len(&self) -> usize;
 
-	/// Applies the given operation to the palette.
+	/// Applies the given operation to the palette. Usually, this will just 
+	/// defer to the PaletteOperation's apply method, but this could also 
+	/// provide extra functionality such as undo/redo and format-specific 
+	/// checks.
 	fn apply_operation(
 		&mut self, 
 		mut operation: Box<PaletteOperation>) 

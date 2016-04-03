@@ -30,7 +30,7 @@ use palette::data::PaletteData;
 use palette::operation::PaletteOperation;
 use palette;
 use address::{Address, Group};
-use color::Color;
+use color::Rgb;
 
 use std::fmt;
 use std::result;
@@ -53,7 +53,7 @@ impl Palette for BasicPalette {
 		pal
 	}
 
-	fn get_color(&self, address: Address) -> Option<Color> {
+	fn get_color(&self, address: Address) -> Option<Rgb> {
 		self.core.get_slot(address).and_then(|slot| slot.get_color())
 	}
 

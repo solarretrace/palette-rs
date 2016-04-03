@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use super::element::{Slot, ColorElement};
 use super::error::{Error, Result};
-use color::Color;
+use color::Rgb;
 use address::{Address, Group, 
 	PageCount, LineCount, ColumnCount, 
 	PAGE_MAX, LINE_MAX, COLUMN_MAX
@@ -127,12 +127,12 @@ impl PaletteData {
 	///
 	/// ```rust
 	/// use rampeditor::palette::data::PaletteData;
-	/// use rampeditor::{Address, Color};
+	/// use rampeditor::{Address, Rgb};
 	/// 
 	/// let mut dat: PaletteData = Default::default();
 	/// let slot = dat.create_slot(Address::new(1, 1, 1))
 	/// 	.ok()
-	/// 	.unwrap(); // Create slot with default Color and unwrap weak ref.
+	/// 	.unwrap(); // Create slot with default Rgb and unwrap weak ref.
 	///
 	/// assert_eq!(slot.get_color(), Some(Default::default()));
 	/// ```
@@ -444,12 +444,12 @@ impl fmt::Display for PaletteData {
 					try!(write!(f, "\t{}\n", meta));
 				}
 				cur_line_group = address.line_group();
-				try!(write!(f, "\tAddress   Color    Order\n"));
+				try!(write!(f, "\tAddress   Rgb    Order\n"));
 			}
 
 			try!(writeln!(f, "\t{:X}  {:X}  {:<5}",
 				address,
-				slot.borrow().get_color().unwrap_or(Color(0,0,0)),
+				slot.borrow().get_color().unwrap_or(Rgb::new(0,0,0)),
 				slot.borrow().get_order(),
 			));
 		}
@@ -471,3 +471,20 @@ impl Default for PaletteData {
 		}
 	}
 }
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// PaletteDataWithUndo
+////////////////////////////////////////////////////////////////////////////////
+// Encapsulates a single palette with undo/redo functionality.
+// pub struct PaletteDataWithUndo {
+// 	data: PaletteData,
+// }
+
+
+
+
+// impl Deref<PaletteData> for PaletteDataWithUndo {
+// }

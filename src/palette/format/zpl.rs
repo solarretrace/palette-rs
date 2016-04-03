@@ -30,7 +30,7 @@ use palette::data::PaletteData;
 use palette::operation::{PaletteOperation, OperationHistory};
 use palette;
 use address::{Address, Group, PageCount, LineCount, ColumnCount};
-use color::Color;
+use color::Rgb;
 
 use std::fmt;
 use std::result;
@@ -165,7 +165,7 @@ impl Palette for ZplPalette {
 		pal
 	}
 
-	fn get_color(&self, address: Address) -> Option<Color> {
+	fn get_color(&self, address: Address) -> Option<Rgb> {
 		self.core.get_slot(address).and_then(|slot| slot.get_color())
 	}
 
@@ -178,6 +178,7 @@ impl Palette for ZplPalette {
 	{
 		let entry = try!(operation.apply(&mut self.core));
 		self.undo_history.push(entry);
+		self.redo_history.clear();
 		Ok(())
 	}
 

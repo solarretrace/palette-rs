@@ -52,7 +52,7 @@ use address::Address;
 /// 
 /// let mut pal = BasicPalette::new("Example");
 ///
-/// pal.apply_operation(Box::new(InsertColor::new(Color(12, 50, 78)))).unwrap();
+/// pal.apply_operation(Box::new(InsertColor::new(Rgb::new(12, 50, 78)))).unwrap();
 /// pal.apply_operation(Box::new(CopyColor::new(Address::new(0, 0, 0)))).unwrap();
 ///
 /// assert_eq!(
@@ -99,7 +99,7 @@ impl CopyColor {
 impl PaletteOperation for CopyColor {
 	fn get_info(&self) -> OperationInfo {
 		OperationInfo {
-			name: "Copy Color",
+			name: "Copy Rgb",
 			details: Some(format!("{:?}", self))
 		}
 	}
@@ -154,7 +154,7 @@ impl PaletteOperation for CopyColor {
 /// 
 /// let mut pal = BasicPalette::new("Example");
 ///
-/// pal.apply_operation(Box::new(InsertColor::new(Color(12, 50, 78)))).unwrap();
+/// pal.apply_operation(Box::new(InsertColor::new(Rgb::new(12, 50, 78)))).unwrap();
 /// pal.apply_operation(Box::new(InsertWatcher::new(Address::new(0, 0, 0)))).unwrap();
 ///
 /// assert_eq!(

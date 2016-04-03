@@ -37,7 +37,7 @@ use palette::data::PaletteData;
 use palette::element::ColorElement;
 use palette::operation::Undo;
 use address::Address;
-use color::lerp_rgb;
+use color::Rgb;
 
 
 
@@ -54,15 +54,15 @@ use color::lerp_rgb;
 /// 
 /// let mut pal = BasicPalette::new("Example");
 ///
-/// pal.apply_operation(Box::new(InsertColor::new(Color(0, 0, 0)))).unwrap();
-/// pal.apply_operation(Box::new(InsertColor::new(Color(150, 100, 50)))).unwrap();
+/// pal.apply_operation(Box::new(InsertColor::new(Rgb::new(0, 0, 0)))).unwrap();
+/// pal.apply_operation(Box::new(InsertColor::new(Rgb::new(150, 100, 50)))).unwrap();
 /// pal.apply_operation(Box::new(InsertRamp::new(
 /// 	Address::new(0, 0, 0),
 /// 	Address::new(0, 0, 1),
 /// 	5
 /// ))).unwrap();
 ///
-/// assert_eq!(pal.get_color(Address::new(0, 0, 4)), Some(Color(75, 50, 25)));
+/// assert_eq!(pal.get_color(Address::new(0, 0, 4)), Some(Rgb::new(75, 50, 25)));
 /// assert_eq!(pal.len(), 7);
 /// 
 /// ```
@@ -159,7 +159,7 @@ impl PaletteOperation for InsertRamp {
 			let am = (1.0 / (self.count + 1) as f32) * (i + 1) as f32;
 
 			let new_element = ColorElement::Mixed {
-				mix: Box::new(move |colors| lerp_rgb(colors[0], colors[1], am)),
+				mix: Box::new(move |colors| Rgb::lerp(colors[0], colors[1], am)),
 				sources: vec![src_from.clone(), src_to.clone()]
 			};
 

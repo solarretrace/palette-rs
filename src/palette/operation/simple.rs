@@ -31,7 +31,7 @@ use palette::{Result, Error};
 use palette::data::PaletteData;
 use palette::element::ColorElement;
 use address::Address;
-use color::Color;
+use color::Rgb;
 
 
 
@@ -47,15 +47,15 @@ use color::Color;
 /// 
 /// let mut pal = BasicPalette::new("Example");
 ///
-/// pal.apply_operation(Box::new(InsertColor::new(Color(12, 50, 78)))).unwrap();
+/// pal.apply_operation(Box::new(InsertColor::new(Rgb::new(12, 50, 78)))).unwrap();
 ///
-/// assert_eq!(pal.get_color(Address::new(0, 0, 0)), Some(Color(12, 50, 78)));
+/// assert_eq!(pal.get_color(Address::new(0, 0, 0)), Some(Rgb::new(12, 50, 78)));
 /// 
 /// ```
 #[derive(Debug, Clone, Copy, Default)]
 pub struct InsertColor {
-	/// The Color to add to the paletee.
-	color: Color,
+	/// The Rgb to add to the paletee.
+	color: Rgb,
 	/// The location to start placing the colors.
 	location: Option<Address>,
 	/// Whether to overwrite existing elements when generating new ones.
@@ -66,7 +66,7 @@ pub struct InsertColor {
 impl InsertColor {
 	/// Creates a new InsertColor operation.
 	#[inline]
-	pub fn new(color: Color) -> InsertColor {
+	pub fn new(color: Rgb) -> InsertColor {
 		InsertColor {
 			color: color,
 			location: None,
@@ -91,7 +91,7 @@ impl InsertColor {
 impl PaletteOperation for InsertColor {
 	fn get_info(&self) -> OperationInfo {
 		OperationInfo {
-			name: "Insert Color",
+			name: "Insert Rgb",
 			details: Some(format!("{:?}", self))
 		}
 	}
@@ -146,7 +146,7 @@ impl PaletteOperation for InsertColor {
 /// 
 /// let mut pal = BasicPalette::new("Example");
 ///
-/// pal.apply_operation(Box::new(InsertColor::new(Color(12, 50, 78)))).unwrap();
+/// pal.apply_operation(Box::new(InsertColor::new(Rgb::new(12, 50, 78)))).unwrap();
 /// pal.apply_operation(Box::new(RemoveElement::new(Address::new(0, 0, 0)))).unwrap();
 /// 
 /// assert_eq!(pal.len(), 0);
