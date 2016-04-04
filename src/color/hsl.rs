@@ -54,7 +54,7 @@ impl Hsl {
 			|| !saturation.is_finite() 
 			|| !lightness.is_finite()
 		{
-			panic!("invalid argument to Hsl::new {:?}{:?}{:?}",
+			panic!("invalid argument at Hsl::new({:?}, {:?}, {:?})",
 				hue, saturation, lightness
 			);
 		}
@@ -129,7 +129,7 @@ impl Hsl {
 	/// ```
 	pub fn set_hue(&mut self, value: f32) {
 		if !value.is_finite() {
-			panic!("invalid argument to Hsl::set_hue {:?}", value);
+			panic!("invalid argument at Hsl::set_hue({:?})", value);
 		}
 		self.h = (value + (if value < 0.0 {360.0} else {0.0})) % 360.0;
 	}
@@ -149,7 +149,7 @@ impl Hsl {
 	/// ```
 	pub fn set_saturation(&mut self, value: f32) {
 		if !value.is_finite() {
-			panic!("invalid argument to Hsl::set_saturation {:?}", value);
+			panic!("invalid argument at Hsl::set_saturation({:?})", value);
 		}
 		self.s = clamped(value, 0.0, 1.0);;
 	}
@@ -170,7 +170,7 @@ impl Hsl {
 	/// ```
 	pub fn set_lightness(&mut self, value: f32) {
 		if !value.is_finite() {
-			panic!("invalid argument to Hsl::set_lightness {:?}", value);
+			panic!("invalid argument at Hsl::set_lightness({:?})", value);
 		}
 		self.l = clamped(value, 0.0, 1.0);
 	}
@@ -215,6 +215,9 @@ impl Hsl {
 	pub fn lerp<C>(start: C, end: C, amount: f32) -> Self 
 		where C: Into<Self> + Sized
 	{
+		if !amount.is_finite() {
+			panic!("invalid argument at Hsl::lerp(_, _, {:?}", amount);
+		}
 		let s = start.into();
 		let e = end.into();
 		Hsl {
@@ -281,13 +284,22 @@ impl From<(f32, f32, f32)> for Hsl {
 
 impl From<Cmyk> for Hsl {
 	fn from(cmyk: Cmyk) -> Self {
-		unimplemented!()
+		Hsl::from(Rgb::from(cmyk))
 	}
 }
 
 
 impl From<Rgb> for Hsl {
 	fn from(rgb: Rgb) -> Self {
+		// When 0 ≤ H < 360, 0 ≤ S ≤ 1 and 0 ≤ L ≤ 1:
+		// C = (1 - |2L - 1|) × S
+		// X = C × (1 - |(H / 60º) mod 2 - 1|)
+		// m = L - C/2
+
+		// (R,G,B) = ((R'+m)×255, (G'+m)×255,(B'+m)×255)
 		unimplemented!()
+
+
 	}
 }
+
