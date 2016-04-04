@@ -26,16 +26,19 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
-#[warn(missing_docs)]
-pub mod rgb;
-#[warn(missing_docs)]
-pub mod hsl;
+
 #[warn(missing_docs)]
 pub mod cmyk;
 
-pub use color::rgb::*;
-pub use color::hsl::*;
+#[warn(missing_docs)]
+pub mod hsl;
+
+#[warn(missing_docs)]
+pub mod rgb;
+
 pub use color::cmyk::*;
+pub use color::hsl::*;
+pub use color::rgb::*;
 
 
 /// Standard SRGB gamma correction matrix. This gives the relative intensities 

@@ -25,20 +25,12 @@
 //! Defines a 24-bit RGB color space.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::Hsl;
-use utilities::lerp_u8;
+use super::{Cmyk, Hsl};
+use utilities::{lerp_u8, clamped};
 
 use std::convert::From;
 use std::fmt;
 use std::u8;
-
-////////////////////////////////////////////////////////////////////////////////
-// RgbChannel
-////////////////////////////////////////////////////////////////////////////////
-/// The type of a single RGB channel.
-pub type RgbChannel = u8;
-
-const RGB_CHANNEL_MAX: RgbChannel = u8::MAX;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Rgb
@@ -47,17 +39,17 @@ const RGB_CHANNEL_MAX: RgbChannel = u8::MAX;
 #[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone, Copy, Default)]
 pub struct Rgb {
 	/// The red channel.
-	pub r: RgbChannel,
+	pub r: u8,
 	/// The green channel.
-	pub g: RgbChannel,
+	pub g: u8,
 	/// The blue channel.
-	pub b: RgbChannel,
+	pub b: u8,
 }
 
 
 impl Rgb {
 	/// Creates a new Rgb color.
-	pub fn new(red: RgbChannel, green: RgbChannel, blue: RgbChannel,) -> Self {
+	pub fn new(red: u8, green: u8, blue: u8,) -> Self {
 		Rgb {r: red, g: green, b: blue}
 	}
 
@@ -72,7 +64,7 @@ impl Rgb {
 	///
 	/// assert_eq!(c.red(), 10);
 	/// ```
-	pub fn red(&self) -> RgbChannel {
+	pub fn red(&self) -> u8 {
 		self.r
 	}
 	
@@ -87,7 +79,7 @@ impl Rgb {
 	///
 	/// assert_eq!(c.green(), 20);
 	/// ```
-	pub fn green(&self) -> RgbChannel {
+	pub fn green(&self) -> u8 {
 		self.g
 	}
 	
@@ -102,7 +94,7 @@ impl Rgb {
 	///
 	/// assert_eq!(c.blue(), 30);
 	/// ```
-	pub fn blue(&self) -> RgbChannel {
+	pub fn blue(&self) -> u8 {
 		self.b
 	}
 	
@@ -118,7 +110,7 @@ impl Rgb {
 	///
 	/// assert_eq!(c.red(), 99);
 	/// ```
-	pub fn set_red(&mut self, value: RgbChannel) {
+	pub fn set_red(&mut self, value: u8) {
 		self.r = value;
 	}
 	
@@ -134,7 +126,7 @@ impl Rgb {
 	///
 	/// assert_eq!(c.green(), 99);
 	/// ```
-	pub fn set_green(&mut self, value: RgbChannel) {
+	pub fn set_green(&mut self, value: u8) {
 		self.g = value;
 	}
 
@@ -151,13 +143,28 @@ impl Rgb {
 	///
 	/// assert_eq!(c.blue(), 99);
 	/// ```
-	pub fn set_blue(&mut self, value: RgbChannel) {
+	pub fn set_blue(&mut self, value: u8) {
 		self.b = value;
 	}
 
-	/// Returns an array containing the [R, G, B] component channels.
-	pub fn components(&self) -> [RgbChannel; 3] {
+	/// Returns an array containing the [R, G, B] channel octets.
+	pub fn octets(&self) -> [u8; 3] {
 		[self.r, self.g, self.b]
+	}
+
+	/// Returns an array containing the [R, G, B] channel ratios.
+	pub fn ratios(&self) -> [f32; 3] {
+		let max = u8::MAX as f32;
+		[
+			self.r as f32 / max,
+			self.g as f32 / max, 
+			self.b as f32 / max,
+		]
+	}
+
+	/// Returns the RGB hex code.
+	pub fn hex(&self) -> u32 {
+		(self.r as u32) << 16 | (self.g as u32) << 8 | (self.b as u32)
 	}
 
 	/// Performs an RGB component-wise linear interpolation between the colors 
@@ -219,11 +226,13 @@ impl fmt::Display for Rgb {
 	}
 }
 
+
 impl fmt::UpperHex for Rgb {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
 		write!(f, "#{:02X}{:02X}{:02X}", self.r, self.g, self.b)
 	}
 }
+
 
 impl fmt::LowerHex for Rgb {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
@@ -232,38 +241,68 @@ impl fmt::LowerHex for Rgb {
 }
 
 
-
+////////////////////////////////////////////////////////////////////////////////
+// Rgb conversions
+////////////////////////////////////////////////////////////////////////////////
 impl From<u32> for Rgb {
-	fn from(hex: u32) -> Rgb {
+	fn from(hex: u32) -> Self {
 		Rgb {
-			r: ((hex & 0xFF0000) >> 16) as RgbChannel,
-			g: ((hex & 0x00FF00) >> 8) as RgbChannel,
-			b: ((hex & 0x0000FF)) as RgbChannel,
+			r: ((hex & 0xFF0000) >> 16) as u8,
+			g: ((hex & 0x00FF00) >> 8) as u8,
+			b: ((hex & 0x0000FF)) as u8,
 		}
 	}
 }
 
-impl From<[RgbChannel; 3]> for Rgb {
-	fn from(components: [RgbChannel; 3]) -> Rgb {
+
+impl From<[u8; 3]> for Rgb {
+	fn from(octets: [u8; 3]) -> Self {
 		Rgb {
-			r: components[0],
-			g: components[1],
-			b: components[2],
+			r: octets[0],
+			g: octets[1],
+			b: octets[2],
 		}
 	}
 }
+
+impl From<[f32; 3]> for Rgb {
+	fn from(ratios: [f32; 3]) -> Self {
+		Rgb {
+			r: (u8::MAX as f32 * clamped(ratios[0], 0f32, 1f32)) as u8,
+			g: (u8::MAX as f32 * clamped(ratios[1], 0f32, 1f32)) as u8,
+			b: (u8::MAX as f32 * clamped(ratios[2], 0f32, 1f32)) as u8,
+		}
+	}
+}
+
+
+impl From<Cmyk> for Rgb {
+	fn from(cmyk: Cmyk) -> Self {
+		let ratios = cmyk.ratios();
+		let cn = 1f32 - ratios[0];
+		let mn = 1f32 - ratios[1];
+		let yn = 1f32 - ratios[2];
+		let kn = 1f32 - ratios[3];
+		Rgb {
+			r: (u8::MAX as f32 * cn * kn) as u8,
+			g: (u8::MAX as f32 * mn * kn) as u8,
+			b: (u8::MAX as f32 * yn * kn) as u8,
+		}
+	}
+}
+
 
 impl From<Hsl> for Rgb {
-	fn from(hsl: Hsl) -> Rgb {
+	fn from(hsl: Hsl) -> Self {
 		let (h, s, l) = (hsl.hue(), hsl.saturation(), hsl.lightness());
 
 		let ci: f32 = s * (1.0 - (2.0 * l - 1.0).abs());
 		let xi: f32 = ci * (1.0 - (h / 60.0 % 2.0 - 1.0).abs());
 		let mi: f32 = l - ci / 2.0;
 
-		let c = ((RGB_CHANNEL_MAX as f32) * ci) as RgbChannel;
-		let x = ((RGB_CHANNEL_MAX as f32) * xi) as RgbChannel;
-		let m = ((RGB_CHANNEL_MAX as f32) * mi) as RgbChannel;
+		let c = ((u8::MAX as f32) * ci) as u8;
+		let x = ((u8::MAX as f32) * xi) as u8;
+		let m = ((u8::MAX as f32) * mi) as u8;
 
 		match h {
 			h if   0.0 <= h && h <  60.0 => Rgb::new(c+m, x+m,   m),

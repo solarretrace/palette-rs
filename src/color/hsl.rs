@@ -25,16 +25,12 @@
 //! Defines a 96-bit HSL color space.
 //!
 ////////////////////////////////////////////////////////////////////////////////
+use super::{Cmyk, Rgb};
 use utilities::{lerp_f32, clamped};
 
 use std::convert::From;
 use std::fmt;
 
-////////////////////////////////////////////////////////////////////////////////
-// HslChannel
-////////////////////////////////////////////////////////////////////////////////
-/// The type of a single HSL channel.
-pub type HslChannel = f32;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Hsl
@@ -43,17 +39,26 @@ pub type HslChannel = f32;
 #[derive(Debug, PartialOrd, PartialEq, Clone, Copy, Default)]
 pub struct Hsl {
 	/// The hue channel.
-	h: HslChannel,
+	h: f32,
 	/// The saturation channel.
-	s: HslChannel,
+	s: f32,
 	/// The lightness channel.
-	l: HslChannel,
+	l: f32,
 }
 
 
 impl Hsl {
 	/// Creates a new Hsl color.
-	pub fn new(hue: HslChannel, saturation: HslChannel, lightness: HslChannel,) -> Self {
+	pub fn new(hue: f32, saturation: f32, lightness: f32,) -> Self {
+		if !hue.is_finite() 
+			|| !saturation.is_finite() 
+			|| !lightness.is_finite()
+		{
+			panic!("invalid argument to Hsl::new {:?}{:?}{:?}",
+				hue, saturation, lightness
+			);
+		}
+
 		let mut hsl = Hsl {h: 0.0, s: 0.0, l: 0.0};
 		hsl.set_hue(hue);
 		hsl.set_saturation(saturation);
@@ -73,7 +78,7 @@ impl Hsl {
 	///
 	/// assert!(nearly_equal(c.hue(), 10.0));
 	/// ```
-	pub fn hue(&self) -> HslChannel {
+	pub fn hue(&self) -> f32 {
 		self.h
 	}
 	
@@ -89,7 +94,7 @@ impl Hsl {
 	///
 	/// assert!(nearly_equal(c.saturation(), 0.2));
 	/// ```
-	pub fn saturation(&self) -> HslChannel {
+	pub fn saturation(&self) -> f32 {
 		self.s
 	}
 	
@@ -105,7 +110,7 @@ impl Hsl {
 	///
 	/// assert!(nearly_equal(c.lightness(), 0.3));
 	/// ```
-	pub fn lightness(&self) -> HslChannel {
+	pub fn lightness(&self) -> f32 {
 		self.l
 	}
 	
@@ -122,7 +127,10 @@ impl Hsl {
 	///
 	/// assert!(nearly_equal(c.hue(), 99.0));
 	/// ```
-	pub fn set_hue(&mut self, value: HslChannel) {
+	pub fn set_hue(&mut self, value: f32) {
+		if !value.is_finite() {
+			panic!("invalid argument to Hsl::set_hue {:?}", value);
+		}
 		self.h = (value + (if value < 0.0 {360.0} else {0.0})) % 360.0;
 	}
 	
@@ -139,7 +147,10 @@ impl Hsl {
 	///
 	/// assert!(nearly_equal(c.saturation(), 0.99));
 	/// ```
-	pub fn set_saturation(&mut self, value: HslChannel) {
+	pub fn set_saturation(&mut self, value: f32) {
+		if !value.is_finite() {
+			panic!("invalid argument to Hsl::set_saturation {:?}", value);
+		}
 		self.s = clamped(value, 0.0, 1.0);;
 	}
 
@@ -157,12 +168,15 @@ impl Hsl {
 	///
 	/// assert!(nearly_equal(c.lightness(), 0.99));
 	/// ```
-	pub fn set_lightness(&mut self, value: HslChannel) {
+	pub fn set_lightness(&mut self, value: f32) {
+		if !value.is_finite() {
+			panic!("invalid argument to Hsl::set_lightness {:?}", value);
+		}
 		self.l = clamped(value, 0.0, 1.0);
 	}
 
-	/// Returns an array containing the [H, S, L] component channels.
-	pub fn components(&self) -> [HslChannel; 3] {
+	/// Returns an array containing the [H, S, L] channels.
+	pub fn components(&self) -> [f32; 3] {
 		[self.h, self.s, self.l]
 	}
 
@@ -217,10 +231,12 @@ impl Hsl {
 		let s = start.into();
 		let e = end.into();
 		
-		let csx = s.l * s.h.cos() * 2.0;
-		let csy = s.l * s.h.sin() * 2.0;
-		let cex = e.l * e.h.cos() * 2.0;
-		let cey = e.l * e.h.sin() * 2.0;
+		let (shx, shy) = s.h.sin_cos();
+		let (ehx, ehy) = e.h.sin_cos();
+		let csx = s.l * shx * 2.0;
+		let csy = s.l * shy * 2.0;
+		let cex = e.l * ehx * 2.0;
+		let cey = e.l * ehy * 2.0;
 
 		let s = s.s - e.s;
 		let x = csx - cex;
@@ -231,8 +247,18 @@ impl Hsl {
 }
 
 
-impl From<[HslChannel; 3]> for Hsl {
-	fn from(components: [HslChannel; 3]) -> Hsl {
+impl fmt::Display for Hsl {
+	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+		write!(f, "{:?}", self)
+	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Hslconversions
+////////////////////////////////////////////////////////////////////////////////
+impl From<[f32; 3]> for Hsl {
+	fn from(components: [f32; 3]) -> Self {
 		Hsl {
 			h: components[0],
 			s: components[1],
@@ -241,8 +267,9 @@ impl From<[HslChannel; 3]> for Hsl {
 	}
 }
 
-impl From<(HslChannel, HslChannel, HslChannel)> for Hsl {
-	fn from(components: (HslChannel, HslChannel, HslChannel)) -> Hsl {
+
+impl From<(f32, f32, f32)> for Hsl {
+	fn from(components: (f32, f32, f32)) -> Self {
 		Hsl {
 			h: components.0,
 			s: components.1,
@@ -251,8 +278,16 @@ impl From<(HslChannel, HslChannel, HslChannel)> for Hsl {
 	}
 }
 
-impl fmt::Display for Hsl {
-	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		write!(f, "{:?}", self)
+
+impl From<Cmyk> for Hsl {
+	fn from(cmyk: Cmyk) -> Self {
+		unimplemented!()
+	}
+}
+
+
+impl From<Rgb> for Hsl {
+	fn from(rgb: Rgb) -> Self {
+		unimplemented!()
 	}
 }

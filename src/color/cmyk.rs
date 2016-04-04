@@ -25,17 +25,12 @@
 //! Defines a 32-bit CMYK color space.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use utilities::lerp_u8;
+use super::{Hsl, Rgb};
+use utilities::{lerp_u8, clamped};
 
 use std::convert::From;
 use std::fmt;
-
-////////////////////////////////////////////////////////////////////////////////
-// CmykChannel
-////////////////////////////////////////////////////////////////////////////////
-/// The type of a single CMYK channel.
-pub type CmykChannel = u8;
-
+use std::u8;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -45,23 +40,23 @@ pub type CmykChannel = u8;
 #[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone, Copy, Default)]
 pub struct Cmyk {
 	/// The cyan channel.
-	pub c: CmykChannel,
+	pub c: u8,
 	/// The magenta channel.
-	pub m: CmykChannel,
+	pub m: u8,
 	/// The yellow channel.
-	pub y: CmykChannel,
+	pub y: u8,
 	/// The key (black) channel.
-	pub k: CmykChannel,
+	pub k: u8,
 }
 
 
 impl Cmyk {
 	/// Creates a new Cmyk color.
 	pub fn new(
-		cyan: CmykChannel, 
-		magenta: CmykChannel, 
-		yellow: CmykChannel,
-		key: CmykChannel) 
+		cyan: u8, 
+		magenta: u8, 
+		yellow: u8,
+		key: u8) 
 		-> Self 
 	{
 		Cmyk {c: cyan, m: magenta, y: yellow, k: key}
@@ -78,7 +73,7 @@ impl Cmyk {
 	///
 	/// assert_eq!(c.cyan(), 10);
 	/// ```
-	pub fn cyan(&self) -> CmykChannel {
+	pub fn cyan(&self) -> u8 {
 		self.c
 	}
 	
@@ -93,7 +88,7 @@ impl Cmyk {
 	///
 	/// assert_eq!(c.magenta(), 20);
 	/// ```
-	pub fn magenta(&self) -> CmykChannel {
+	pub fn magenta(&self) -> u8 {
 		self.m
 	}
 	
@@ -108,7 +103,7 @@ impl Cmyk {
 	///
 	/// assert_eq!(c.yellow(), 30);
 	/// ```
-	pub fn yellow(&self) -> CmykChannel {
+	pub fn yellow(&self) -> u8 {
 		self.y
 	}
 
@@ -123,7 +118,7 @@ impl Cmyk {
 	///
 	/// assert_eq!(c.key(), 40);
 	/// ```
-	pub fn key(&self) -> CmykChannel {
+	pub fn key(&self) -> u8 {
 		self.k
 	}
 	
@@ -139,7 +134,7 @@ impl Cmyk {
 	///
 	/// assert_eq!(c.cyan(), 99);
 	/// ```
-	pub fn set_cyan(&mut self, value: CmykChannel) {
+	pub fn set_cyan(&mut self, value: u8) {
 		self.c = value;
 	}
 	
@@ -155,7 +150,7 @@ impl Cmyk {
 	///
 	/// assert_eq!(c.magenta(), 99);
 	/// ```
-	pub fn set_magenta(&mut self, value: CmykChannel) {
+	pub fn set_magenta(&mut self, value: u8) {
 		self.m = value;
 	}
 
@@ -172,7 +167,7 @@ impl Cmyk {
 	///
 	/// assert_eq!(c.yellow(), 99);
 	/// ```
-	pub fn set_yellow(&mut self, value: CmykChannel) {
+	pub fn set_yellow(&mut self, value: u8) {
 		self.y = value;
 	}
 
@@ -188,13 +183,24 @@ impl Cmyk {
 	///
 	/// assert_eq!(c.key(), 99);
 	/// ```
-	pub fn set_key(&mut self, value: CmykChannel) {
+	pub fn set_key(&mut self, value: u8) {
 		self.k = value;
 	}
 
-	/// Returns an array containing the [R, G, B] component channels.
-	pub fn components(&self) -> [CmykChannel; 4] {
+	/// Returns an array containing the [C, M, Y, K] channels octets.
+	pub fn octets(&self) -> [u8; 4] {
 		[self.c, self.m, self.y, self.k]
+	}
+
+	/// Returns an array containing the [C, M, Y, K] channel ratios.
+	pub fn ratios(&self) -> [f32; 4] {
+		let max = u8::MAX as f32;
+		[
+			self.c as f32 / max,
+			self.m as f32 / max, 
+			self.y as f32 / max,
+			self.k as f32 / max,
+		]
 	}
 
 	/// Performs an CMYK component-wise linear interpolation between the colors 
@@ -251,18 +257,19 @@ impl Cmyk {
 }
 
 
-
 impl fmt::Display for Cmyk {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
 		write!(f, "{:?}", self)
 	}
 }
 
+
 impl fmt::UpperHex for Cmyk {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
 		write!(f, "#{:02X}{:02X}{:02X}{:02X}", self.c, self.m, self.y, self.k)
 	}
 }
+
 
 impl fmt::LowerHex for Cmyk {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
@@ -272,25 +279,71 @@ impl fmt::LowerHex for Cmyk {
 
 
 
+////////////////////////////////////////////////////////////////////////////////
+// Cmyk conversions
+////////////////////////////////////////////////////////////////////////////////
 impl From<u32> for Cmyk {
-	fn from(hex: u32) -> Cmyk {
+	fn from(hex: u32) -> Self {
 		Cmyk {
-			c: ((hex & 0xFF000000) >> 24) as CmykChannel,
-			m: ((hex & 0x00FF0000) >> 16) as CmykChannel,
-			y: ((hex & 0x0000FF00) >> 8) as CmykChannel,
-			k: ((hex & 0x000000FF)) as CmykChannel,
+			c: ((hex & 0xFF000000) >> 24) as u8,
+			m: ((hex & 0x00FF0000) >> 16) as u8,
+			y: ((hex & 0x0000FF00) >> 8) as u8,
+			k: ((hex & 0x000000FF)) as u8,
 		}
 	}
 }
 
-impl From<[CmykChannel; 4]> for Cmyk {
-	fn from(components: [CmykChannel; 4]) -> Cmyk {
+
+impl From<[u8; 4]> for Cmyk {
+	fn from(octets: [u8; 4]) -> Self {
 		Cmyk {
-			c: components[0],
-			m: components[1],
-			y: components[2],
-			k: components[3],
+			c: octets[0],
+			m: octets[1],
+			y: octets[2],
+			k: octets[3],
 		}
 	}
 }
 
+
+impl From<[f32; 4]> for Cmyk {
+	fn from(ratios: [f32; 4]) -> Self {
+		Cmyk {
+			c: (u8::MAX as f32 * clamped(ratios[0], 0f32, 1f32)) as u8,
+			m: (u8::MAX as f32 * clamped(ratios[1], 0f32, 1f32)) as u8,
+			y: (u8::MAX as f32 * clamped(ratios[2], 0f32, 1f32)) as u8,
+			k: (u8::MAX as f32 * clamped(ratios[3], 0f32, 1f32)) as u8,
+		}
+	}
+}
+
+
+impl From<Rgb> for Cmyk {
+	fn from(rgb: Rgb) -> Self {
+		let ratios = rgb.ratios();
+
+		let mut max = ratios[0];
+		if ratios[1] > max {max = ratios[1];}
+		if ratios[2] > max {max = ratios[2];}
+
+		let kn = 1f32 - max;
+		let cn = (1f32 - ratios[0] - kn) / max;
+		let mn = (1f32 - ratios[1] - kn) / max;
+		let yn = (1f32 - ratios[2] - kn) / max;
+
+		Cmyk {
+			c: (cn * u8::MAX as f32) as u8,
+			m: (mn * u8::MAX as f32) as u8,
+			y: (yn * u8::MAX as f32) as u8,
+			k: (kn * u8::MAX as f32) as u8,
+		}
+
+	}
+}
+
+
+impl From<Hsl> for Cmyk {
+	fn from(hsl: Hsl) -> Self {
+		Cmyk::from(Rgb::from(hsl))
+	}
+}
