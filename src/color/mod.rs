@@ -321,11 +321,10 @@ mod tests {
     use super::{Cmyk, Hsl, Rgb};
     use super::super::utilities::nearly_equal;
 
-    /// Tests color conversions.
-    #[test]
-    fn color_conversions() {
+	/// Tests color conversions for the color black.
+	#[test]
+    fn color_conversions_black() {
 
- 		// Black conversions.
  		let black = Rgb::from(0x000000);
  		let black_hsl = Hsl::from(black);
  		let black_cmyk = Cmyk::from(black);
@@ -344,8 +343,12 @@ mod tests {
  		let black_rgb_b = Rgb::from(black_cmyk);
  		println!("Testing Cmyk to Rgb. black = {:?}", black_rgb_b);
  		assert_eq!(black_rgb_b, black);
+ 	}
 
- 		// White conversions.
+	/// Tests color conversions for the color white.
+	#[test]
+ 	fn color_conversions_white() {
+
  		let white = Rgb::from(0xFFFFFF);
  		let white_hsl = Hsl::from(white);
  		let white_cmyk = Cmyk::from(white);
@@ -364,8 +367,12 @@ mod tests {
  		let white_rgb_b = Rgb::from(white_cmyk);
  		println!("Testing Cmyk to Rgb. white = {:?}", white_rgb_b);
  		assert_eq!(white_rgb_b, white);
+ 	}
 
- 		// Red conversions.
+	/// Tests color conversions for the color red.
+	#[test]
+ 	fn color_conversions_red() {
+
  		let red = Rgb::from(0xFF0000);
  		let red_hsl = Hsl::from(red);
  		let red_cmyk = Cmyk::from(red);
@@ -384,8 +391,12 @@ mod tests {
  		let red_rgb_b = Rgb::from(red_cmyk);
  		println!("Testing Cmyk to Rgb. red = {:?}", red_rgb_b);
  		assert_eq!(red_rgb_b, red);
+ 	}
 
- 		// Lime conversions.
+	/// Tests color conversions for the color lime.
+	#[test]
+ 	fn color_conversions_lime() {
+
  		let lime = Rgb::from(0x00FF00);
  		let lime_hsl = Hsl::from(lime);
  		let lime_cmyk = Cmyk::from(lime);
@@ -404,8 +415,12 @@ mod tests {
  		let lime_rgb_b = Rgb::from(lime_cmyk);
  		println!("Testing Cmyk to Rgb. lime = {:?}", lime_rgb_b);
  		assert_eq!(lime_rgb_b, lime);
+ 	}
 
- 		// Blue conversions.
+	/// Tests color conversions for the color blue.
+	#[test]
+ 	fn color_conversions_blue() {
+
  		let blue = Rgb::from(0x0000FF);
  		let blue_hsl = Hsl::from(blue);
  		let blue_cmyk = Cmyk::from(blue);
@@ -424,8 +439,12 @@ mod tests {
  		let blue_rgb_b = Rgb::from(blue_cmyk);
  		println!("Testing Cmyk to Rgb. blue = {:?}", blue_rgb_b);
  		assert_eq!(blue_rgb_b, blue);
+ 	}
 
- 		// Yellow conversions.
+	/// Tests color conversions for the color yellow.
+	#[test]
+ 	fn color_conversions_yellow() {
+
  		let yellow = Rgb::from(0xFFFF00);
  		let yellow_hsl = Hsl::from(yellow);
  		let yellow_cmyk = Cmyk::from(yellow);
@@ -444,8 +463,12 @@ mod tests {
  		let yellow_rgb_b = Rgb::from(yellow_cmyk);
  		println!("Testing Cmyk to Rgb. yellow = {:?}", yellow_rgb_b);
  		assert_eq!(yellow_rgb_b, yellow);
+ 	}
 
- 		// Cyan conversions.
+	/// Tests color conversions for the color cyan.
+	#[test]
+ 	fn color_conversions_cyan() {
+
  		let cyan = Rgb::from(0x00FFFF);
  		let cyan_hsl = Hsl::from(cyan);
  		let cyan_cmyk = Cmyk::from(cyan);
@@ -464,8 +487,12 @@ mod tests {
  		let cyan_rgb_b = Rgb::from(cyan_cmyk);
  		println!("Testing Cmyk to Rgb. cyan = {:?}", cyan_rgb_b);
  		assert_eq!(cyan_rgb_b, cyan);
+ 	}
 
- 		// Magenta conversions.
+	/// Tests color conversions for the color magenta.
+	#[test]
+ 	fn color_conversions_magenta() {
+
  		let magenta = Rgb::from(0xFF00FF);
  		let magenta_hsl = Hsl::from(magenta);
  		let magenta_cmyk = Cmyk::from(magenta);
@@ -484,8 +511,12 @@ mod tests {
  		let magenta_rgb_b = Rgb::from(magenta_cmyk);
  		println!("Testing Cmyk to Rgb. magenta = {:?}", magenta_rgb_b);
  		assert_eq!(magenta_rgb_b, magenta);
+ 	}
 
- 		// Silver conversions.
+	/// Tests color conversions for the color silver.
+	#[test]
+ 	fn color_conversions_silver() {
+
  		let silver = Rgb::from(0xC0C0C0);
  		let silver_hsl = Hsl::from(silver);
  		let silver_cmyk = Cmyk::from(silver);
@@ -497,15 +528,19 @@ mod tests {
  		assert_eq!(silver_cmyk.c, 0);
  		assert_eq!(silver_cmyk.m, 0);
  		assert_eq!(silver_cmyk.y, 0);
- 		assert_eq!(silver_cmyk.k, 63);
+ 		assert_eq!(silver_cmyk.k, 64);
  		let silver_rgb_a = Rgb::from(silver_hsl);
  		println!("Testing Hsl to Rgb. silver = {:?}", silver_rgb_a);
  		assert_eq!(silver_rgb_a, silver);
  		let silver_rgb_b = Rgb::from(silver_cmyk);
  		println!("Testing Cmyk to Rgb. silver = {:?}", silver_rgb_b);
  		assert_eq!(silver_rgb_b, silver);
+ 	}
 
- 		// Gray conversions.
+	/// Tests color conversions for the color gray.
+	#[test]
+ 	fn color_conversions_gray() {
+
  		let gray = Rgb::from(0x808080);
  		let gray_hsl = Hsl::from(gray);
  		let gray_cmyk = Cmyk::from(gray);
@@ -517,15 +552,19 @@ mod tests {
  		assert_eq!(gray_cmyk.c, 0);
  		assert_eq!(gray_cmyk.m, 0);
  		assert_eq!(gray_cmyk.y, 0);
- 		assert_eq!(gray_cmyk.k, 126);
+ 		assert_eq!(gray_cmyk.k, 127);
  		let gray_rgb_a = Rgb::from(gray_hsl);
  		println!("Testing Hsl to Rgb. gray = {:?}", gray_rgb_a);
  		assert_eq!(gray_rgb_a, gray);
  		let gray_rgb_b = Rgb::from(gray_cmyk);
  		println!("Testing Cmyk to Rgb. gray = {:?}", gray_rgb_b);
  		assert_eq!(gray_rgb_b, gray);
+ 	}
 
- 		// Maroon conversions.
+	/// Tests color conversions for the color maroon.
+	#[test]
+ 	fn color_conversions_maroon() {
+
  		let maroon = Rgb::from(0x800000);
  		let maroon_hsl = Hsl::from(maroon);
  		let maroon_cmyk = Cmyk::from(maroon);
@@ -537,15 +576,19 @@ mod tests {
  		assert_eq!(maroon_cmyk.c, 0);
  		assert_eq!(maroon_cmyk.m, 255);
  		assert_eq!(maroon_cmyk.y, 255);
- 		assert_eq!(maroon_cmyk.k, 126);
+ 		assert_eq!(maroon_cmyk.k, 127);
  		let maroon_rgb_a = Rgb::from(maroon_hsl);
  		println!("Testing Hsl to Rgb. maroon = {:?}", maroon_rgb_a);
  		assert_eq!(maroon_rgb_a, maroon);
  		let maroon_rgb_b = Rgb::from(maroon_cmyk);
  		println!("Testing Cmyk to Rgb. maroon = {:?}", maroon_rgb_b);
  		assert_eq!(maroon_rgb_b, maroon);
+ 	}
 
- 		// Olive conversions.
+	/// Tests color conversions for the color olive.
+	#[test]
+ 	fn color_conversions_olive() {
+
  		let olive = Rgb::from(0x808000);
  		let olive_hsl = Hsl::from(olive);
  		let olive_cmyk = Cmyk::from(olive);
@@ -557,15 +600,19 @@ mod tests {
  		assert_eq!(olive_cmyk.c, 0);
  		assert_eq!(olive_cmyk.m, 0);
  		assert_eq!(olive_cmyk.y, 255);
- 		assert_eq!(olive_cmyk.k, 126);
+ 		assert_eq!(olive_cmyk.k, 127);
  		let olive_rgb_a = Rgb::from(olive_hsl);
  		println!("Testing Hsl to Rgb. olive = {:?}", olive_rgb_a);
  		assert_eq!(olive_rgb_a, olive);
  		let olive_rgb_b = Rgb::from(olive_cmyk);
  		println!("Testing Cmyk to Rgb. olive = {:?}", olive_rgb_b);
  		assert_eq!(olive_rgb_b, olive);
+ 	}
 
- 		// Green conversions.
+	/// Tests color conversions for the color green.
+	#[test]
+ 	fn color_conversions_green() {
+
  		let green = Rgb::from(0x008000);
  		let green_hsl = Hsl::from(green);
  		let green_cmyk = Cmyk::from(green);
@@ -577,15 +624,19 @@ mod tests {
  		assert_eq!(green_cmyk.c, 255);
  		assert_eq!(green_cmyk.m, 0);
  		assert_eq!(green_cmyk.y, 255);
- 		assert_eq!(green_cmyk.k, 126);
+ 		assert_eq!(green_cmyk.k, 127);
  		let green_rgb_a = Rgb::from(green_hsl);
  		println!("Testing Hsl to Rgb. green = {:?}", green_rgb_a);
  		assert_eq!(green_rgb_a, green);
  		let green_rgb_b = Rgb::from(green_cmyk);
  		println!("Testing Cmyk to Rgb. green = {:?}", green_rgb_b);
  		assert_eq!(green_rgb_b, green);
+ 	}
 
- 		// Purple conversions.
+	/// Tests color conversions for the color purple.
+	#[test]
+ 	fn color_conversions_purple() {
+
  		let purple = Rgb::from(0x800080);
  		let purple_hsl = Hsl::from(purple);
  		let purple_cmyk = Cmyk::from(purple);
@@ -597,15 +648,19 @@ mod tests {
  		assert_eq!(purple_cmyk.c, 0);
  		assert_eq!(purple_cmyk.m, 255);
  		assert_eq!(purple_cmyk.y, 0);
- 		assert_eq!(purple_cmyk.k, 126);
+ 		assert_eq!(purple_cmyk.k, 127);
  		let purple_rgb_a = Rgb::from(purple_hsl);
  		println!("Testing Hsl to Rgb. purple = {:?}", purple_rgb_a);
  		assert_eq!(purple_rgb_a, purple);
  		let purple_rgb_b = Rgb::from(purple_cmyk);
  		println!("Testing Cmyk to Rgb. purple = {:?}", purple_rgb_b);
  		assert_eq!(purple_rgb_b, purple);
+ 	}
 
- 		// Teal conversions.
+	/// Tests color conversions for the color teal.
+	#[test]
+ 	fn color_conversions_teal() {
+
  		let teal = Rgb::from(0x008080);
  		let teal_hsl = Hsl::from(teal);
  		let teal_cmyk = Cmyk::from(teal);
@@ -617,15 +672,19 @@ mod tests {
  		assert_eq!(teal_cmyk.c, 255);
  		assert_eq!(teal_cmyk.m, 0);
  		assert_eq!(teal_cmyk.y, 0);
- 		assert_eq!(teal_cmyk.k, 126);
+ 		assert_eq!(teal_cmyk.k, 127);
  		let teal_rgb_a = Rgb::from(teal_hsl);
  		println!("Testing Hsl to Rgb. teal = {:?}", teal_rgb_a);
  		assert_eq!(teal_rgb_a, teal);
  		let teal_rgb_b = Rgb::from(teal_cmyk);
  		println!("Testing Cmyk to Rgb. teal = {:?}", teal_rgb_b);
  		assert_eq!(teal_rgb_b, teal);
+ 	}
 
- 		// Navy conversions.
+	/// Tests color conversions for the color navy.
+	#[test]
+ 	fn color_conversions_navy() {
+
  		let navy = Rgb::from(0x000080);
  		let navy_hsl = Hsl::from(navy);
  		let navy_cmyk = Cmyk::from(navy);
@@ -637,7 +696,7 @@ mod tests {
  		assert_eq!(navy_cmyk.c, 255);
  		assert_eq!(navy_cmyk.m, 255);
  		assert_eq!(navy_cmyk.y, 0);
- 		assert_eq!(navy_cmyk.k, 126);
+ 		assert_eq!(navy_cmyk.k, 127);
  		let navy_rgb_a = Rgb::from(navy_hsl);
  		println!("Testing Hsl to Rgb. navy = {:?}", navy_rgb_a);
  		assert_eq!(navy_rgb_a, navy);
