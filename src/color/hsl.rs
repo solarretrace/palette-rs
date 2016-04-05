@@ -26,7 +26,7 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 use super::{Cmyk, Rgb};
-use utilities::{lerp_f32, clamped};
+use utilities::{lerp_f32, clamped, nearly_equal};
 
 use std::convert::From;
 use std::fmt;
@@ -38,18 +38,18 @@ use std::fmt;
 /// The encoded HSL color.
 #[derive(Debug, PartialOrd, PartialEq, Clone, Copy, Default)]
 pub struct Hsl {
-	/// The hue channel.
+	/// The hue component.
 	h: f32,
-	/// The saturation channel.
+	/// The saturation component.
 	s: f32,
-	/// The lightness channel.
+	/// The lightness component.
 	l: f32,
 }
 
 
 impl Hsl {
 	/// Creates a new Hsl color.
-	pub fn new(hue: f32, saturation: f32, lightness: f32,) -> Self {
+	pub fn new(hue: f32, saturation: f32, lightness: f32) -> Self {
 		if !hue.is_finite() 
 			|| !saturation.is_finite() 
 			|| !lightness.is_finite()
@@ -175,7 +175,7 @@ impl Hsl {
 		self.l = clamped(value, 0.0, 1.0);
 	}
 
-	/// Returns an array containing the [H, S, L] channels.
+	/// Returns an array containing the [H, S, L] components.
 	pub fn components(&self) -> [f32; 3] {
 		[self.h, self.s, self.l]
 	}
@@ -291,15 +291,37 @@ impl From<Cmyk> for Hsl {
 
 impl From<Rgb> for Hsl {
 	fn from(rgb: Rgb) -> Self {
-		// When 0 ≤ H < 360, 0 ≤ S ≤ 1 and 0 ≤ L ≤ 1:
-		// C = (1 - |2L - 1|) × S
-		// X = C × (1 - |(H / 60º) mod 2 - 1|)
-		// m = L - C/2
+		let ratios = rgb.ratios();
 
-		// (R,G,B) = ((R'+m)×255, (G'+m)×255,(B'+m)×255)
-		unimplemented!()
+		let mut max = ratios[0];
+		if ratios[1] > max {max = ratios[1];}
+		if ratios[2] > max {max = ratios[2];}
 
+		let mut min = ratios[0];
+		if ratios[1] < min {min = ratios[1];}
+		if ratios[2] < min {min = ratios[2];}
 
+		let delta = max - min;
+
+		let l = (max + min) / 2f32;
+
+		let s = if nearly_equal(delta, 0f32) { 
+			0f32
+		} else {
+			delta / (1f32 - (2f32 * l - 1f32))
+		};
+
+		let h = 60f32 * if nearly_equal(delta, 0f32) {
+			0f32
+		} else if max == ratios[0] {
+			((ratios[1] + ratios[2]) / delta)
+		} else if max == ratios[0] {
+			(ratios[0] + ratios[2]) / delta + 2f32
+		} else {
+			(ratios[0] + ratios[1]) / delta + 4f32
+		};
+
+		Hsl {h: h, s: s, l: l}
 	}
 }
 

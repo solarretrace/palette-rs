@@ -38,22 +38,22 @@ use std::u8;
 /// The encoded RGB color.
 #[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone, Copy, Default)]
 pub struct Rgb {
-	/// The red channel.
+	/// The red component.
 	pub r: u8,
-	/// The green channel.
+	/// The green component.
 	pub g: u8,
-	/// The blue channel.
+	/// The blue component.
 	pub b: u8,
 }
 
 
 impl Rgb {
 	/// Creates a new Rgb color.
-	pub fn new(red: u8, green: u8, blue: u8,) -> Self {
+	pub fn new(red: u8, green: u8, blue: u8) -> Self {
 		Rgb {r: red, g: green, b: blue}
 	}
 
-	/// Returns the red channel.
+	/// Returns the red component.
 	///
 	/// # Example
 	///
@@ -68,7 +68,7 @@ impl Rgb {
 		self.r
 	}
 	
-	/// Returns the green channel.
+	/// Returns the green component.
 	///
 	/// # Example
 	///
@@ -83,7 +83,7 @@ impl Rgb {
 		self.g
 	}
 	
-	/// Returns the blue channel.
+	/// Returns the blue component.
 	///
 	/// # Example
 	///
@@ -98,7 +98,7 @@ impl Rgb {
 		self.b
 	}
 	
-	/// Sets the red channel.
+	/// Sets the red component.
 	///
 	/// # Example
 	///
@@ -114,7 +114,7 @@ impl Rgb {
 		self.r = value;
 	}
 	
-	/// Sets the green channel.
+	/// Sets the green component.
 	///
 	/// # Example
 	///
@@ -131,7 +131,7 @@ impl Rgb {
 	}
 
 
-	/// Sets the blue channel.
+	/// Sets the blue component.
 	///
 	/// # Example
 	///
@@ -147,12 +147,12 @@ impl Rgb {
 		self.b = value;
 	}
 
-	/// Returns an array containing the [R, G, B] channel octets.
+	/// Returns an array containing the [R, G, B] component octets.
 	pub fn octets(&self) -> [u8; 3] {
 		[self.r, self.g, self.b]
 	}
 
-	/// Returns an array containing the [R, G, B] channel ratios.
+	/// Returns an array containing the [R, G, B] component ratios.
 	pub fn ratios(&self) -> [f32; 3] {
 		let max = u8::MAX as f32;
 		[

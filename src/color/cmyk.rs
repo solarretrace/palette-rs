@@ -39,13 +39,13 @@ use std::u8;
 /// The encoded CMYK color.
 #[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone, Copy, Default)]
 pub struct Cmyk {
-	/// The cyan channel.
+	/// The cyan component.
 	pub c: u8,
-	/// The magenta channel.
+	/// The magenta component.
 	pub m: u8,
-	/// The yellow channel.
+	/// The yellow component.
 	pub y: u8,
-	/// The key (black) channel.
+	/// The key (black) component.
 	pub k: u8,
 }
 
@@ -62,7 +62,7 @@ impl Cmyk {
 		Cmyk {c: cyan, m: magenta, y: yellow, k: key}
 	}
 
-	/// Returns the cyan channel.
+	/// Returns the cyan component.
 	///
 	/// # Example
 	///
@@ -77,7 +77,7 @@ impl Cmyk {
 		self.c
 	}
 	
-	/// Returns the magenta channel.
+	/// Returns the magenta component.
 	///
 	/// # Example
 	///
@@ -92,7 +92,7 @@ impl Cmyk {
 		self.m
 	}
 	
-	/// Returns the yellow channel.
+	/// Returns the yellow component.
 	///
 	/// # Example
 	///
@@ -107,7 +107,7 @@ impl Cmyk {
 		self.y
 	}
 
-	/// Returns the key channel.
+	/// Returns the key component.
 	///
 	/// # Example
 	///
@@ -122,7 +122,7 @@ impl Cmyk {
 		self.k
 	}
 	
-	/// Sets the cyan channel.
+	/// Sets the cyan component.
 	///
 	/// # Example
 	///
@@ -138,7 +138,7 @@ impl Cmyk {
 		self.c = value;
 	}
 	
-	/// Sets the magenta channel.
+	/// Sets the magenta component.
 	///
 	/// # Example
 	///
@@ -155,7 +155,7 @@ impl Cmyk {
 	}
 
 
-	/// Sets the yellow channel.
+	/// Sets the yellow component.
 	///
 	/// # Example
 	///
@@ -171,7 +171,7 @@ impl Cmyk {
 		self.y = value;
 	}
 
-	/// Sets the key channel.
+	/// Sets the key component.
 	///
 	/// # Example
 	///
@@ -187,12 +187,12 @@ impl Cmyk {
 		self.k = value;
 	}
 
-	/// Returns an array containing the [C, M, Y, K] channels octets.
+	/// Returns an array containing the [C, M, Y, K] components octets.
 	pub fn octets(&self) -> [u8; 4] {
 		[self.c, self.m, self.y, self.k]
 	}
 
-	/// Returns an array containing the [C, M, Y, K] channel ratios.
+	/// Returns an array containing the [C, M, Y, K] component ratios.
 	pub fn ratios(&self) -> [f32; 4] {
 		let max = u8::MAX as f32;
 		[
@@ -203,7 +203,15 @@ impl Cmyk {
 		]
 	}
 
-	/// Performs an CMYK component-wise linear interpolation between the colors 
+	/// Returns the CMYK hex code.
+	pub fn hex(&self) -> u32 {
+		(self.c as u32) << 24 | 
+		(self.m as u32) << 16 | 
+		(self.y as u32) << 8 | 
+		(self.k as u32)
+	}
+
+	/// Performs a CMYK component-wise linear interpolation between the colors 
 	/// `start` and `end`, returning the color located at the ratio given by 
 	/// `amount`, which is clamped between 1 and 0.
 	///
