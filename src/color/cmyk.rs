@@ -26,7 +26,7 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 use super::{Hsl, Rgb};
-use utilities::{lerp_u8, clamped};
+use utilities::{lerp_u8, clamped, nearly_equal};
 
 use std::convert::From;
 use std::fmt;
@@ -197,7 +197,7 @@ impl Cmyk {
 		let max = u8::MAX as f32;
 		[
 			self.c as f32 / max,
-			self.m as f32 / max, 
+			self.m as f32 / max,
 			self.y as f32 / max,
 			self.k as f32 / max,
 		]
@@ -320,10 +320,10 @@ impl From<[u8; 4]> for Cmyk {
 impl From<[f32; 4]> for Cmyk {
 	fn from(ratios: [f32; 4]) -> Self {
 		Cmyk {
-			c: (u8::MAX as f32 * clamped(ratios[0], 0f32, 1f32)) as u8,
-			m: (u8::MAX as f32 * clamped(ratios[1], 0f32, 1f32)) as u8,
-			y: (u8::MAX as f32 * clamped(ratios[2], 0f32, 1f32)) as u8,
-			k: (u8::MAX as f32 * clamped(ratios[3], 0f32, 1f32)) as u8,
+			c: (u8::MAX as f32 * clamped(ratios[0], 0.0, 1.0)) as u8,
+			m: (u8::MAX as f32 * clamped(ratios[1], 0.0, 1.0)) as u8,
+			y: (u8::MAX as f32 * clamped(ratios[2], 0.0, 1.0)) as u8,
+			k: (u8::MAX as f32 * clamped(ratios[3], 0.0, 1.0)) as u8,
 		}
 	}
 }
@@ -331,24 +331,31 @@ impl From<[f32; 4]> for Cmyk {
 
 impl From<Rgb> for Cmyk {
 	fn from(rgb: Rgb) -> Self {
+		// Find min, max, index of max, and delta.
 		let ratios = rgb.ratios();
+		let max = ratios
+			.into_iter()
+			.fold(ratios[0], |max, &x| {
+				if x > max {x} else {max}
+			});
 
-		let mut max = ratios[0];
-		if ratios[1] > max {max = ratios[1];}
-		if ratios[2] > max {max = ratios[2];}
+		if nearly_equal(max, 0.0) {
+			// No need to compute components for black.
+			Cmyk { c: 0, m: 0, y: 0, k: 255}
 
-		let kn = 1f32 - max;
-		let cn = (1f32 - ratios[0] - kn) / max;
-		let mn = (1f32 - ratios[1] - kn) / max;
-		let yn = (1f32 - ratios[2] - kn) / max;
-
-		Cmyk {
-			c: (cn * u8::MAX as f32) as u8,
-			m: (mn * u8::MAX as f32) as u8,
-			y: (yn * u8::MAX as f32) as u8,
-			k: (kn * u8::MAX as f32) as u8,
+		} else {
+			let kn = 1.0 - max;
+			let cn = (1.0 - ratios[0] - kn) / max;
+			let mn = (1.0 - ratios[1] - kn) / max;
+			let yn = (1.0 - ratios[2] - kn) / max;
+			
+			Cmyk {
+				c: (cn * u8::MAX as f32 + 0.5) as u8,
+				m: (mn * u8::MAX as f32 + 0.5) as u8,
+				y: (yn * u8::MAX as f32 + 0.5) as u8,
+				k: (kn * u8::MAX as f32 + 0.5) as u8,
+			}
 		}
-
 	}
 }
 

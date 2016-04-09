@@ -271,9 +271,9 @@ impl From<[u8; 3]> for Rgb {
 impl From<[f32; 3]> for Rgb {
 	fn from(ratios: [f32; 3]) -> Self {
 		Rgb {
-			r: (u8::MAX as f32 * clamped(ratios[0], 0f32, 1f32)) as u8,
-			g: (u8::MAX as f32 * clamped(ratios[1], 0f32, 1f32)) as u8,
-			b: (u8::MAX as f32 * clamped(ratios[2], 0f32, 1f32)) as u8,
+			r: (u8::MAX as f32 * clamped(ratios[0], 0.0, 1.0)) as u8,
+			g: (u8::MAX as f32 * clamped(ratios[1], 0.0, 1.0)) as u8,
+			b: (u8::MAX as f32 * clamped(ratios[2], 0.0, 1.0)) as u8,
 		}
 	}
 }
@@ -282,14 +282,15 @@ impl From<[f32; 3]> for Rgb {
 impl From<Cmyk> for Rgb {
 	fn from(cmyk: Cmyk) -> Self {
 		let ratios = cmyk.ratios();
-		let cn = 1f32 - ratios[0];
-		let mn = 1f32 - ratios[1];
-		let yn = 1f32 - ratios[2];
-		let kn = 1f32 - ratios[3];
+		let cn = 1.0 - ratios[0];
+		let mn = 1.0 - ratios[1];
+		let yn = 1.0 - ratios[2];
+		let kn = 1.0 - ratios[3];
+
 		Rgb {
-			r: (u8::MAX as f32 * cn * kn) as u8,
-			g: (u8::MAX as f32 * mn * kn) as u8,
-			b: (u8::MAX as f32 * yn * kn) as u8,
+			r: (u8::MAX as f32 * cn * kn + 0.5) as u8,
+			g: (u8::MAX as f32 * mn * kn + 0.5) as u8,
+			b: (u8::MAX as f32 * yn * kn + 0.5) as u8,
 		}
 	}
 }
@@ -299,22 +300,26 @@ impl From<Hsl> for Rgb {
 	fn from(hsl: Hsl) -> Self {
 		let (h, s, l) = (hsl.hue(), hsl.saturation(), hsl.lightness());
 
+		// Compute intermediate values.
 		let ci: f32 = s * (1.0 - (2.0 * l - 1.0).abs());
 		let xi: f32 = ci * (1.0 - (h / 60.0 % 2.0 - 1.0).abs());
 		let mi: f32 = l - ci / 2.0;
 
+		// Scale and cast.
 		let c = ((u8::MAX as f32) * ci) as u8;
 		let x = ((u8::MAX as f32) * xi) as u8;
 		let m = ((u8::MAX as f32) * mi) as u8;
 
+		// Use hue hextant to select RGB color.
 		match h {
 			h if   0.0 <= h && h <  60.0 => Rgb::new(c+m, x+m,   m),
 			h if  60.0 <= h && h < 120.0 => Rgb::new(x+m, c+m,   m),
 			h if 120.0 <= h && h < 180.0 => Rgb::new(  m, c+m, x+m),
 			h if 180.0 <= h && h < 240.0 => Rgb::new(  m, x+m, c+m),
 			h if 240.0 <= h && h < 300.0 => Rgb::new(x+m,   m, c+m),
-			_ => Rgb::new(c+m, m, x+m),
-		}
+			h if 300.0 <= h && h < 360.0 => Rgb::new(c+m,   m, x+m),
+			_ => unreachable!()
+		}		
 	}
 }
 

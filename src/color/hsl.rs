@@ -245,7 +245,7 @@ impl Hsl {
 		let x = csx - cex;
 		let y = csy - cey;
 
-		(s*s + x*x + y*y).sqrt() / 6f32.sqrt()
+		(s*s + x*x + y*y).sqrt() / 6.0f32.sqrt()
 	}
 }
 
@@ -291,37 +291,50 @@ impl From<Cmyk> for Hsl {
 
 impl From<Rgb> for Hsl {
 	fn from(rgb: Rgb) -> Self {
+		// Find min, max, index of max, and delta.
 		let ratios = rgb.ratios();
-
-		let mut max = ratios[0];
-		if ratios[1] > max {max = ratios[1];}
-		if ratios[2] > max {max = ratios[2];}
-
-		let mut min = ratios[0];
-		if ratios[1] < min {min = ratios[1];}
-		if ratios[2] < min {min = ratios[2];}
-
+		let (min, max, max_index, _) = ratios
+			.into_iter()
+			.fold((ratios[0], ratios[0], 0, 0), |(min, max, i, c), &x| {
+				match (x < min, x > max) {
+					(true, false) => (x, max, i, c+1),
+					(false, true) => (min, x, c, c+1),
+					_ => (min, max, i, c+1)
+				}
+			});
 		let delta = max - min;
 
-		let l = (max + min) / 2f32;
+		// Compute lightness.
+		let l = (max + min) / 2.0;
+		
+		if nearly_equal(delta, 0.0) {
+			// No need to compute saturation and hue for grayscale colors.
+			Hsl {h: 0.0, s: 0.0, l: l}
 
-		let s = if nearly_equal(delta, 0f32) { 
-			0f32
 		} else {
-			delta / (1f32 - (2f32 * l - 1f32))
-		};
 
-		let h = 60f32 * if nearly_equal(delta, 0f32) {
-			0f32
-		} else if max == ratios[0] {
-			((ratios[1] + ratios[2]) / delta)
-		} else if max == ratios[0] {
-			(ratios[0] + ratios[2]) / delta + 2f32
-		} else {
-			(ratios[0] + ratios[1]) / delta + 4f32
-		};
+			// Compute saturation.
+			let s = if l > 0.5 {
+				delta / (2.0 - delta)
+			} else {
+				delta / (max - min)
+			};
 
-		Hsl {h: h, s: s, l: l}
+			// Compute hue.
+			let mut h = 60.0 * match max_index {
+				0 => (ratios[1] - ratios[2]) / delta,
+				1 => (ratios[2] - ratios[0]) / delta + 2.0,
+				2 => (ratios[0] - ratios[1]) / delta + 4.0,
+				_ => unreachable!()
+			};
+
+			// Correct wrapping.
+			if h > 360.0 {h -= 360.0};
+			if h < 0.0 {h += 360.0};
+
+			Hsl {h: h, s: s, l: l}
+		}
+
 	}
 }
 

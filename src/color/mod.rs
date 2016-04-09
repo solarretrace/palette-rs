@@ -319,19 +319,22 @@ impl From<Rgb> for Color {
 #[cfg(test)]
 mod tests {
     use super::{Cmyk, Hsl, Rgb};
-    use super::super::utilities::nearly_equal;
+    use super::super::utilities::close;
+
+    const UNIT: f32 = 1.0 / 255.0;
 
 	/// Tests color conversions for the color black.
 	#[test]
-    fn color_conversions_black() {
+	fn color_conversions_black() {
+		println!("Unit {}", UNIT);
 
 		let black = Rgb::from(0x000000);
 		let black_hsl = Hsl::from(black);
 		let black_cmyk = Cmyk::from(black);
 		println!("Testing Rgb to Hsl. black = {:?}", black_hsl);
-		assert!(nearly_equal(black_hsl.hue(), 0f32));
-		assert!(nearly_equal(black_hsl.saturation() * 100f32, 0f32));
-		assert!(nearly_equal(black_hsl.lightness() * 100f32, 0f32));
+		assert!(close(black_hsl.hue(), 0.0, UNIT));
+		assert!(close(black_hsl.saturation(), 0.0, UNIT));
+		assert!(close(black_hsl.lightness(), 0.0, UNIT));
 		println!("Testing Rgb to Cmyk. black = {:?}", black_cmyk);
 		assert_eq!(black_cmyk.c, 0);
 		assert_eq!(black_cmyk.m, 0);
@@ -353,9 +356,9 @@ mod tests {
 		let white_hsl = Hsl::from(white);
 		let white_cmyk = Cmyk::from(white);
 		println!("Testing Rgb to Hsl. white = {:?}", white_hsl);
-		assert!(nearly_equal(white_hsl.hue(), 0f32));
-		assert!(nearly_equal(white_hsl.saturation() * 100f32, 0f32));
-		assert!(nearly_equal(white_hsl.lightness() * 100f32, 100f32));
+		assert!(close(white_hsl.hue(), 0.0, UNIT));
+		assert!(close(white_hsl.saturation(), 0.0, UNIT));
+		assert!(close(white_hsl.lightness(), 1.0, UNIT));
 		println!("Testing Rgb to Cmyk. white = {:?}", white_cmyk);
 		assert_eq!(white_cmyk.c, 0);
 		assert_eq!(white_cmyk.m, 0);
@@ -377,9 +380,9 @@ mod tests {
 		let red_hsl = Hsl::from(red);
 		let red_cmyk = Cmyk::from(red);
 		println!("Testing Rgb to Hsl. red = {:?}", red_hsl);
-		assert!(nearly_equal(red_hsl.hue(), 0f32));
-		assert!(nearly_equal(red_hsl.saturation() * 100f32, 100f32));
-		assert!(nearly_equal(red_hsl.lightness() * 100f32, 50f32));
+		assert!(close(red_hsl.hue(), 0.0, UNIT));
+		assert!(close(red_hsl.saturation() , 1.0, UNIT));
+		assert!(close(red_hsl.lightness(), 0.5, UNIT));
 		println!("Testing Rgb to Cmyk. red = {:?}", red_cmyk);
 		assert_eq!(red_cmyk.c, 0);
 		assert_eq!(red_cmyk.m, 255);
@@ -401,9 +404,9 @@ mod tests {
 		let lime_hsl = Hsl::from(lime);
 		let lime_cmyk = Cmyk::from(lime);
 		println!("Testing Rgb to Hsl. lime = {:?}", lime_hsl);
-		assert!(nearly_equal(lime_hsl.hue(), 120f32));
-		assert!(nearly_equal(lime_hsl.saturation() * 100f32, 100f32));
-		assert!(nearly_equal(lime_hsl.lightness() * 100f32, 50f32));
+		assert!(close(lime_hsl.hue(), 120.0, UNIT));
+		assert!(close(lime_hsl.saturation(), 1.0, UNIT));
+		assert!(close(lime_hsl.lightness(), 0.5, UNIT));
 		println!("Testing Rgb to Cmyk. lime = {:?}", lime_cmyk);
 		assert_eq!(lime_cmyk.c, 255);
 		assert_eq!(lime_cmyk.m, 0);
@@ -425,9 +428,9 @@ mod tests {
 		let blue_hsl = Hsl::from(blue);
 		let blue_cmyk = Cmyk::from(blue);
 		println!("Testing Rgb to Hsl. blue = {:?}", blue_hsl);
-		assert!(nearly_equal(blue_hsl.hue(), 240f32));
-		assert!(nearly_equal(blue_hsl.saturation() * 100f32, 100f32));
-		assert!(nearly_equal(blue_hsl.lightness() * 100f32, 50f32));
+		assert!(close(blue_hsl.hue(), 240.0, UNIT));
+		assert!(close(blue_hsl.saturation(), 1.0, UNIT));
+		assert!(close(blue_hsl.lightness(), 0.5, UNIT));
 		println!("Testing Rgb to Cmyk. blue = {:?}", blue_cmyk);
 		assert_eq!(blue_cmyk.c, 255);
 		assert_eq!(blue_cmyk.m, 255);
@@ -449,9 +452,9 @@ mod tests {
 		let yellow_hsl = Hsl::from(yellow);
 		let yellow_cmyk = Cmyk::from(yellow);
 		println!("Testing Rgb to Hsl. yellow = {:?}", yellow_hsl);
-		assert!(nearly_equal(yellow_hsl.hue(), 60f32));
-		assert!(nearly_equal(yellow_hsl.saturation() * 100f32, 100f32));
-		assert!(nearly_equal(yellow_hsl.lightness() * 100f32, 50f32));
+		assert!(close(yellow_hsl.hue(), 60.0, UNIT));
+		assert!(close(yellow_hsl.saturation(), 1.0, UNIT));
+		assert!(close(yellow_hsl.lightness(), 0.5, UNIT));
 		println!("Testing Rgb to Cmyk. yellow = {:?}", yellow_cmyk);
 		assert_eq!(yellow_cmyk.c, 0);
 		assert_eq!(yellow_cmyk.m, 0);
@@ -473,9 +476,9 @@ mod tests {
 		let cyan_hsl = Hsl::from(cyan);
 		let cyan_cmyk = Cmyk::from(cyan);
 		println!("Testing Rgb to Hsl. cyan = {:?}", cyan_hsl);
-		assert!(nearly_equal(cyan_hsl.hue(), 180f32));
-		assert!(nearly_equal(cyan_hsl.saturation() * 100f32, 100f32));
-		assert!(nearly_equal(cyan_hsl.lightness() * 100f32, 50f32));
+		assert!(close(cyan_hsl.hue(), 180.0, UNIT));
+		assert!(close(cyan_hsl.saturation(), 1.0, UNIT));
+		assert!(close(cyan_hsl.lightness(), 0.5, UNIT));
 		println!("Testing Rgb to Cmyk. cyan = {:?}", cyan_cmyk);
 		assert_eq!(cyan_cmyk.c, 255);
 		assert_eq!(cyan_cmyk.m, 0);
@@ -497,9 +500,9 @@ mod tests {
 		let magenta_hsl = Hsl::from(magenta);
 		let magenta_cmyk = Cmyk::from(magenta);
 		println!("Testing Rgb to Hsl. magenta = {:?}", magenta_hsl);
-		assert!(nearly_equal(magenta_hsl.hue(), 300f32));
-		assert!(nearly_equal(magenta_hsl.saturation() * 100f32, 100f32));
-		assert!(nearly_equal(magenta_hsl.lightness() * 100f32, 50f32));
+		assert!(close(magenta_hsl.hue(), 300.0, UNIT));
+		assert!(close(magenta_hsl.saturation(), 1.0, UNIT));
+		assert!(close(magenta_hsl.lightness(), 0.5, UNIT));
 		println!("Testing Rgb to Cmyk. magenta = {:?}", magenta_cmyk);
 		assert_eq!(magenta_cmyk.c, 0);
 		assert_eq!(magenta_cmyk.m, 255);
@@ -521,14 +524,14 @@ mod tests {
 		let silver_hsl = Hsl::from(silver);
 		let silver_cmyk = Cmyk::from(silver);
 		println!("Testing Rgb to Hsl. silver = {:?}", silver_hsl);
-		assert!(nearly_equal(silver_hsl.hue(), 0f32));
-		assert!(nearly_equal(silver_hsl.saturation() * 100f32, 0f32));
-		assert!(nearly_equal(silver_hsl.lightness() * 100f32, 75f32));
+		assert!(close(silver_hsl.hue(), 0.0, UNIT));
+		assert!(close(silver_hsl.saturation(), 0.0, UNIT));
+		assert!(close(silver_hsl.lightness(), 0.75, UNIT));
 		println!("Testing Rgb to Cmyk. silver = {:?}", silver_cmyk);
 		assert_eq!(silver_cmyk.c, 0);
 		assert_eq!(silver_cmyk.m, 0);
 		assert_eq!(silver_cmyk.y, 0);
-		assert_eq!(silver_cmyk.k, 64);
+		assert_eq!(silver_cmyk.k, 63);
 		let silver_rgb_a = Rgb::from(silver_hsl);
 		println!("Testing Hsl to Rgb. silver = {:?}", silver_rgb_a);
 		assert_eq!(silver_rgb_a, silver);
@@ -545,9 +548,9 @@ mod tests {
 		let gray_hsl = Hsl::from(gray);
 		let gray_cmyk = Cmyk::from(gray);
 		println!("Testing Rgb to Hsl. gray = {:?}", gray_hsl);
-		assert!(nearly_equal(gray_hsl.hue(), 0f32));
-		assert!(nearly_equal(gray_hsl.saturation() * 100f32, 0f32));
-		assert!(nearly_equal(gray_hsl.lightness() * 100f32, 50f32));
+		assert!(close(gray_hsl.hue(), 0.0, UNIT));
+		assert!(close(gray_hsl.saturation(), 0.0, UNIT));
+		assert!(close(gray_hsl.lightness(), 0.5, UNIT));
 		println!("Testing Rgb to Cmyk. gray = {:?}", gray_cmyk);
 		assert_eq!(gray_cmyk.c, 0);
 		assert_eq!(gray_cmyk.m, 0);
@@ -569,9 +572,9 @@ mod tests {
 		let maroon_hsl = Hsl::from(maroon);
 		let maroon_cmyk = Cmyk::from(maroon);
 		println!("Testing Rgb to Hsl. maroon = {:?}", maroon_hsl);
-		assert!(nearly_equal(maroon_hsl.hue(), 0f32));
-		assert!(nearly_equal(maroon_hsl.saturation() * 100f32, 100f32));
-		assert!(nearly_equal(maroon_hsl.lightness() * 100f32, 25f32));
+		assert!(close(maroon_hsl.hue(), 0.0, UNIT));
+		assert!(close(maroon_hsl.saturation(), 1.0, UNIT));
+		assert!(close(maroon_hsl.lightness(), 0.25, UNIT));
 		println!("Testing Rgb to Cmyk. maroon = {:?}", maroon_cmyk);
 		assert_eq!(maroon_cmyk.c, 0);
 		assert_eq!(maroon_cmyk.m, 255);
@@ -593,9 +596,9 @@ mod tests {
 		let olive_hsl = Hsl::from(olive);
 		let olive_cmyk = Cmyk::from(olive);
 		println!("Testing Rgb to Hsl. olive = {:?}", olive_hsl);
-		assert!(nearly_equal(olive_hsl.hue(), 60f32));
-		assert!(nearly_equal(olive_hsl.saturation() * 100f32, 100f32));
-		assert!(nearly_equal(olive_hsl.lightness() * 100f32, 25f32));
+		assert!(close(olive_hsl.hue(), 60.0, UNIT));
+		assert!(close(olive_hsl.saturation(), 1.0, UNIT));
+		assert!(close(olive_hsl.lightness(), 0.25, UNIT));
 		println!("Testing Rgb to Cmyk. olive = {:?}", olive_cmyk);
 		assert_eq!(olive_cmyk.c, 0);
 		assert_eq!(olive_cmyk.m, 0);
@@ -617,9 +620,9 @@ mod tests {
 		let green_hsl = Hsl::from(green);
 		let green_cmyk = Cmyk::from(green);
 		println!("Testing Rgb to Hsl. green = {:?}", green_hsl);
-		assert!(nearly_equal(green_hsl.hue(), 120f32));
-		assert!(nearly_equal(green_hsl.saturation() * 100f32, 100f32));
-		assert!(nearly_equal(green_hsl.lightness() * 100f32, 25f32));
+		assert!(close(green_hsl.hue(), 120.0, UNIT));
+		assert!(close(green_hsl.saturation(), 1.0, UNIT));
+		assert!(close(green_hsl.lightness(), 0.25, UNIT));
 		println!("Testing Rgb to Cmyk. green = {:?}", green_cmyk);
 		assert_eq!(green_cmyk.c, 255);
 		assert_eq!(green_cmyk.m, 0);
@@ -641,9 +644,9 @@ mod tests {
 		let purple_hsl = Hsl::from(purple);
 		let purple_cmyk = Cmyk::from(purple);
 		println!("Testing Rgb to Hsl. purple = {:?}", purple_hsl);
-		assert!(nearly_equal(purple_hsl.hue(), 300f32));
-		assert!(nearly_equal(purple_hsl.saturation() * 100f32, 100f32));
-		assert!(nearly_equal(purple_hsl.lightness() * 100f32, 25f32));
+		assert!(close(purple_hsl.hue(), 300.0, UNIT));
+		assert!(close(purple_hsl.saturation(), 1.0, UNIT));
+		assert!(close(purple_hsl.lightness(), 0.25, UNIT));
 		println!("Testing Rgb to Cmyk. purple = {:?}", purple_cmyk);
 		assert_eq!(purple_cmyk.c, 0);
 		assert_eq!(purple_cmyk.m, 255);
@@ -665,9 +668,9 @@ mod tests {
 		let teal_hsl = Hsl::from(teal);
 		let teal_cmyk = Cmyk::from(teal);
 		println!("Testing Rgb to Hsl. teal = {:?}", teal_hsl);
-		assert!(nearly_equal(teal_hsl.hue(), 180f32));
-		assert!(nearly_equal(teal_hsl.saturation() * 100f32, 100f32));
-		assert!(nearly_equal(teal_hsl.lightness() * 100f32, 25f32));
+		assert!(close(teal_hsl.hue(), 180.0, UNIT));
+		assert!(close(teal_hsl.saturation(), 1.0, UNIT));
+		assert!(close(teal_hsl.lightness(), 0.25, UNIT));
 		println!("Testing Rgb to Cmyk. teal = {:?}", teal_cmyk);
 		assert_eq!(teal_cmyk.c, 255);
 		assert_eq!(teal_cmyk.m, 0);
@@ -689,9 +692,9 @@ mod tests {
 		let navy_hsl = Hsl::from(navy);
 		let navy_cmyk = Cmyk::from(navy);
 		println!("Testing Rgb to Hsl. navy = {:?}", navy_hsl);
-		assert!(nearly_equal(navy_hsl.hue(), 240f32));
-		assert!(nearly_equal(navy_hsl.saturation() * 100f32, 100f32));
-		assert!(nearly_equal(navy_hsl.lightness() * 100f32, 25f32));
+		assert!(close(navy_hsl.hue(), 240.0, UNIT));
+		assert!(close(navy_hsl.saturation(), 1.0, UNIT));
+		assert!(close(navy_hsl.lightness(), 0.25, UNIT));
 		println!("Testing Rgb to Cmyk. navy = {:?}", navy_cmyk);
 		assert_eq!(navy_cmyk.c, 255);
 		assert_eq!(navy_cmyk.m, 255);

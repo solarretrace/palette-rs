@@ -30,6 +30,7 @@ use std::f32;
 
 /// Returns true if the given float values are nearly equal, taking into account
 /// relative error and infinites. 
+#[inline]
 pub fn nearly_equal(a: f32, b: f32) -> bool {
 	let abs_a = a.abs();
 	let abs_b = b.abs();
@@ -46,6 +47,12 @@ pub fn nearly_equal(a: f32, b: f32) -> bool {
 	}
 }
 
+/// Returns true if the given float values are nearly equal, taking into account
+/// relative error and infinites. 
+#[inline]
+pub fn close(a: f32, b: f32, precision: f32) -> bool {
+	(a - b).abs() < precision
+}
 
 /// Returns the given value clamped between the provided bounds.
 /// 
@@ -57,6 +64,7 @@ pub fn nearly_equal(a: f32, b: f32) -> bool {
 ///
 /// assert!(nearly_equal(a, 7.4));
 /// ```
+#[inline]
 pub fn clamped(value: f32, lower_bound: f32, upper_bound: f32) -> f32 {
 	assert!(lower_bound <= upper_bound);
 	if value < lower_bound {
@@ -89,6 +97,7 @@ pub fn clamped(value: f32, lower_bound: f32, upper_bound: f32) -> f32 {
 ///
 /// assert_eq!(a, b); // Reversed argument order inverts the ratio.
 /// ```
+#[inline]
 pub fn lerp_u8(start: u8, end:u8, amount: f32) -> u8 {
 	let a = if start > end {
 		1.0 - clamped(amount, 0.0, 1.0)
@@ -122,6 +131,7 @@ pub fn lerp_u8(start: u8, end:u8, amount: f32) -> u8 {
 ///
 /// assert!(nearly_equal(a, b)); // Reversed argument order inverts the ratio.
 /// ```
+#[inline]
 pub fn lerp_f32(start: f32, end:f32, amount: f32) -> f32 {
 	let a = if start > end {
 		1.0 - clamped(amount, 0.0, 1.0)
