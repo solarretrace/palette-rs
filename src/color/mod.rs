@@ -384,6 +384,17 @@ impl From<Rgb> for Color {
 	}
 }
 
+impl From<Hsv> for Color {
+	fn from(hsv: Hsv) -> Color {
+		Color {rgb: Rgb::from(hsv)}
+	}
+}
+
+impl From<Xyz> for Color {
+	fn from(xyz: Xyz) -> Color {
+		Color {rgb: Rgb::from(xyz)}
+	}
+}
 
 
 
