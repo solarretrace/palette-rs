@@ -25,7 +25,7 @@
 //! Defines a 24-bit RGB color space.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::{Cmyk, Hsl};
+use super::{Cmyk, Hsl, Hsv, Xyz};
 use utilities::{lerp_u8, clamped};
 
 use std::convert::From;
@@ -323,3 +323,44 @@ impl From<Hsl> for Rgb {
 	}
 }
 
+impl From<Hsv> for Rgb {
+	fn from(hsv: Hsv) -> Self {
+		let (h, s, v) = (hsv.hue(), hsv.saturation(), hsv.value());
+
+		let c = v * s;
+		let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
+		let m = v - c;
+
+		let (ri, gi, bi) = match h {
+			h if   0.0 <= h && h <  60.0 => (  c,   x, 0.0),
+			h if  60.0 <= h && h < 120.0 => (  x,   c, 0.0),
+			h if 120.0 <= h && h < 180.0 => (0.0,   c,   x),
+			h if 180.0 <= h && h < 240.0 => (0.0,   x,   c),
+			h if 240.0 <= h && h < 300.0 => (  x, 0.0,   c),
+			h if 300.0 <= h && h < 360.0 => (  c, 0.0,   x),
+			_ => unreachable!()		
+		};
+
+		Rgb {
+			r: ((ri + m) * (u8::MAX as f32)) as u8,
+			g: ((gi + m) * (u8::MAX as f32)) as u8,
+			b: ((bi + m) * (u8::MAX as f32)) as u8,
+		}
+	}
+}
+
+impl From<Xyz> for Rgb {
+	fn from(xyz: Xyz) -> Self {
+		let (x, y, z) = (xyz.x(), xyz.y(), xyz.z()); 
+
+		let ri = x *  3.2404542 + y * -1.5371385 + z * -0.4985314;
+		let gi = x * -0.9692660 + y *  1.8760108 + z *  0.0415560;
+		let bi = x *  0.0556434 + y * -0.2040259 + z *  1.0572252;
+
+		Rgb {
+			r: (ri * u8::MAX as f32) as u8,
+			g: (gi * u8::MAX as f32) as u8,
+			b: (bi * u8::MAX as f32) as u8,
+		}
+	}
+}
