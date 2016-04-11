@@ -25,7 +25,7 @@
 //! Defines simple color creation operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::common::{PaletteOperation, HistoryEntry, OperationInfo, set_target};
+use super::{PaletteOperation, HistoryEntry, OperationInfo, set_target};
 use super::undo::Undo;
 use palette::{Result, Error};
 use palette::data::PaletteData;

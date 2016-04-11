@@ -25,7 +25,7 @@
 //! Defines an undo operation to be returned by other operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::common::{PaletteOperation, HistoryEntry, OperationInfo};
+use super::{PaletteOperation, HistoryEntry, OperationInfo};
 use palette::Result;
 use palette::data::PaletteData;
 use palette::element::ColorElement;

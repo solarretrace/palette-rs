@@ -81,9 +81,9 @@ use std::sync::mpsc;
 
 The `extern crate conrod` line should let our program use conrod's functionality, and the `#[macro_use]` attribute will let us use the `widget_ids!` macro later on. The `find_folder` crate is being used to locate an assets directory for the UI font. 
 
-The `piston_window` crate defines a basic window configuration. This looks to be part of the configurable backend that piston advertises. The [Piston] crate itself seems to only provide an interface, while crates like `piston_window` provide implementations.
+The `piston_window` crate defines a basic window configuration. This looks to be part of the configurable backend that piston advertizes. The [Piston](https://github.com/PistonDevelopers/piston) crate itself seems to only provide an interface, while crates like `piston_window` provide implementations.
 
-The [`std::sync::mpsc`](https://doc.rust-lang.org/std/sync/mpsc/) module is providing channels for use in sending updates through a widget matrix. I'll look into how this works does later...
+The [`std::sync::mpsc`](https://doc.rust-lang.org/std/sync/mpsc/) module is providing channels for use in sending updates through a widget matrix. I'll look into how this works later...
 
 ## Type aliases
 
@@ -94,7 +94,7 @@ type Ui = conrod::Ui<Backend>;
 type UiCell<'a> = conrod::UiCell<'a, Backend>;
 ```
 
-This looks pretty straightforward. Just have to keep these in mind when reading forward.
+This looks pretty straightforward. Just have to keep these in mind.
 
 ## GUI state struct
 
@@ -224,7 +224,7 @@ Text::new("Widget Demonstration")
     .set(TITLE, ui);
 ```
 
-This is our first widget. The `top_left_with_margins_on` method it telling this widget to be overlapping the given widget. We see other widgets using `..._of` methods, which presumably means to place the widgets next to eachother. Here', we're placing it in the top left of the canvas using the given arguments as margin settings. This method is provided by the [`Positionable`](http://docs.piston.rs/conrod/conrod/trait.Positionable.html) trait, so we can see what it needs from there:
+This is our first 'real' widget. The `top_left_with_margins_on` method is telling this widget to overlap the given widget. We see other widgets using `..._of` methods, which presumably means to place the widgets next to each other instead. Here, we're placing it in the top left of the canvas using the given arguments as margin settings. This method is provided by the [`Positionable`](http://docs.piston.rs/conrod/conrod/trait.Positionable.html) trait, so we can see what it needs from there:
 
 ```rust
 fn top_left_with_margins_on<I>(self, other: I, top: Scalar, left: Scalar) -> Self where I: Into<Index> + Copy { ... }
@@ -238,7 +238,7 @@ Interactive widgets all seem to have a `react` method which takes a closure that
 .and_if(i == 0, |text| text.right_from(COLOR_SELECT, 30.0))
 ```
 
-Most of the rest of the builder methods seem quite obvious, except for maybe the `each_widget` method on the WidgetMatrix. This function takes a closure which provides the position of the required widget and returns the widget that goes in that position. This is where the `mpsc` channels come into play. Each of the generated widgets has a cloned copy of `elem_sender`, which it uses to send its identifying information and state through: Then, in the `set_widgets` function, we use the `elem_receiver` to try and receive updates from these elements. If we get an update, then we know which widget needs to have its state changed.
+Most of the rest of the builder methods seem quite obvious, except for maybe the `each_widget` method on the WidgetMatrix. This function takes a closure which provides the position of the required widget and returns the widget that goes in that position. This is where the `mpsc` channels come into play. Each of the generated widgets has a cloned copy of `elem_sender`, which it uses to send its identifying information and state through. Then, in the `set_widgets` function, we use the `elem_receiver` to try and receive updates from these elements. If we get an update, then we know which widget needs to have its state changed.
 
 A simplified version of the code looks like this:
 
@@ -291,7 +291,7 @@ With this analysis under our belts, we should be able to dive in and create a GU
 The Palette Editor
 ==================
 
-The palette editor is not your average 'collection of colors' editor. This is a *structured* palette editor, which means that colors are best defined by their relationships with other colors. You see, most images have color gradients. Rather than flatly specifying each color in the gradient, we want to specify the boundary colors of the gradient and an interpolation function. Furthermore, we may wish to apply blending and other transformations to the gradient. Our palette should be able to talk about colors in these terms, and allow us to iterate over the requested colors which will be generated lazily upon request.
+The palette editor is not your typical 'collection of colors' editor. This is a *structured* palette editor, which means that colors are best defined by their relationships with other colors. You see, most images have color gradients. Rather than flatly specifying each color in the gradient, we want to specify the boundary colors of the gradient and an interpolation function. Furthermore, we may wish to apply blending and other transformations to the gradient. Our palette should be able to talk about colors in these terms, and allow us to iterate over the requested colors which will be generated lazily upon request.
 
 Additionally, we'll need some way to arrange these colors in a user-friendly manner. Lets say you have a couple of different connected color structures, and you use these to represent different properties of your image. For example, you may have a 'wood color' ramp and a 'water color' ramp. We want to take all the colors associated with one ramp and seperate them from the other somehow. To do this, I'm using a 'Page/Line/Column' addressing scheme. This gives us a view of our colors such that we can look at a whole page of colors at once, with each page consisting of ramps in lines, and each color occupying a single column. This will make it more convenient to arrange and label colors, as well as applying operations to multiple colors at once.
 
@@ -379,8 +379,22 @@ Page 0:*:* - "Main" (Level 0) [Lines: 14] [Columns: 0]
     00:01:05  #000EE8  2
 ```
 
-Notice how all the ramp colors (which were dependent upon the inserted colors) change in responce to our overwriting of an existing color. In this way, our two original colors act as controls for the ramp. We could, if we wished, add additional ramps that depend upon other ramps. The only thing we can't do is add a dependency loop to the palette.
+Notice how all the ramp colors (which were dependent upon the inserted colors) change in response to our overwriting of an existing color. In this way, our two original colors act as controls for the ramp. We could, if we wished, add additional ramps that depend upon other ramps. The only thing we can't do is add a dependency loop to the palette.
 
 ## Onward
 
-With that said, we want to build a GUI for this thing! We need to display the colors in the palette. Switch our view to different pages. Provide a means for arranging colors, as well as selecting and modifying them. And we need to provide an interface for all the operations defined in the palette operation modules. (Which are only partially implemented at this point.) We also need color selection and file opening and saving features at some point.
+With that said, we want to build a GUI for this thing! We need to display the colors in the palette, switch our view to different pages, provide a means for arranging colors, as well as selecting and modifying them. And we need to provide an interface for all the operations defined in the palette operation modules. (Which are only partially implemented at this point.) We also need color selection and file opening and saving features at some point.
+
+The first thing we're going to do is build a new module for our GUI stuff.
+
++ rampeditor-rs
+  + gui
+    - mod.rs
+    - editor.rs
+
+Then build a first version of the state struct:
+
+```rust
+```
+
+

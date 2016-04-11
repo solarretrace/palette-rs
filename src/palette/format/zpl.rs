@@ -25,7 +25,7 @@
 //! Provides components for interacting with the ZPL palette format.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::common::{Palette, PaletteExtensions};
+use super::{Palette, PaletteExtensions};
 use palette::data::PaletteData;
 use palette::operation::{PaletteOperation, OperationHistory};
 use palette;

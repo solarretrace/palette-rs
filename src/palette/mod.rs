@@ -20,16 +20,12 @@
 
 #[warn(missing_docs)]
 pub mod error;
-
 #[warn(missing_docs)]
 pub mod element;
-
 #[warn(missing_docs)]
 pub mod data;
-
 #[warn(missing_docs)]
 pub mod operation;
-
 #[warn(missing_docs)]
 pub mod format;
 

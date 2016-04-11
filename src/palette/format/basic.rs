@@ -25,7 +25,7 @@
 //! Provides components for interacting with the default palette format.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::common::Palette;
+use super::Palette;
 use palette::data::PaletteData;
 use palette::operation::PaletteOperation;
 use palette;

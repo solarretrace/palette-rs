@@ -25,7 +25,7 @@
 //! Defines operations for duplicating elements.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::common::{
+use super::{
 	PaletteOperation, 
 	HistoryEntry, 
 	OperationInfo, 

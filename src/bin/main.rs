@@ -26,15 +26,63 @@ use rampeditor::*;
 // use std::fs::File;
 
 fn main() {
+	// let colors = vec![
+	// 	("Black", 0x000000),
+	// 	("White", 0xFFFFFF),
+	// 	("Red", 0xFF0000),
+	// 	("Lime", 0x00FF00),
+	// 	("Blue", 0x0000FF),
+	// 	("Yellow", 0xFFFF00),
+	// 	("Cyan", 0x00FFFF),
+	// 	("Magenta", 0xFF00FF),
+	// 	("Silver", 0xC0C0C0),
+	// 	("Gray", 0x808080),
+	// 	("Maroon", 0x800000),
+	// 	("Olive", 0x808000),
+	// 	("Green", 0x008000),
+	// 	("Purple", 0x800080),
+	// 	("Teal", 0x008080),
+	// 	("Navy", 0x000080),
+	// ];
+
+	// for (name, color) in colors {
+	// 	let rgb = Rgb::from(color);
+	// 	let hsl = Hsl::from(rgb);
+	// 	let hsv = Hsv::from(rgb);
+	// 	let cmyk = Cmyk::from(rgb);
+	// 	let xyz = Xyz::from(rgb);
+	// 	println!("{}\t{:X}\t{:?}\
+	// 		\n\t{:X}\t{:?}\
+	// 		\n\t{:X}\t{:?}\
+	// 		\n\t{:X}\t{:?}\
+	// 		\n\t{:X}\t{:?}\
+	// 		\n", 
+	// 		name,
+	// 		rgb, rgb,
+	// 		Rgb::from(cmyk), cmyk,
+	// 		Rgb::from(hsl), hsl,
+	// 		Rgb::from(hsv), hsv,
+	// 		Rgb::from(xyz), xyz);
+	// }
+
+	// let mut c = Color::new(0x89, 0x66, 0x00);
+	// println!("{:?}", c.hsv_components());
+	// for _ in 0..16 {
+	// 	// c.shift_hue(30.0);
+	// 	c.darken(0.1);
+	// 	println!("{:?}", c.hsv_components());
+	// }
+
+
 	let mut pal = ZplPalette::new("Test Palette");
 	
 	pal.apply(
-		InsertColor::new(Color(50, 50, 78))
+		InsertColor::new(Rgb::from(0x404088))
 			.located_at(Address::new(0, 0, 0))
 	).ok();
 
 	pal.apply(
-		InsertColor::new(Color(0, 0, 255))
+		InsertColor::new(Rgb::from(0x00CC00))
 			.located_at(Address::new(0, 0, 1))
 	).ok();
 
@@ -46,8 +94,8 @@ fn main() {
 	println!("{}", pal);
 
 	pal.apply(
-		InsertColor::new(Color(0, 100, 100))
-			.located_at(Address::new(0, 0, 0))
+		InsertColor::new(Rgb::from(0xFFFFFF))
+			.located_at(Address::new(0, 0, 1))
 			.overwrite(true)
 	).ok();
 

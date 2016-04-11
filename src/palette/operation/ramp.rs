@@ -25,7 +25,7 @@
 //! Defines ramp creation operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::common::{
+use super::{
 	PaletteOperation, 
 	HistoryEntry, 
 	OperationInfo, 

@@ -25,7 +25,7 @@
 //! Defines operations for combining multiple operations together.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::common::{PaletteOperation, HistoryEntry, OperationInfo};
+use super::{PaletteOperation, HistoryEntry, OperationInfo};
 use palette::Result;
 use palette::data::PaletteData;
 
