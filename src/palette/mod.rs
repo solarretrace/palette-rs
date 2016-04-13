@@ -26,10 +26,10 @@ pub mod element;
 pub mod data;
 #[warn(missing_docs)]
 pub mod operation;
-#[warn(missing_docs)]
-pub mod format;
+// #[warn(missing_docs)]
+// pub mod format;
 
-pub use palette::format::{Palette, PaletteExtensions, BasicPalette, ZplPalette};
+// pub use palette::format::{Palette, PaletteExtensions, BasicPalette, ZplPalette};
 pub use palette::error::{Error, Result};
 pub use palette::operation::{
 	InsertColor,
@@ -40,3 +40,15 @@ pub use palette::operation::{
 	RepeatOperation,
 	InsertRamp,
 };
+
+use palette::data::PaletteData;
+use palette::operation::OperationHistory;
+
+////////////////////////////////////////////////////////////////////////////////
+// Palette
+////////////////////////////////////////////////////////////////////////////////
+pub struct Palette {
+	data: PaletteData,
+	// format: PaletteFormat,
+	undo_data: Option<OperationHistory>,	
+}

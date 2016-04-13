@@ -25,12 +25,12 @@
 //! The main palette editor.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-pub use palette::format::Palette;
+pub use palette::Palette;
 
 /// The editor's state.
 pub struct PaletteEditor {
 	/// The current palette.
-	palette: Box<Palette>,
+	palette: Palette,
 	// The current page.
 
 	// The current selection.
