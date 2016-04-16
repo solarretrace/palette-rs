@@ -28,7 +28,7 @@
 use super::{PaletteOperation, HistoryEntry, OperationInfo, set_target};
 use super::undo::Undo;
 use palette::{Result, Error};
-use palette::data::PaletteData;
+use palette::data::PaletteOperationData;
 use palette::element::ColorElement;
 use address::Address;
 use color::Rgb;
@@ -96,7 +96,7 @@ impl PaletteOperation for InsertColor {
 		}
 	}
 
-	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
+	fn apply(&mut self, data: &mut PaletteOperationData) -> Result<HistoryEntry> {
 		// Get starting address.
 		let starting_address = if let Some(address) = self.location {
 			address
@@ -175,7 +175,7 @@ impl PaletteOperation for RemoveElement {
 		}
 	}
 
-	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
+	fn apply(&mut self, data: &mut PaletteOperationData) -> Result<HistoryEntry> {
 
 		let mut undo = Undo::new_for(self);
 		undo.record(self.address, Some(try!(data.remove_slot(self.address))));

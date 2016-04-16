@@ -27,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use super::{PaletteOperation, HistoryEntry, OperationInfo};
 use palette::Result;
-use palette::data::PaletteData;
+use palette::data::PaletteOperationData;
 
 use std::mem;
 // Sequence
@@ -80,7 +80,7 @@ impl PaletteOperation for SequenceOperation {
 		}
 	}
 
-	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
+	fn apply(&mut self, data: &mut PaletteOperationData) -> Result<HistoryEntry> {
 		let mut undo_sequence: Vec<Box<PaletteOperation>> = Vec::new();
 
 		let operations = mem::replace(&mut self.operations, Vec::new());
@@ -153,7 +153,7 @@ impl PaletteOperation for RepeatOperation {
 		}
 	}
 	
-	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
+	fn apply(&mut self, data: &mut PaletteOperationData) -> Result<HistoryEntry> {
 		let mut undo_sequence: Vec<Box<PaletteOperation>> = Vec::new();
 
 		for _ in 0..self.repeat_count {

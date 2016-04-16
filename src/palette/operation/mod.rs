@@ -46,7 +46,7 @@ pub use palette::operation::sequence::*;
 pub use palette::operation::simple::*;
 pub use palette::operation::undo::*;
 
-use palette::data::PaletteData;
+use palette::data::PaletteOperationData;
 use palette::element::{Slot, ColorElement};
 use palette::{Error, Result};
 use palette;
@@ -61,7 +61,7 @@ use std::mem;
 /// make_sources is true. If the source is created, its creation will be logged 
 /// in the provided Undo operation.
 pub fn get_source(
-	data: &mut PaletteData, 
+	data: &mut PaletteOperationData, 
 	address: Address, 
 	make_sources: bool,
 	undo: &mut Undo) 
@@ -81,7 +81,7 @@ pub fn get_source(
 /// Returns a reference to the target element located at the given address in
 /// the given palette. If the slot is empty, it will be created.
 pub fn get_target(
-	data: &mut PaletteData, 
+	data: &mut PaletteOperationData, 
 	address: Address, 
 	undo: &mut Undo)
 	-> Result<Rc<Slot>>
@@ -98,7 +98,7 @@ pub fn get_target(
 /// Stores the given ColorElement in the slot at the given address in the given 
 /// palette. If the slot is empty, it will be created.
 pub fn set_target(
-	data: &mut PaletteData,
+	data: &mut PaletteOperationData,
 	address: Address,
 	new_element: ColorElement,
 	undo: &mut Undo)
@@ -124,7 +124,7 @@ pub trait PaletteOperation: fmt::Debug {
 	fn get_info(&self) -> OperationInfo;
 
 	/// Applies the operation to the given palette.
-	fn apply(&mut self, data: &mut PaletteData) 
+	fn apply(&mut self, data: &mut PaletteOperationData) 
 		-> palette::Result<HistoryEntry>;
 }
 

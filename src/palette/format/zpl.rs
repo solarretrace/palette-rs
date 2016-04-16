@@ -26,7 +26,7 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 use palette::Palette;
-use palette::data::PaletteData;
+use palette::data::PaletteOperationData;
 use palette::operation::PaletteOperation;
 use palette;
 use address::{Address, Group, PageCount, LineCount, ColumnCount};
@@ -95,11 +95,11 @@ const SPRITE_PAGE_LIMIT: PageCount = 515;
 /// The default palette format with no special configuration.
 #[derive(Debug)]
 pub struct ZplPalette {
-	inner: PaletteDataWithHistory,
+	inner: PaletteOperationDataWithHistory,
 }
 
 impl ZplPalette {
-	fn prepare_new_page(data: &mut PaletteData, group: Group) {
+	fn prepare_new_page(data: &mut PaletteOperationData, group: Group) {
 		if let Group::Page {page} = group {
 			if page <= MAIN_PAGE_LIMIT {
 				data.set_name(group, "Main");
@@ -113,7 +113,7 @@ impl ZplPalette {
 		}
 	}
 
-	fn prepare_new_line(data: &mut PaletteData, group: Group) {
+	fn prepare_new_line(data: &mut PaletteOperationData, group: Group) {
 		if let Group::Line {page, line} = group {
 			if page <= MAIN_PAGE_LIMIT {
 				data.set_label(group, format!("Main CSET {}", line));
@@ -148,7 +148,7 @@ impl ZplPalette {
 
 impl Palette for ZplPalette {
 	fn new<S>(name: S) -> Self where S: Into<String> {
-		let mut inner: PaletteDataWithHistory = Default::default();
+		let mut inner: PaletteOperationDataWithHistory = Default::default();
 		
 		inner.set_label(Group::All, "ZplPalette 1.0.0");
 		inner.set_name(Group::All, name.into());

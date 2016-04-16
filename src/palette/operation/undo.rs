@@ -27,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use super::{PaletteOperation, HistoryEntry, OperationInfo};
 use palette::Result;
-use palette::data::PaletteData;
+use palette::data::PaletteOperationData;
 use palette::element::ColorElement;
 use address::Address;
 
@@ -97,7 +97,7 @@ impl PaletteOperation for Undo {
 		}
 	}
 
-	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
+	fn apply(&mut self, data: &mut PaletteOperationData) -> Result<HistoryEntry> {
 		let mut redo = Undo::new();
 
 		let saved = mem::replace(&mut self.saved, HashMap::new());

@@ -26,7 +26,7 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 use palette::Palette;
-use palette::data::PaletteData;
+use palette::data::PaletteOperationData;
 use palette::operation::PaletteOperation;
 use palette;
 use address::{Address, Group};
@@ -41,13 +41,13 @@ use std::result;
 /// A basic palette format with no special configuration or functionality.
 #[derive(Debug)]
 pub struct BasicPalette {
-	inner: PaletteData,
+	inner: PaletteOperationData,
 }
 
 impl Palette for BasicPalette {
 
 	fn new<S>(name: S) -> Self where S: Into<String> {
-		let mut inner: PaletteData = Default::default();
+		let mut inner: PaletteOperationData = Default::default();
 
 		inner.set_label(Group::All, "BasicPalette 1.0.0");
 		inner.set_name(Group::All, name.into());

@@ -22,7 +22,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! Defines a structured PaletteData object for storing common data for palette
+//! Defines a structured PaletteOperationData object for storing common data for palette
 //! formats.
 //!
 ////////////////////////////////////////////////////////////////////////////////
@@ -46,7 +46,7 @@ use std::ops::{Deref, DerefMut};
 /// Default function for prepare_new_page and prepare_new_line triggers.
 #[allow(unused_variables)]
 #[inline]
-fn no_op(data: &mut PaletteData, group: Group) {}
+fn no_op(data: &mut PaletteOperationData, group: Group) {}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -82,19 +82,19 @@ impl fmt::Display for Metadata {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// PaletteDataWithHistory
+// PaletteData
 ////////////////////////////////////////////////////////////////////////////////
 /// Encapsulates a single palette.
 #[derive(Debug)]
-pub struct PaletteDataWithHistory {
+pub struct PaletteData {
 	/// The palette's operation-relevant data.
-	pub data: PaletteData,
+	pub data: PaletteOperationData,
 	/// The operation undo and redo history.
 	pub operation_history: Option<OperationHistory>,
 }
 
 
-impl PaletteDataWithHistory {
+impl PaletteData {
 	/// Returns the total number of history entries recorded.
 	pub fn history_len(&self) -> usize {
 		if let Some(ref history) = self.operation_history {
@@ -106,8 +106,8 @@ impl PaletteDataWithHistory {
 	}
 }
 
-impl Deref for PaletteDataWithHistory {
-    type Target = PaletteData;
+impl Deref for PaletteData {
+    type Target = PaletteOperationData;
 
     fn deref(&self) -> &Self::Target {
         &self.data
@@ -115,16 +115,16 @@ impl Deref for PaletteDataWithHistory {
 }
 
 
-impl DerefMut for PaletteDataWithHistory {
+impl DerefMut for PaletteData {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.data
     }
 }
 
 
-impl Default for PaletteDataWithHistory {
+impl Default for PaletteData {
 	fn default() -> Self {
-		PaletteDataWithHistory {
+		PaletteData {
 			data: Default::default(),
 			operation_history: None,
 		}
@@ -133,10 +133,10 @@ impl Default for PaletteDataWithHistory {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// PaletteData
+// PaletteOperationData
 ////////////////////////////////////////////////////////////////////////////////
 /// Encapsulates a single palette's operation-relevant data.
-pub struct PaletteData {
+pub struct PaletteOperationData {
 	/// A map assigning addresses to palette slots.
 	pub slotmap: BTreeMap<Address, Rc<Slot>>,
 	/// Provided metadata for various parts of the palette.
@@ -151,16 +151,16 @@ pub struct PaletteData {
 	/// expectation is that this will add the appropriate meta data to the 
 	/// palette. This will be called before the prepare_new_line function is 
 	/// called.
-	pub prepare_new_page: fn(&mut PaletteData, Group),
+	pub prepare_new_page: fn(&mut PaletteOperationData, Group),
 	/// Called before an element is added to a new line in the palette. The 
 	/// expectation is that this will add the appropriate meta data to the 
 	/// palette.
-	pub prepare_new_line: fn(&mut PaletteData, Group),
+	pub prepare_new_line: fn(&mut PaletteOperationData, Group),
 }
 
 
-impl PaletteData {
-	/// Returns the number of colors in the PaletteData.
+impl PaletteOperationData {
+	/// Returns the number of colors in the PaletteOperationData.
 	#[inline]
 	pub fn len(&self) -> usize {
 		self.slotmap.len()
@@ -179,10 +179,10 @@ impl PaletteData {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::palette::data::PaletteData;
+	/// use rampeditor::palette::data::PaletteOperationData;
 	/// use rampeditor::{Address, Rgb};
 	/// 
-	/// let mut dat: PaletteData = Default::default();
+	/// let mut dat: PaletteOperationData = Default::default();
 	/// let slot = dat.create_slot(Address::new(1, 1, 1))
 	/// 	.ok()
 	/// 	.unwrap(); // Create slot with default Rgb and unwrap weak ref.
@@ -221,10 +221,10 @@ impl PaletteData {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::palette::data::PaletteData;
+	/// use rampeditor::palette::data::PaletteOperationData;
 	/// use rampeditor::Group;
 	/// 
-	/// let mut dat: PaletteData = Default::default();
+	/// let mut dat: PaletteOperationData = Default::default();
 	/// dat.set_label(Group::All, "My Palette");
 	///
 	/// assert_eq!(dat.get_label(Group::All), Some("My Palette"));
@@ -255,10 +255,10 @@ impl PaletteData {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::palette::data::PaletteData;
+	/// use rampeditor::palette::data::PaletteOperationData;
 	/// use rampeditor::Group;
 	/// 
-	/// let mut dat: PaletteData = Default::default();
+	/// let mut dat: PaletteOperationData = Default::default();
 	/// dat.set_name(Group::All, "My Palette");
 	///
 	/// assert_eq!(dat.get_name(Group::All), Some("My Palette"));
@@ -446,9 +446,9 @@ impl PaletteData {
 }
 
 
-impl fmt::Debug for PaletteData {
+impl fmt::Debug for PaletteOperationData {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		write!(f, "PaletteData {{ \
+		write!(f, "PaletteOperationData {{ \
 			slotmap: {:#?}, \
 			metadata: {:#?}, \
 			page_count: {}, \
@@ -464,7 +464,7 @@ impl fmt::Debug for PaletteData {
 }
 
 
-impl fmt::Display for PaletteData {
+impl fmt::Display for PaletteOperationData {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
 		if let Some(data) = self.metadata.get(&Group::All) {
 			try!(write!(f, "{} ", data));
@@ -511,9 +511,9 @@ impl fmt::Display for PaletteData {
 }
 
 
-impl Default for PaletteData {
+impl Default for PaletteOperationData {
 	fn default() -> Self {
-		PaletteData {
+		PaletteOperationData {
 			slotmap: BTreeMap::new(),
 			metadata: BTreeMap::new(),
 			page_count: PAGE_MAX,

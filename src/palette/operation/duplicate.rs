@@ -33,7 +33,7 @@ use super::{
 	get_source
 };
 use palette::{Result, Error};
-use palette::data::PaletteData;
+use palette::data::PaletteOperationData;
 use palette::element::ColorElement;
 use palette::operation::Undo;
 use address::Address;
@@ -104,7 +104,7 @@ impl PaletteOperation for CopyColor {
 		}
 	}
 
-	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
+	fn apply(&mut self, data: &mut PaletteOperationData) -> Result<HistoryEntry> {
 		// Get starting address.
 		let starting_address = if let Some(address) = self.location {
 			address
@@ -221,7 +221,7 @@ impl PaletteOperation for InsertWatcher {
 		}
 	}
 
-	fn apply(&mut self, data: &mut PaletteData) -> Result<HistoryEntry> {
+	fn apply(&mut self, data: &mut PaletteOperationData) -> Result<HistoryEntry> {
 		// Get starting address.
 		let starting_address = if let Some(address) = self.location {
 			address
