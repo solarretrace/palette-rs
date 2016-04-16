@@ -25,9 +25,9 @@
 //! Provides components for interacting with the ZPL palette format.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::{Palette, PaletteExtensions};
+use palette::Palette;
 use palette::data::PaletteData;
-use palette::operation::{PaletteOperation, OperationHistory};
+use palette::operation::PaletteOperation;
 use palette;
 use address::{Address, Group, PageCount, LineCount, ColumnCount};
 use color::Rgb;
@@ -95,9 +95,7 @@ const SPRITE_PAGE_LIMIT: PageCount = 515;
 /// The default palette format with no special configuration.
 #[derive(Debug)]
 pub struct ZplPalette {
-	core: PaletteData,
-	undo_history: OperationHistory,
-	redo_history: OperationHistory,
+	inner: PaletteDataWithHistory,
 }
 
 impl ZplPalette {
@@ -150,43 +148,90 @@ impl ZplPalette {
 
 impl Palette for ZplPalette {
 	fn new<S>(name: S) -> Self where S: Into<String> {
-		let mut pal = ZplPalette {
-			core: Default::default(),
-			undo_history: OperationHistory::new(),
-			redo_history: OperationHistory::new(),
-		};
-		pal.core.set_label(Group::All, "ZplPalette 1.0.0");
-		pal.core.set_name(Group::All, name.into());
-		pal.core.page_count = ZPL_PAGE_LIMIT;
-		pal.core.default_line_count = ZPL_DEFAULT_LINE_LIMIT;
-		pal.core.default_column_count = ZPL_DEFAULT_COLUMN_LIMIT;
-		pal.core.prepare_new_page = ZplPalette::prepare_new_page;
-		pal.core.prepare_new_line = ZplPalette::prepare_new_line;
-		pal
+		let mut inner: PaletteDataWithHistory = Default::default();
+		
+		inner.set_label(Group::All, "ZplPalette 1.0.0");
+		inner.set_name(Group::All, name.into());
+		inner.page_count = ZPL_PAGE_LIMIT;
+		inner.default_line_count = ZPL_DEFAULT_LINE_LIMIT;
+		inner.default_column_count = ZPL_DEFAULT_COLUMN_LIMIT;
+		inner.prepare_new_page = ZplPalette::prepare_new_page;
+		inner.prepare_new_line = ZplPalette::prepare_new_line;
+		
+		ZplPalette {
+			inner: inner,
+		}
 	}
 
 	fn get_color(&self, address: Address) -> Option<Rgb> {
-		self.core.get_slot(address).and_then(|slot| slot.get_color())
+		self.inner.get_slot(address).and_then(|slot| slot.get_color())
 	}
 
 	fn len(&self) -> usize {
-		self.core.len()
+		self.inner.len()
 	}
 
 	fn apply_operation(&mut self, mut operation: Box<PaletteOperation>) 
 		-> palette::Result<()> 
 	{
-		let entry = try!(operation.apply(&mut self.core));
-		self.undo_history.push(entry);
-		self.redo_history.clear();
+		let entry = try!(operation.apply(&mut self.inner));
+		if let Some(ref history) = self.inner.operation_history {
+			history.borrow_mut().undo_entries.push(entry);
+			history.borrow_mut().redo_entries.clear();
+		}
 		Ok(())
+	}
+
+
+	/// Reverses the most recently applied operation.
+	fn undo(&mut self) -> palette::Result<()> {
+		let mut inner = &mut self.inner;
+		if inner.operation_history.is_some() {
+			let mut h = inner.operation_history.as_ref().unwrap().borrow_mut();
+
+			if let Some(mut entry) = h.undo_entries.pop() {
+				let redo = try!(entry.undo.apply(inner));
+				h.redo_entries.push(redo);
+			}
+			Ok(())
+
+		} else {
+			panic!("undo not supported")
+		}
+
+		// if let Some(ref history) = self.inner.operation_history {
+		// 	let mut h = history.borrow_mut();
+
+		// 	if let Some(mut entry) = h.undo_entries.pop() {
+		// 		let redo = try!(entry.undo.apply(&mut self.inner));
+		// 		h.redo_entries.push(redo);
+		// 	}
+		// 	Ok(())
+		// } else {
+		// 	panic!("undo not supported")
+		// }
+	}
+
+	/// Reverses the most recently applied undo operation.
+	fn redo(&mut self) -> palette::Result<()> {
+		if let Some(ref history) = self.inner.operation_history {
+			let h = history.borrow_mut();
+			let (ref u, ref r) = (h.undo_entries, h.redo_entries);
+			if let Some(mut entry) = r.pop() {
+				let undo = try!(entry.undo.apply(&mut self.inner));
+				u.push(undo);
+			}
+			Ok(())
+		} else {
+			panic!("undo not supported")
+		}
 	}
 
 	fn write_palette<W>(&self, out_buf: &mut W) -> io::Result<()> 
 		where W: io::Write
 	{
 		// Write header.
-		try!(out_buf.write(&ZPL_HEADER)); 
+		try!(out_buf.write(&ZPL_HEADER));
 
 		// Write all pages in sequence.
 
@@ -204,40 +249,14 @@ impl Palette for ZplPalette {
 		try!(out_buf.write(&ZPL_FOOTER_E));
 		Ok(())
 	}
-
-	#[allow(unused_variables)]
-	fn read_palette<R>(in_buf: &R) -> io::Result<Self>
-		where R: io::Read, Self: Sized
-	{
-		unimplemented!()
-	}
 }
-
-impl PaletteExtensions for ZplPalette {
-	fn undo(&mut self) -> palette::Result<()> {
-		if let Some(mut entry) = self.undo_history.pop() {
-			let redo = try!(entry.undo.apply(&mut self.core));
-			self.redo_history.push(redo);
-		}
-		Ok(())
-	}
-
-	fn redo(&mut self) -> palette::Result<()> {
-		if let Some(mut entry) = self.redo_history.pop() {
-			let undo = try!(entry.undo.apply(&mut self.core));
-			self.undo_history.push(undo);
-		}
-		Ok(())
-	}
-}
-
 
 impl fmt::Display for ZplPalette {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
 		write!(f, "{} [History: {} items]\n{}",
-			self.core.get_label(Group::All).unwrap_or(""),
-			self.undo_history.len(),
-			self.core,
+			self.inner.get_label(Group::All).unwrap_or(""),
+			self.inner.history_len(),
+			self.inner,
 		)
 	}
 }

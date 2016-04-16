@@ -1,3 +1,25 @@
+// The MIT License (MIT)
+// 
+// Copyright (c) 2016 Skylor R. Schermer
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in 
+// all copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
 ////////////////////////////////////////////////////////////////////////////////
 //!
 //! Contains definitions for various palette editing operations.
@@ -33,7 +55,6 @@ use address::Address;
 use std::fmt;
 use std::rc::{Rc, Weak};
 use std::mem;
-use std::ops::{Deref, DerefMut};
 
 /// Returns a weak reference to the source element located at the given address 
 /// in the given palette. If the slot is empty, it will be created if 
@@ -117,33 +138,24 @@ pub trait PaletteOperation: fmt::Debug {
 /// undo operations.
 #[derive(Debug)]
 pub struct OperationHistory {
-	/// The record of applied operations an undo operations.
-	records: Vec<HistoryEntry>,
+	/// The record of available undos.
+	pub undo_entries: Vec<HistoryEntry>,
+	/// The record of available redos.
+	pub redo_entries: Vec<HistoryEntry>,
 }
 
 
 impl OperationHistory {
 	/// Creates a new, empty OperationHistory
 	pub fn new() -> OperationHistory {
-		OperationHistory {records: Vec::new()}
+		OperationHistory {
+			undo_entries: Vec::new(),
+			redo_entries: Vec::new(),
+		}
 	}
 }
 
 
-
-impl Deref for OperationHistory {
-	type Target = Vec<HistoryEntry>;
-	fn deref(&self) -> &Self::Target {
-		&self.records
-	}
-}
-
-
-impl DerefMut for OperationHistory {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		&mut self.records
-	}
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////

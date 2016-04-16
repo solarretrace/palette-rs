@@ -28,6 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use super::element::{Slot, ColorElement};
 use super::error::{Error, Result};
+use super::operation::OperationHistory;
 use color::Rgb;
 use address::{Address, Group, 
 	PageCount, LineCount, ColumnCount, 
@@ -35,10 +36,12 @@ use address::{Address, Group,
 };
 
 use std::rc::Rc;
+use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::result;
 use std::mem;
+use std::ops::{Deref, DerefMut};
 
 /// Default function for prepare_new_page and prepare_new_line triggers.
 #[allow(unused_variables)]
@@ -78,11 +81,61 @@ impl fmt::Display for Metadata {
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
+// PaletteDataWithHistory
+////////////////////////////////////////////////////////////////////////////////
+/// Encapsulates a single palette.
+#[derive(Debug)]
+pub struct PaletteDataWithHistory {
+	/// The palette's operation-relevant data.
+	pub data: PaletteData,
+	/// The operation undo and redo history.
+	pub operation_history: Option<OperationHistory>,
+}
+
+
+impl PaletteDataWithHistory {
+	/// Returns the total number of history entries recorded.
+	pub fn history_len(&self) -> usize {
+		if let Some(ref history) = self.operation_history {
+			history.undo_entries.len() + 
+			history.redo_entries.len()
+		} else {
+			0
+		}
+	}
+}
+
+impl Deref for PaletteDataWithHistory {
+    type Target = PaletteData;
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
+
+impl DerefMut for PaletteDataWithHistory {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.data
+    }
+}
+
+
+impl Default for PaletteDataWithHistory {
+	fn default() -> Self {
+		PaletteDataWithHistory {
+			data: Default::default(),
+			operation_history: None,
+		}
+	}
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // PaletteData
 ////////////////////////////////////////////////////////////////////////////////
-/// Encapsulates a single palette.
+/// Encapsulates a single palette's operation-relevant data.
 pub struct PaletteData {
 	/// A map assigning addresses to palette slots.
 	pub slotmap: BTreeMap<Address, Rc<Slot>>,
@@ -400,12 +453,12 @@ impl fmt::Debug for PaletteData {
 			metadata: {:#?}, \
 			page_count: {}, \
 			default_line_count: {}, \
-			default_column_count: {} }}",
+			default_column_count: {}",
 			self.slotmap,
 			self.metadata,
 			self.page_count,
 			self.default_line_count,
-			self.default_column_count
+			self.default_column_count,
 		)
 	}
 }
@@ -471,20 +524,3 @@ impl Default for PaletteData {
 		}
 	}
 }
-
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-// PaletteDataWithUndo
-////////////////////////////////////////////////////////////////////////////////
-// Encapsulates a single palette with undo/redo functionality.
-// pub struct PaletteDataWithUndo {
-// 	data: PaletteData,
-// }
-
-
-
-
-// impl Deref<PaletteData> for PaletteDataWithUndo {
-// }

@@ -15,7 +15,6 @@ pub mod gui;
 
 pub use color::{Color, Cmyk, Hsl, Hsv, Rgb, Xyz};
 pub use palette::Palette;
-// pub use palette::{Palette, PaletteExtensions, BasicPalette, ZplPalette};
 pub use address::{Address, Group, Selection};
 pub use interval::{Bound, Interval};
 pub use palette::operation::{

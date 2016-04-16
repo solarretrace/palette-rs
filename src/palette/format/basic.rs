@@ -25,7 +25,7 @@
 //! Provides components for interacting with the default palette format.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::Palette;
+use palette::Palette;
 use palette::data::PaletteData;
 use palette::operation::PaletteOperation;
 use palette;
@@ -41,38 +41,75 @@ use std::result;
 /// A basic palette format with no special configuration or functionality.
 #[derive(Debug)]
 pub struct BasicPalette {
-	core: PaletteData,
+	inner: PaletteData,
 }
 
 impl Palette for BasicPalette {
 
 	fn new<S>(name: S) -> Self where S: Into<String> {
-		let mut pal = BasicPalette {core: Default::default()};
-		pal.core.set_label(Group::All, "BasicPalette 1.0.0");
-		pal.core.set_name(Group::All, name.into());
-		pal
+		let mut inner: PaletteData = Default::default();
+
+		inner.set_label(Group::All, "BasicPalette 1.0.0");
+		inner.set_name(Group::All, name.into());
+		
+		BasicPalette {
+			inner: inner
+		}
 	}
 
 	fn get_color(&self, address: Address) -> Option<Rgb> {
-		self.core.get_slot(address).and_then(|slot| slot.get_color())
+		self.inner.get_slot(address).and_then(|slot| slot.get_color())
 	}
 
 	fn len(&self) -> usize {
-		self.core.len()
+		self.inner.len()
 	}
 
 	fn apply_operation(&mut self, mut operation: Box<PaletteOperation>) 
 		-> palette::Result<()> 
 	{
-		operation.apply(&mut self.core).map(|_| ())
+		let entry = try!(operation.apply(&mut self.inner));
+
+		if let Some(ref history) = self.inner.operation_history {
+			history.borrow_mut().undo_entries.push(entry);
+			history.borrow_mut().redo_entries.clear();
+		}
+		Ok(())
 	}
+
+
+	// Reverses the most recently applied operation.
+	// fn undo(&mut self) -> palette::Result<()> {
+	// 	if let Some((ref mut u, ref mut r)) = self.inner.operation_history {
+	// 		if let Some(mut entry) = u.pop() {
+	// 			let redo = try!(entry.undo.apply(&mut self.inner));
+	// 			r.push(redo);
+	// 		}
+	// 		Ok(())
+	// 	} else {
+	// 		panic!("undo not supported")
+	// 	}
+	// }
+
+	// Reverses the most recently applied undo operation.
+	// fn redo(&mut self) -> palette::Result<()> {
+	// 	if let Some((ref mut u, ref mut r)) = self.inner.operation_history {
+	// 		if let Some(mut entry) = r.pop() {
+	// 			let undo = try!(entry.undo.apply(&mut self.inner));
+	// 			u.push(undo);
+	// 		}
+	// 		Ok(())
+	// 	} else {
+	// 		panic!("undo not supported")
+	// 	}
+	// }
 }
 
 impl fmt::Display for BasicPalette {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
 		write!(f, "{} {}",
-			self.core.get_label(Group::All).unwrap_or(""),
-			self.core
+			self.inner.get_label(Group::All).unwrap_or(""),
+			self.inner
 		)
 	}
 }

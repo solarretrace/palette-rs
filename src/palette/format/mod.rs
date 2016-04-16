@@ -22,16 +22,16 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! The main palette editor.
+//! Provides a set of interfaces and implementations for converting palettes 
+//! between different formats.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-pub use palette::Palette;
 
-// The editor's state.
-// pub struct PaletteEditor {
-	// / The current palette.
-	// palette: Palette,
-	// The current page.
+#[warn(missing_docs)]
+pub mod basic;
+#[warn(missing_docs)]
+#[allow(dead_code)]
+pub mod zpl;
 
-	// The current selection.
-// }
+// pub use palette::format::basic::BasicPalette;
+// pub use palette::format::zpl::ZplPalette;
