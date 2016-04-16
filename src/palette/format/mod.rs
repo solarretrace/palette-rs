@@ -27,11 +27,49 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
-#[warn(missing_docs)]
-pub mod basic;
-#[warn(missing_docs)]
-#[allow(dead_code)]
-pub mod zpl;
+// Module declarations.
+// #[warn(missing_docs)]
+// pub mod basic;
+// #[warn(missing_docs)]
+// #[allow(dead_code)]
+// pub mod zpl;
 
+// Re-exports.
 // pub use palette::format::basic::BasicPalette;
 // pub use palette::format::zpl::ZplPalette;
+
+// Module imports.
+use palette::data::PaletteOperationData;
+use address::Group;
+
+use std::fmt;
+use std::result;
+
+/// A trait for defining palette formats.
+pub trait PaletteFormat: fmt::Debug {
+	/// The function to call when a new page is created.
+	fn prepare_new_page(data: &mut PaletteOperationData, group: Group) 
+		where Self: Sized; // Required to provide a receiver for the method.
+	/// The function to call when a new line is created.
+	fn prepare_new_line(data: &mut PaletteOperationData, group: Group) 
+		where Self: Sized; // Required to provide a receiver for the method.
+}
+
+
+/// A palette format with no restrictions or special behaviors.
+pub struct DefaultPaletteFormat;
+
+#[allow(unused_variables)]
+impl PaletteFormat for DefaultPaletteFormat {
+	fn prepare_new_page(data: &mut PaletteOperationData, group: Group) {}
+	fn prepare_new_line(data: &mut PaletteOperationData, group: Group) {}
+}
+
+impl fmt::Debug for DefaultPaletteFormat {
+	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
+		write!(f, "DefaultPaletteFormat")
+	}
+}
+
+/// A palette format with no restrictions or special behaviors.
+pub static DEFAULT_PALETTE_FORMAT: DefaultPaletteFormat = DefaultPaletteFormat;

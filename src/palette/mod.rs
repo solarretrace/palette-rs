@@ -40,6 +40,7 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
+// Module declarations.
 #[warn(missing_docs)]
 pub mod error;
 #[warn(missing_docs)]
@@ -49,9 +50,9 @@ pub mod data;
 #[warn(missing_docs)]
 pub mod operation;
 // #[warn(missing_docs)]
-// pub mod format;
+pub mod format;
 
-// pub use palette::format::{Palette, PaletteExtensions, BasicPalette, ZplPalette};
+// Re-exports.
 pub use palette::error::{Error, Result};
 pub use palette::operation::{
 	InsertColor,
@@ -63,51 +64,98 @@ pub use palette::operation::{
 	InsertRamp,
 };
 
-use palette::operation::PaletteOperation;
+// Module imports.
+use palette::operation::{OperationHistory, PaletteOperation};
+use palette::format::{PaletteFormat, DEFAULT_PALETTE_FORMAT};
+use palette::data::PaletteOperationData;
 use palette;
-use address::Address;
+use address::{Address, Group};
 use color::Rgb;
-
-use std::fmt;
-use std::io::{Write, Read};
+use std::io::{Read, Write};
 use std::io;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Palette
 ////////////////////////////////////////////////////////////////////////////////
-/// Specifies the interface for using a specific palette format.
-pub trait Palette : fmt::Debug {
+/// Encapsulates a single palette.
+#[derive(Debug)]
+pub struct Palette {
+	/// The palette's operation-relevant data.
+	data: PaletteOperationData,
+	/// The operation undo and redo history.
+	operation_history: Option<OperationHistory>,
+	/// The palette format.
+	format: &'static PaletteFormat,
+}
+
+
+impl Palette {
 	/// Creates a new palette with the given name.
-	fn new<S>(name: S) -> Self where S: Into<String>;
+	pub fn new<S>(name: S, format: &'static PaletteFormat, history: bool) 
+		-> Self where S: Into<String> 
+	{
+		let mut pal = Palette {
+			data: Default::default(),
+			operation_history: if history {
+					Some(OperationHistory::new())
+				} else {
+				    None
+				},
+			format: format,
+		};
+		
+		pal.data.set_name(Group::All, name.into());
+		pal
+	}
+
+	/// Returns the total number of history entries recorded.
+	pub fn history_len(&self) -> usize {
+		if let Some(ref history) = self.operation_history {
+			history.undo_entries.len() + 
+			history.redo_entries.len()
+		} else {
+			0
+		}
+	}
 
 	/// Returns the color at the given address, or None if the slot is empty.
-	fn get_color(&self, address: Address) -> Option<Rgb>;
+	pub fn get_color(&self, address: Address) -> Option<Rgb> {
+		self.data.get_slot(address).and_then(|slot| slot.get_color())
+	}
 
 	/// Returns the number of elements in the palette.
-	fn len(&self) -> usize;
+	pub fn len(&self) -> usize {
+		self.data.len()
+	}
 
 	/// Applies the given operation to the palette. Usually, this will just 
 	/// defer to the PaletteOperation's apply method, but this could also 
 	/// provide extra functionality such as undo/redo and format-specific 
 	/// checks.
-	fn apply_operation(
+	#[allow(unused_variables)]
+	pub fn apply_operation(
 		&mut self, 
 		mut operation: Box<PaletteOperation>) 
-		-> palette::Result<()>;
+		-> palette::Result<()> 
+	{
+		panic!("operation not supported")
+	}
 
 	/// Reverses the most recently applied operation.
-	fn undo(&mut self) -> palette::Result<()> {
+	#[allow(unused_variables)]
+	pub fn undo(&mut self) -> palette::Result<()> {
 		panic!("operation not supported")
 	}
 
 	/// Reverses the most recently applied undo operation.
-	fn redo(&mut self) -> palette::Result<()> {
+	#[allow(unused_variables)]
+	pub fn redo(&mut self) -> palette::Result<()> {
 		panic!("operation not supported")
 	}
 
 	/// Writes the palette to the given buffer.
 	#[allow(unused_variables)]
-	fn write_palette<W>(&self, out_buf: &mut W) -> io::Result<()> 
+	pub fn write_palette<W>(&self, out_buf: &mut W) -> io::Result<()> 
 		where W: io::Write
 	{
 		panic!("operation not supported")
@@ -115,9 +163,21 @@ pub trait Palette : fmt::Debug {
 
 	/// Reads a palette from the given buffer.
 	#[allow(unused_variables)]
-	fn read_palette<R>(in_buf: &R) -> io::Result<Self>
+	pub fn read_palette<R>(in_buf: &R) -> io::Result<Self>
 		where R: io::Read, Self: Sized
 	{
 		panic!("operation not supported")
+	}
+
+}
+
+
+impl Default for Palette {
+	fn default() -> Self {
+		Palette {
+			data: Default::default(),
+			operation_history: None,
+			format: &DEFAULT_PALETTE_FORMAT as &'static PaletteFormat,
+		}
 	}
 }

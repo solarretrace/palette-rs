@@ -26,28 +26,26 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
-
+// Module declarations.
 #[warn(missing_docs)]
 pub mod cmyk;
-
 #[warn(missing_docs)]
 pub mod hsl;
-
 #[warn(missing_docs)]
 pub mod hsv;
-
 #[warn(missing_docs)]
 pub mod rgb;
-
 #[warn(missing_docs)]
 pub mod xyz;
 
+// Re-exports.
 pub use color::cmyk::*;
 pub use color::hsl::*;
 pub use color::hsv::*;
 pub use color::rgb::*;
 pub use color::xyz::*;
 
+// Module imports.
 use utilities::clamped;
 use std::fmt;
 

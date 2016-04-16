@@ -26,8 +26,9 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
-
+// Module declarations.
 #[warn(missing_docs)]
 pub mod editor;
 
+// Re-exports.
 pub use gui::editor::*;

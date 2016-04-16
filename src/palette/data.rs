@@ -28,7 +28,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 use super::element::{Slot, ColorElement};
 use super::error::{Error, Result};
-use super::operation::OperationHistory;
 use color::Rgb;
 use address::{Address, Group, 
 	PageCount, LineCount, ColumnCount, 
@@ -36,12 +35,10 @@ use address::{Address, Group,
 };
 
 use std::rc::Rc;
-use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::result;
 use std::mem;
-use std::ops::{Deref, DerefMut};
 
 /// Default function for prepare_new_page and prepare_new_line triggers.
 #[allow(unused_variables)]
@@ -77,57 +74,6 @@ impl fmt::Display for Metadata {
 			self.line_count, 
 			self.column_count
 		)
-	}
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-// PaletteData
-////////////////////////////////////////////////////////////////////////////////
-/// Encapsulates a single palette.
-#[derive(Debug)]
-pub struct PaletteData {
-	/// The palette's operation-relevant data.
-	pub data: PaletteOperationData,
-	/// The operation undo and redo history.
-	pub operation_history: Option<OperationHistory>,
-}
-
-
-impl PaletteData {
-	/// Returns the total number of history entries recorded.
-	pub fn history_len(&self) -> usize {
-		if let Some(ref history) = self.operation_history {
-			history.undo_entries.len() + 
-			history.redo_entries.len()
-		} else {
-			0
-		}
-	}
-}
-
-impl Deref for PaletteData {
-    type Target = PaletteOperationData;
-
-    fn deref(&self) -> &Self::Target {
-        &self.data
-    }
-}
-
-
-impl DerefMut for PaletteData {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.data
-    }
-}
-
-
-impl Default for PaletteData {
-	fn default() -> Self {
-		PaletteData {
-			data: Default::default(),
-			operation_history: None,
-		}
 	}
 }
 
