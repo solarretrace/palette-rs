@@ -23,7 +23,7 @@
 extern crate rampeditor;
 
 use rampeditor::*;
-// use std::fs::File;
+
 
 fn main() {
 	// let colors = vec![
@@ -65,39 +65,39 @@ fn main() {
 	// 		Rgb::from(xyz), xyz);
 	// }
 
-	let mut c = Color::new(0x89, 0x66, 0x00);
-	println!("{:?}", c.hsv_components());
-	for _ in 0..16 {
-		// c.shift_hue(30.0);
-		c.darken(0.1);
-		println!("{:?}", c.hsv_components());
-	}
+	// let mut c = Color::new(0x89, 0x66, 0x00);
+	// println!("{:?}", c.hsv_components());
+	// for _ in 0..16 {
+	// 	// c.shift_hue(30.0);
+	// 	c.darken(0.1);
+	// 	println!("{:?}", c.hsv_components());
+	// }
 
 
-	// let mut pal = ZplPalette::new("Test Palette");
+	let mut pal = Palette::new("Test Palette", Format::Default, true);
 	
-	// pal.apply(
-	// 	InsertColor::new(Rgb::from(0x404088))
-	// 		.located_at(Address::new(0, 0, 0))
-	// ).ok();
+	pal.apply(
+		InsertColor::new(Rgb::from(0x404088))
+			.located_at(Address::new(0, 0, 0))
+	).ok();
 
-	// pal.apply(
-	// 	InsertColor::new(Rgb::from(0x00CC00))
-	// 		.located_at(Address::new(0, 0, 1))
-	// ).ok();
+	pal.apply(
+		InsertColor::new(Rgb::from(0x00CC00))
+			.located_at(Address::new(0, 0, 1))
+	).ok();
 
-	// pal.apply(
-	// 	InsertRamp::new(Address::new(0, 0, 0), Address::new(0, 0, 1), 6)
-	// 		.located_at(Address::new(0, 1, 0))
-	// ).ok();
+	pal.apply(
+		InsertRamp::new(Address::new(0, 0, 0), Address::new(0, 0, 1), 6)
+			.located_at(Address::new(0, 1, 0))
+	).ok();
 
-	// println!("{}", pal);
+	println!("{:?}", pal);
 
-	// pal.apply(
-	// 	InsertColor::new(Rgb::from(0xFFFFFF))
-	// 		.located_at(Address::new(0, 0, 1))
-	// 		.overwrite(true)
-	// ).ok();
+	pal.apply(
+		InsertColor::new(Rgb::from(0xFFFFFF))
+			.located_at(Address::new(0, 0, 1))
+			.overwrite(true)
+	).ok();
 
-	// println!("{}", pal);
+	println!("{:?}", pal);
 }

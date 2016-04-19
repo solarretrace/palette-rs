@@ -28,48 +28,89 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 // Module declarations.
-// #[warn(missing_docs)]
-// pub mod basic;
-// #[warn(missing_docs)]
-// #[allow(dead_code)]
-// pub mod zpl;
-
-// Re-exports.
-// pub use palette::format::basic::BasicPalette;
-// pub use palette::format::zpl::ZplPalette;
+#[warn(missing_docs)]
+#[allow(dead_code)]
+pub mod zpl;
+#[warn(missing_docs)]
+pub mod default;
 
 // Module imports.
+use palette::Palette;
 use palette::data::PaletteOperationData;
+use palette::operation::PaletteOperation;
+use palette::format::default::*;
+use palette::format::zpl::*;
+use palette;
 use address::Group;
 
-use std::fmt;
-use std::result;
 
-/// A trait for defining palette formats.
-pub trait PaletteFormat: fmt::Debug {
+////////////////////////////////////////////////////////////////////////////////
+// Format
+////////////////////////////////////////////////////////////////////////////////
+/// The supported palette formats.
+#[derive(Debug, Clone, Copy)]
+pub enum Format {
+	/// The default palette format; provides no special behaviors or 
+	/// restrictions.
+	Default,
+	/// The ZPL palette format. 
+	Zpl,
+}
+
+
+impl Format {
+	/// Called when a new palette is created. Initializes the palette data.
+	#[allow(unused_variables)]
+	pub fn initialize(&self, palette: &mut Palette)  {
+		match *self {
+			Format::Zpl => zpl::initialize(palette),
+			_ => (),
+		}
+	}
+
 	/// The function to call when a new page is created.
-	fn prepare_new_page(data: &mut PaletteOperationData, group: Group) 
-		where Self: Sized; // Required to provide a receiver for the method.
+	#[allow(unused_variables)]
+	pub fn prepare_new_page(&self, data: &mut PaletteOperationData, group: Group) {
+		match *self {
+			Format::Zpl => zpl::prepare_new_page(data, group),
+			_ => (),
+		}
+	}
+
 	/// The function to call when a new line is created.
-	fn prepare_new_line(data: &mut PaletteOperationData, group: Group) 
-		where Self: Sized; // Required to provide a receiver for the method.
-}
+	#[allow(unused_variables)]
+	pub fn prepare_new_line(&self, data: &mut PaletteOperationData, group: Group) {
+		match *self {
+			Format::Zpl => zpl::prepare_new_line(data, group),
+			_ => (),
+		}
+	}
 
+	/// Applies the given operation to the palette. Usually, this will just 
+	/// defer to the PaletteOperation's apply method, but this could also 
+	/// provide extra functionality such as undo/redo and format-specific 
+	/// checks.
+	#[allow(unused_variables)]
+	pub fn apply_operation(
+		&self, 
+		palette: &mut Palette, 
+		mut operation: Box<PaletteOperation>) 
+		-> palette::Result<()>
+	{
+		default::apply_operation(palette, operation)
+	}
 
-/// A palette format with no restrictions or special behaviors.
-pub struct DefaultPaletteFormat;
+	/// Reverses the most recently applied operation.
+	#[allow(unused_variables)]
+	pub fn undo(&self, palette: &mut Palette) -> palette::Result<()> {
+		default::undo(palette)
+	}
 
-#[allow(unused_variables)]
-impl PaletteFormat for DefaultPaletteFormat {
-	fn prepare_new_page(data: &mut PaletteOperationData, group: Group) {}
-	fn prepare_new_line(data: &mut PaletteOperationData, group: Group) {}
-}
-
-impl fmt::Debug for DefaultPaletteFormat {
-	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		write!(f, "DefaultPaletteFormat")
+	/// Reverses the most recently applied undo operation.
+	#[allow(unused_variables)]
+	pub fn redo(&self, palette: &mut Palette) -> palette::Result<()> {
+		default::redo(palette)
 	}
 }
 
-/// A palette format with no restrictions or special behaviors.
-pub static DEFAULT_PALETTE_FORMAT: DefaultPaletteFormat = DefaultPaletteFormat;
+
