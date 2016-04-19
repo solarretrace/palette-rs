@@ -60,27 +60,24 @@ pub enum Format {
 
 impl Format {
 	/// Called when a new palette is created. Initializes the palette data.
-	#[allow(unused_variables)]
-	pub fn initialize(&self, palette: &mut Palette)  {
-		match *self {
-			Format::Zpl => zpl::initialize(palette),
+	pub fn initialize(self, data: &mut PaletteOperationData)  {
+		match self {
+			Format::Zpl => zpl::initialize(data),
 			_ => (),
 		}
 	}
 
 	/// The function to call when a new page is created.
-	#[allow(unused_variables)]
-	pub fn prepare_new_page(&self, data: &mut PaletteOperationData, group: Group) {
-		match *self {
+	pub fn prepare_new_page(self, data: &mut PaletteOperationData, group: Group) {
+		match self {
 			Format::Zpl => zpl::prepare_new_page(data, group),
 			_ => (),
 		}
 	}
 
 	/// The function to call when a new line is created.
-	#[allow(unused_variables)]
-	pub fn prepare_new_line(&self, data: &mut PaletteOperationData, group: Group) {
-		match *self {
+	pub fn prepare_new_line(self, data: &mut PaletteOperationData, group: Group) {
+		match self {
 			Format::Zpl => zpl::prepare_new_line(data, group),
 			_ => (),
 		}
@@ -90,25 +87,22 @@ impl Format {
 	/// defer to the PaletteOperation's apply method, but this could also 
 	/// provide extra functionality such as undo/redo and format-specific 
 	/// checks.
-	#[allow(unused_variables)]
 	pub fn apply_operation(
-		&self, 
+		self, 
 		palette: &mut Palette, 
-		mut operation: Box<PaletteOperation>) 
+		operation: Box<PaletteOperation>) 
 		-> palette::Result<()>
 	{
 		default::apply_operation(palette, operation)
 	}
 
 	/// Reverses the most recently applied operation.
-	#[allow(unused_variables)]
-	pub fn undo(&self, palette: &mut Palette) -> palette::Result<()> {
+	pub fn undo(self, palette: &mut Palette) -> palette::Result<()> {
 		default::undo(palette)
 	}
 
 	/// Reverses the most recently applied undo operation.
-	#[allow(unused_variables)]
-	pub fn redo(&self, palette: &mut Palette) -> palette::Result<()> {
+	pub fn redo(self, palette: &mut Palette) -> palette::Result<()> {
 		default::redo(palette)
 	}
 }

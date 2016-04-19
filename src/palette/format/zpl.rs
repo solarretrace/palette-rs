@@ -27,15 +27,9 @@
 //! not work on versions 1.92 or older.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::Format;
-use palette::Palette;
 use palette::data::PaletteOperationData;
-use palette::operation::PaletteOperation;
-use palette;
 use address::{Group, PageCount, LineCount, ColumnCount};
 
-use std::fmt;
-use std::result;
 
 const ZPL_COLOR_DEPTH_SCALE: f32 = 0.25;
 
@@ -101,11 +95,17 @@ fn get_level_label_for_line(line: LineCount) -> String {
 	)
 }
 
-
-pub fn initialize(palette: &mut Palette) {
-
+/// Called when a new palette is created. Initializes the palette data.
+pub fn initialize(data: &mut PaletteOperationData) {
+	data.set_label(Group::All, "ZplPalette 1.0.0");
+	data.page_count = ZPL_PAGE_LIMIT;
+	data.default_line_count = ZPL_DEFAULT_LINE_LIMIT;
+	data.default_column_count = ZPL_DEFAULT_COLUMN_LIMIT;
+	data.prepare_new_page = prepare_new_page;
+	data.prepare_new_line = prepare_new_line;
 }
 	
+/// The function to call when a new page is created.
 pub fn prepare_new_page(data: &mut PaletteOperationData, group: Group) {
 	if let Group::Page {page} = group {
 		if page <= MAIN_PAGE_LIMIT {
@@ -120,6 +120,7 @@ pub fn prepare_new_page(data: &mut PaletteOperationData, group: Group) {
 	}
 }
 
+/// The function to call when a new line is created.
 pub fn prepare_new_line(data: &mut PaletteOperationData, group: Group) {
 	if let Group::Line {page, line} = group {
 		if page <= MAIN_PAGE_LIMIT {
@@ -138,23 +139,6 @@ pub fn prepare_new_line(data: &mut PaletteOperationData, group: Group) {
 	}
 }
 
-
-
-	// fn new<S>(name: S) -> Self where S: Into<String> {
-	// 	let mut inner: PaletteOperationDataWithHistory = Default::default();
-		
-	// 	inner.set_label(Group::All, "ZplPalette 1.0.0");
-	// 	inner.set_name(Group::All, name.into());
-	// 	inner.page_count = ZPL_PAGE_LIMIT;
-	// 	inner.default_line_count = ZPL_DEFAULT_LINE_LIMIT;
-	// 	inner.default_column_count = ZPL_DEFAULT_COLUMN_LIMIT;
-	// 	inner.prepare_new_page = ZplPalette::prepare_new_page;
-	// 	inner.prepare_new_line = ZplPalette::prepare_new_line;
-		
-	// 	ZplPalette {
-	// 		inner: inner,
-	// 	}
-	// }
 
 
 	// fn write_palette<W>(&self, out_buf: &mut W) -> io::Result<()> 

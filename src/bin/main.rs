@@ -76,28 +76,28 @@ fn main() {
 
 	let mut pal = Palette::new("Test Palette", Format::Default, true);
 	
-	pal.apply(
+	pal.apply(Box::new(
 		InsertColor::new(Rgb::from(0x404088))
 			.located_at(Address::new(0, 0, 0))
-	).ok();
+	)).ok();
 
-	pal.apply(
+	pal.apply(Box::new(
 		InsertColor::new(Rgb::from(0x00CC00))
 			.located_at(Address::new(0, 0, 1))
-	).ok();
+	)).ok();
 
-	pal.apply(
+	pal.apply(Box::new(
 		InsertRamp::new(Address::new(0, 0, 0), Address::new(0, 0, 1), 6)
 			.located_at(Address::new(0, 1, 0))
-	).ok();
+	)).ok();
 
-	println!("{:?}", pal);
+	println!("{}", pal);
 
-	pal.apply(
+	pal.apply(Box::new(
 		InsertColor::new(Rgb::from(0xFFFFFF))
 			.located_at(Address::new(0, 0, 1))
 			.overwrite(true)
-	).ok();
+	)).ok();
 
-	println!("{:?}", pal);
+	println!("{}", pal);
 }

@@ -72,6 +72,8 @@ use palette;
 use address::{Address, Group};
 use color::Rgb;
 
+use std::fmt;
+use std::result;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Palette
@@ -104,7 +106,7 @@ impl Palette {
 		};
 		
 		pal.data.set_name(Group::All, name.into());
-		format.initialize(&mut pal);
+		format.initialize(&mut pal.data);
 		pal
 	}
 
@@ -133,26 +135,24 @@ impl Palette {
 	/// provide extra functionality such as undo/redo and format-specific 
 	/// checks.
 	#[allow(unused_variables)]
-	pub fn apply<O>(
+	pub fn apply(
 		&mut self, 
-		mut operation: O) 
+		operation: Box<PaletteOperation>) 
 		-> palette::Result<()> 
-		where O: PaletteOperation
 	{
-		let boxed_op = Box::new(operation);
-		self.format.apply_operation(self, boxed_op)
+		self.format.apply_operation(self, operation)
 	}
 
 	/// Reverses the most recently applied operation.
 	#[allow(unused_variables)]
 	pub fn undo(&mut self) -> palette::Result<()> {
-		self.format.clone().undo(self)
+		self.format.undo(self)
 	}
 
 	/// Reverses the most recently applied undo operation.
 	#[allow(unused_variables)]
 	pub fn redo(&mut self) -> palette::Result<()> {
-		self.format.clone().redo(self)
+		self.format.redo(self)
 	}
 }
 
@@ -164,5 +164,15 @@ impl Default for Palette {
 			operation_history: None,
 			format: Format::Default,
 		}
+	}
+}
+
+
+impl fmt::Display for Palette {
+	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
+		write!(f, "{}\nFormat: {:?}, History: {}",
+			self.data, 
+			self.format,
+			self.history_len())
 	}
 }
