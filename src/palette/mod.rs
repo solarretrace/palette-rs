@@ -111,12 +111,11 @@ impl Palette {
 	}
 
 	/// Returns the total number of history entries recorded.
-	pub fn history_len(&self) -> usize {
+	pub fn history_len(&self) -> (usize, usize) {
 		if let Some(ref history) = self.operation_history {
-			history.undo_entries.len() + 
-			history.redo_entries.len()
+			(history.undo_entries.len(), history.redo_entries.len())
 		} else {
-			0
+			(0, 0)
 		}
 	}
 
@@ -170,9 +169,9 @@ impl Default for Palette {
 
 impl fmt::Display for Palette {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		write!(f, "{}\nFormat: {:?}, History: {}",
-			self.data, 
+		write!(f, "Format: {:?}, History: {:?}\n{}",
 			self.format,
-			self.history_len())
+			self.history_len(),
+			self.data)
 	}
 }

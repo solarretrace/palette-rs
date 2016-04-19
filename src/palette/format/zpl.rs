@@ -80,8 +80,8 @@ const LEVEL_PAGE_LIMIT: PageCount = 512;
 const SPRITE_PAGE_LIMIT: PageCount = 515;
 
 
-
-fn get_level_label_for_line(line: LineCount) -> String {
+/// Returns the level label for the given line.
+fn get_level_label(line: LineCount) -> String {
 	format!("CSET {} ({})", line,
 		if line == 0 || line == 4 || line == 7 || line == 10 {
 			"2"
@@ -95,6 +95,7 @@ fn get_level_label_for_line(line: LineCount) -> String {
 	)
 }
 
+
 /// Called when a new palette is created. Initializes the palette data.
 pub fn initialize(data: &mut PaletteOperationData) {
 	data.set_label(Group::All, "ZplPalette 1.0.0");
@@ -104,6 +105,7 @@ pub fn initialize(data: &mut PaletteOperationData) {
 	data.prepare_new_page = prepare_new_page;
 	data.prepare_new_line = prepare_new_line;
 }
+
 	
 /// The function to call when a new page is created.
 pub fn prepare_new_page(data: &mut PaletteOperationData, group: Group) {
@@ -120,6 +122,7 @@ pub fn prepare_new_page(data: &mut PaletteOperationData, group: Group) {
 	}
 }
 
+
 /// The function to call when a new line is created.
 pub fn prepare_new_line(data: &mut PaletteOperationData, group: Group) {
 	if let Group::Line {page, line} = group {
@@ -127,7 +130,7 @@ pub fn prepare_new_line(data: &mut PaletteOperationData, group: Group) {
 			data.set_label(group, format!("Main CSET {}", line));
 		} else if page <= LEVEL_PAGE_LIMIT {
 			data.set_label(group, 
-				get_level_label_for_line(line)
+				get_level_label(line)
 			);
 		} else {
 			data.set_label(group, 

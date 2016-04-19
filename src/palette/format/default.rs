@@ -48,6 +48,7 @@ pub fn apply_operation(
 	Ok(())
 }
 
+
 /// Reverses the most recently applied operation.
 pub fn undo(palette: &mut Palette) -> palette::Result<()> {
 	let data = &mut palette.data;
@@ -64,6 +65,7 @@ pub fn undo(palette: &mut Palette) -> palette::Result<()> {
 		panic!("undo not supported")
 	}
 }
+
 
 /// Reverses the most recently applied undo operation.
 pub fn redo(palette: &mut Palette) -> palette::Result<()> {

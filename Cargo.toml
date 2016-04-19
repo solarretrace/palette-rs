@@ -7,7 +7,7 @@ authors = ["Skylor R Schermer <skyschermer@gmail.com>"]
 name = "rampeditor"
 
 [dependencies]
-conrod = "* "
+conrod = "*"
 
 # The development profile, used for `cargo build`
 [profile.dev]

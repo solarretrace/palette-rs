@@ -22,8 +22,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! Provides a set of interfaces and implementations for converting palettes 
-//! between different formats.
+//! Provides format-dependent palette operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -43,17 +42,20 @@ use palette::format::zpl::*;
 use palette;
 use address::Group;
 
+use std::io;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Format
 ////////////////////////////////////////////////////////////////////////////////
-/// The supported palette formats.
+/// An enum of the supported palette formats.
 #[derive(Debug, Clone, Copy)]
 pub enum Format {
 	/// The default palette format; provides no special behaviors or 
 	/// restrictions.
 	Default,
-	/// The ZPL palette format. 
+	/// The ZPL palette format. Lines are 15 columns wide, and there are 16 
+	/// lines per page, for 211 pages. The names of lines and pages are 
+	/// auto-generated.
 	Zpl,
 }
 
@@ -67,26 +69,31 @@ impl Format {
 		}
 	}
 
-	/// The function to call when a new page is created.
-	pub fn prepare_new_page(self, data: &mut PaletteOperationData, group: Group) {
+	/// Called when a new page is created.
+	pub fn prepare_new_page(
+		self, data: 
+		&mut PaletteOperationData, 
+		group: Group) 
+	{
 		match self {
 			Format::Zpl => zpl::prepare_new_page(data, group),
 			_ => (),
 		}
 	}
 
-	/// The function to call when a new line is created.
-	pub fn prepare_new_line(self, data: &mut PaletteOperationData, group: Group) {
+	/// Called when a new line is created.
+	pub fn prepare_new_line(
+		self, 
+		data: &mut PaletteOperationData, 
+		group: Group) 
+	{
 		match self {
 			Format::Zpl => zpl::prepare_new_line(data, group),
 			_ => (),
 		}
 	}
 
-	/// Applies the given operation to the palette. Usually, this will just 
-	/// defer to the PaletteOperation's apply method, but this could also 
-	/// provide extra functionality such as undo/redo and format-specific 
-	/// checks.
+	/// Applies the given operation to the palette. 
 	pub fn apply_operation(
 		self, 
 		palette: &mut Palette, 
@@ -104,6 +111,22 @@ impl Format {
 	/// Reverses the most recently applied undo operation.
 	pub fn redo(self, palette: &mut Palette) -> palette::Result<()> {
 		default::redo(palette)
+	}
+
+	/// Writes the palette to the given buffer.
+	#[allow(unused_variables)]
+	pub fn write_palette<W>(self, palette: &Palette, out_buf: &mut W) -> io::Result<()> 
+		where W: io::Write
+	{
+		unimplemented!()
+	}
+
+	/// Reads a palette from the given buffer.
+	#[allow(unused_variables)]
+	pub fn read_palette<R>(self, in_buf: &mut R) -> io::Result<()> 
+		where R: io::Read
+	{
+		unimplemented!()
 	}
 }
 

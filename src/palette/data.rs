@@ -42,7 +42,6 @@ use std::mem;
 
 /// Default function for prepare_new_page and prepare_new_line triggers.
 #[allow(unused_variables)]
-#[inline]
 fn no_op(data: &mut PaletteOperationData, group: Group) {}
 
 
