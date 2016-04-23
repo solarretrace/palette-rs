@@ -934,3 +934,10 @@ mod tests {
 		assert!(close(navy_hsv.value(), 0.5, UNIT));
  	}
 }
+
+
+impl From<Color> for Rgb {
+	fn from(color: Color) -> Self {
+		color.rgb
+	}
+}

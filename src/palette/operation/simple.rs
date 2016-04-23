@@ -31,7 +31,7 @@ use palette::{Result, Error};
 use palette::data::PaletteOperationData;
 use palette::element::ColorElement;
 use address::Address;
-use color::Rgb;
+use color::Color;
 
 
 
@@ -45,17 +45,17 @@ use color::Rgb;
 /// ```rust
 /// use rampeditor::*;
 /// 
-/// let mut pal = BasicPalette::new("Example");
+/// let mut pal = Palette::new("Example", Format::Default, true);
 ///
-/// pal.apply_operation(Box::new(InsertColor::new(Rgb::new(12, 50, 78)))).unwrap();
+/// pal.apply(Box::new(InsertColor::new(Color::new(12, 50, 78)))).unwrap();
 ///
-/// assert_eq!(pal.get_color(Address::new(0, 0, 0)), Some(Rgb::new(12, 50, 78)));
+/// assert_eq!(pal.get_color(Address::new(0, 0, 0)), Some(Color::new(12, 50, 78)));
 /// 
 /// ```
 #[derive(Debug, Clone, Copy, Default)]
 pub struct InsertColor {
-	/// The Rgb to add to the paletee.
-	color: Rgb,
+	/// The Color to add to the paletee.
+	color: Color,
 	/// The location to start placing the colors.
 	location: Option<Address>,
 	/// Whether to overwrite existing elements when generating new ones.
@@ -66,9 +66,9 @@ pub struct InsertColor {
 impl InsertColor {
 	/// Creates a new InsertColor operation.
 	#[inline]
-	pub fn new(color: Rgb) -> InsertColor {
+	pub fn new<C>(color: C) -> InsertColor where C: Into<Color> {
 		InsertColor {
-			color: color,
+			color: color.into(),
 			location: None,
 			overwrite: false,
 		}
@@ -91,7 +91,7 @@ impl InsertColor {
 impl PaletteOperation for InsertColor {
 	fn get_info(&self) -> OperationInfo {
 		OperationInfo {
-			name: "Insert Rgb",
+			name: "Insert Color",
 			details: Some(format!("{:?}", self))
 		}
 	}
@@ -144,10 +144,10 @@ impl PaletteOperation for InsertColor {
 /// ```rust
 /// use rampeditor::*;
 /// 
-/// let mut pal = BasicPalette::new("Example");
+/// let mut pal = Palette::new("Example", Format::Default, true);
 ///
-/// pal.apply_operation(Box::new(InsertColor::new(Rgb::new(12, 50, 78)))).unwrap();
-/// pal.apply_operation(Box::new(RemoveElement::new(Address::new(0, 0, 0)))).unwrap();
+/// pal.apply(Box::new(InsertColor::new(Color::new(12, 50, 78)))).unwrap();
+/// pal.apply(Box::new(RemoveElement::new(Address::new(0, 0, 0)))).unwrap();
 /// 
 /// assert_eq!(pal.len(), 0);
 /// ```

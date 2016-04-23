@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 use super::element::{Slot, ColorElement};
 use super::error::{Error, Result};
-use color::Rgb;
+use color::Color;
 use address::{Address, Group, 
 	PageCount, LineCount, ColumnCount, 
 	PAGE_MAX, LINE_MAX, COLUMN_MAX
@@ -125,12 +125,12 @@ impl PaletteOperationData {
 	///
 	/// ```rust
 	/// use rampeditor::palette::data::PaletteOperationData;
-	/// use rampeditor::{Address, Rgb};
+	/// use rampeditor::{Address, Color};
 	/// 
 	/// let mut dat: PaletteOperationData = Default::default();
 	/// let slot = dat.create_slot(Address::new(1, 1, 1))
 	/// 	.ok()
-	/// 	.unwrap(); // Create slot with default Rgb and unwrap weak ref.
+	/// 	.unwrap(); // Create slot with default Color and unwrap weak ref.
 	///
 	/// assert_eq!(slot.get_color(), Some(Default::default()));
 	/// ```
@@ -442,12 +442,12 @@ impl fmt::Display for PaletteOperationData {
 					try!(write!(f, "\t{}\n", meta));
 				}
 				cur_line_group = address.line_group();
-				try!(write!(f, "\tAddress   Rgb    Order\n"));
+				try!(write!(f, "\tAddress   Color    Order\n"));
 			}
 
 			try!(writeln!(f, "\t{:X}  {:X}  {:<5}",
 				address,
-				slot.borrow().get_color().unwrap_or(Rgb::new(0,0,0)),
+				slot.borrow().get_color().unwrap_or(Color::new(0,0,0)),
 				slot.borrow().get_order(),
 			));
 		}

@@ -50,10 +50,10 @@ use address::Address;
 /// ```rust
 /// use rampeditor::*;
 /// 
-/// let mut pal = BasicPalette::new("Example");
+/// let mut pal = Palette::new("Example", Format::Default, true);
 ///
-/// pal.apply_operation(Box::new(InsertColor::new(Rgb::new(12, 50, 78)))).unwrap();
-/// pal.apply_operation(Box::new(CopyColor::new(Address::new(0, 0, 0)))).unwrap();
+/// pal.apply(Box::new(InsertColor::new(Color::new(12, 50, 78)))).unwrap();
+/// pal.apply(Box::new(CopyColor::new(Address::new(0, 0, 0)))).unwrap();
 ///
 /// assert_eq!(
 /// 	pal.get_color(Address::new(0, 0, 0)), 
@@ -99,7 +99,7 @@ impl CopyColor {
 impl PaletteOperation for CopyColor {
 	fn get_info(&self) -> OperationInfo {
 		OperationInfo {
-			name: "Copy Rgb",
+			name: "Copy Color",
 			details: Some(format!("{:?}", self))
 		}
 	}
@@ -152,10 +152,10 @@ impl PaletteOperation for CopyColor {
 /// ```rust
 /// use rampeditor::*;
 /// 
-/// let mut pal = BasicPalette::new("Example");
+/// let mut pal = Palette::new("Example", Format::Default, true);
 ///
-/// pal.apply_operation(Box::new(InsertColor::new(Rgb::new(12, 50, 78)))).unwrap();
-/// pal.apply_operation(Box::new(InsertWatcher::new(Address::new(0, 0, 0)))).unwrap();
+/// pal.apply(Box::new(InsertColor::new(Color::new(12, 50, 78)))).unwrap();
+/// pal.apply(Box::new(InsertWatcher::new(Address::new(0, 0, 0)))).unwrap();
 ///
 /// assert_eq!(
 /// 	pal.get_color(Address::new(0, 0, 0)),

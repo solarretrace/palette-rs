@@ -37,7 +37,7 @@ use palette::data::PaletteOperationData;
 use palette::element::ColorElement;
 use palette::operation::Undo;
 use address::Address;
-use color::Rgb;
+use color::Color;
 
 
 
@@ -52,17 +52,17 @@ use color::Rgb;
 /// ```rust
 /// use rampeditor::*;
 /// 
-/// let mut pal = BasicPalette::new("Example");
+/// let mut pal = Palette::new("Example", Format::Default, true);
 ///
-/// pal.apply_operation(Box::new(InsertColor::new(Rgb::new(0, 0, 0)))).unwrap();
-/// pal.apply_operation(Box::new(InsertColor::new(Rgb::new(150, 100, 50)))).unwrap();
-/// pal.apply_operation(Box::new(InsertRamp::new(
+/// pal.apply(Box::new(InsertColor::new(Color::new(0, 0, 0)))).unwrap();
+/// pal.apply(Box::new(InsertColor::new(Color::new(150, 100, 50)))).unwrap();
+/// pal.apply(Box::new(InsertRamp::new(
 /// 	Address::new(0, 0, 0),
 /// 	Address::new(0, 0, 1),
 /// 	5
 /// ))).unwrap();
 ///
-/// assert_eq!(pal.get_color(Address::new(0, 0, 4)), Some(Rgb::new(75, 50, 25)));
+/// assert_eq!(pal.get_color(Address::new(0, 0, 4)), Some(Color::new(75, 50, 25)));
 /// assert_eq!(pal.len(), 7);
 /// 
 /// ```
@@ -153,13 +153,13 @@ impl PaletteOperation for InsertRamp {
 		let make = self.make_sources;
 		let src_from = try!(get_source(data, self.from, make, &mut undo));
 		let src_to = try!(get_source(data, self.to, make, &mut undo));
-				
+		
 		// Generate ramp.
 		for (i, &address) in targets.iter().enumerate() {
 			let am = (1.0 / (self.count + 1) as f32) * (i + 1) as f32;
 
 			let new_element = ColorElement::Mixed {
-				mix: Box::new(move |colors| Rgb::lerp(colors[0], colors[1], am)),
+				mix: Box::new(move |colors| Color::rgb_lerp(colors[0], colors[1], am)),
 				sources: vec![src_from.clone(), src_to.clone()]
 			};
 

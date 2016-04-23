@@ -27,11 +27,19 @@
 ////////////////////////////////////////////////////////////////////////////////
 pub use palette::Palette;
 
-// The editor's state.
-// pub struct PaletteEditor {
-	// / The current palette.
-	// palette: Palette,
-	// The current page.
+use address::PageCount;
+use Address;
+use Interval;
+use Color;
 
-	// The current selection.
-// }
+/// The editor's state.
+pub struct State {
+	/// The current palette.
+	palette: Palette,
+	/// The current page.
+	page: PageCount,
+	/// The current selection.
+	selection: Interval<Address>,
+	/// The diplay matrix for the current page.
+	color_matrix: [[Color; 16]; 16],
+}
