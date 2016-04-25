@@ -392,9 +392,187 @@ The first thing we're going to do is build a new module for our GUI stuff.
     - mod.rs
     - editor.rs
 
-Then build a first version of the state struct:
+Then we build a first version of the state struct in editor.rs:
 
 ```rust
+// rampeditor imports
+use palette::Palette;
+use Color;
+
+use std::sync::mpsc;
+
+pub struct Editor {
+    pub frame_width: f64,
+    pub palette: Palette,
+    pub color_matrix: [[Color; 16]; 16], 
+    pub elem_sender: mpsc::Sender<(usize, usize, bool)>,
+    pub elem_receiver: mpsc::Receiver<(usize, usize, bool)>,
+}
+
+impl Editor {
+    pub fn new(pal: Palette) -> Self {
+        let (elem_sender, elem_receiver) = mpsc::channel();
+        let mat = [[Color::new(100, 10, 20); 16]; 16];
+        Editor {
+            frame_width: 1.0,
+            palette: pal,
+            color_matrix: mat,
+            elem_sender: elem_sender,
+            elem_receiver: elem_receiver,
+        }
+    }
+}
 ```
 
+To start with, we are only drawing a 16 x 16 box of `Toggle` widgets. Once we get this working, we'll know everything is setup properly. We'll also build the `set_widgets` function and set the widget IDs:
+
+```rust
+// conrod imports
+use conrod::{
+    Canvas,
+    Colorable,
+    Frameable,
+    Positionable,
+    Sizeable,
+    Toggle,
+    Widget,
+    WidgetMatrix,
+};
+use conrod;
+use piston_window;
+
+/// The editor's back-end.
+pub type Backend = (
+    <piston_window::G2d<'static> as conrod::Graphics>::Texture, 
+    piston_window::Glyphs
+);
+/// The Conrod `Ui` for the back-end.
+pub type Ui = conrod::Ui<Backend>;
+/// The Conrod `UiCell` for the back-end.
+pub type UiCell<'a> = conrod::UiCell<'a, Backend>;
+
+pub fn set_widgets(ui: &mut UiCell, app: &mut Editor) {
+    // Root canvas.
+    Canvas::new()
+        .frame(2.0)
+        .pad(30.0)
+        .color(conrod::Color::Rgba(0.0, 0.0, 0.0, 0.0))
+        .scroll_kids()
+        .set(CANVAS, ui);
+
+    // Color matrix.
+    let (cols, rows) = (16, 16);
+    WidgetMatrix::new(cols, rows)
+        .down(20.0)
+        .w_h(520.0, 520.0) // Matrix width and height.
+        .each_widget(|_n, col: usize, row: usize| {
+            // Set the color.
+            let (r, g, b, a) = (
+                1.0, 
+                1.0,
+                1.0,
+                1.0
+            );
+            // Return the widget we want to set in each element position.
+            let elem = true; // Turn all toggles on for testing.
+            let elem_sender = app.elem_sender.clone();
+            Toggle::new(elem)
+                .rgba(r, g, b, a)
+                .frame(app.frame_width)
+                .react(move |new_val: bool|
+                    elem_sender.send((col, row, new_val)).unwrap()
+                )
+        })
+        .set(COLOR_MATRIX, ui);
+}
+
+widget_ids! {
+    CANVAS,
+    COLOR_MATRIX
+}
+```
+
+Next, we add the window create and run functionality to our `main` function:
+
+```rust
+
+extern crate rampeditor;
+#[macro_use] 
+extern crate conrod;
+extern crate find_folder;
+extern crate piston_window;
+
+use conrod::{Theme, Widget};
+use piston_window::{
+    EventLoop, 
+    Glyphs, 
+    PistonWindow, 
+    UpdateEvent, 
+    WindowSettings
+};
+
+use rampeditor::*;
+use rampeditor::gui::*;
+
+fn main() {
+    // Create the palette.
+    let mut pal = Palette::new("Test Palette", Format::Default, true);
+
+    // Construct the window.
+    let mut window: PistonWindow =
+        WindowSettings::new("Rampeditor 0.1.0", [600, 600])
+            .exit_on_esc(true)
+            .vsync(true)
+            .build()
+            .expect("new window");
+
+    // construct our `Ui`.
+    let mut ui = {
+        let assets = find_folder::Search::KidsThenParents(3, 5)
+            .for_folder("assets")
+            .expect("assets directory");
+        let font_path = assets.join("fonts/NotoSans/NotoSans-Regular.ttf");
+        let theme = Theme::default();
+        let glyph_cache = Glyphs::new(
+            &font_path, 
+            window.factory.borrow().clone()
+        );
+        Ui::new(glyph_cache.expect("glyph cache"), theme)
+    };
+
+    // Our dmonstration app that we'll control with our GUI.
+    let mut app = Editor::new(pal);
+
+    window.set_ups(60);
+
+    // Poll events from the window.
+    while let Some(event) = window.next() {
+        ui.handle_event(&event);
+        event.update(|_| ui.set_widgets(|mut ui| 
+            set_widgets(&mut ui, &mut app))
+        );
+        window.draw_2d(&event, |c, g| ui.draw_if_changed(c, g));
+    }
+}
+```
+
+Now it's time to give it a test run and see if we've got a working window. And if we run this, we'll see that we don't:
+
+```
+src/bin/main.rs:152:16: 152:64 error: this function takes 1 parameter but 2 parameters were supplied [E0061]
+src/bin/main.rs:152         window.draw_2d(&event, |c, g| ui.draw_if_changed(c, g));
+```
+
+Our `draw_2d` function doesn't need to take `&event`. It looks like the example was using an outdated version of `piston_window`... The documentation for this function isn't very helpful:
+
+```
+fn draw_2d<F>(&self, f: F) where F: FnOnce(Context, &mut G2d)
+Renders 2D graphics.
+```
+
+Fortunately, the comments in the example and the function signature make it clear that we're passing in a function for rendering the Conrod window `Ui`, the 'widget' construct, onto the actual underlying Piston window object. Though it is unclear why the example is also passing in an `Event` reference, or why we don't need to do that now.
+
+Anyway, removing the `&event` will allow us to compile, but now we just have a plain black window, with no widgets to be found.
+
+## Rendering the Widgets
 

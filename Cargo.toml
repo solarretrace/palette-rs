@@ -2,12 +2,17 @@
 name = "rampeditor-rs"
 version = "0.1.0"
 authors = ["Skylor R Schermer <skyschermer@gmail.com>"]
+license = "MIT"
+readme = "README.md"
 
 [lib]
 name = "rampeditor"
 
 [dependencies]
 conrod = "*"
+find_folder = "*"
+piston_window = "*"
+piston = "*"
 
 # The development profile, used for `cargo build`
 [profile.dev]

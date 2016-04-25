@@ -25,6 +25,9 @@
 //! A library providing color-ramp editing tools.
 //!
 ////////////////////////////////////////////////////////////////////////////////
+#[macro_use] 
+extern crate conrod;
+extern crate piston_window;
 
 // Module declarations.
 #[warn(missing_docs)]
@@ -55,3 +58,4 @@ pub use palette::operation::{
 	RepeatOperation,
 	InsertRamp,
 };
+

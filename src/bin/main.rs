@@ -21,9 +21,22 @@
 // SOFTWARE.
 
 extern crate rampeditor;
+#[macro_use] 
+extern crate conrod;
+extern crate find_folder;
+extern crate piston_window;
+
+use conrod::{Theme, Widget};
+use piston_window::{
+	EventLoop, 
+	Glyphs, 
+	PistonWindow, 
+	UpdateEvent, 
+	WindowSettings
+};
 
 use rampeditor::*;
-
+use rampeditor::gui::*;
 
 fn main() {
 	// let colors = vec![
@@ -100,4 +113,42 @@ fn main() {
 	)).ok();
 
 	println!("{}", pal);
+
+
+
+    // Construct the window.
+    let mut window: PistonWindow =
+    	WindowSettings::new("Rampeditor 0.1.0", [600, 600])
+            .exit_on_esc(true)
+            .vsync(true)
+            .build()
+            .expect("new window");
+
+    // construct our `Ui`.
+    let mut ui = {
+        let assets = find_folder::Search::KidsThenParents(3, 5)
+            .for_folder("assets")
+            .expect("assets directory");
+        let font_path = assets.join("fonts/NotoSans/NotoSans-Regular.ttf");
+        let theme = Theme::default();
+        let glyph_cache = Glyphs::new(
+        	&font_path, 
+        	window.factory.borrow().clone()
+        );
+        Ui::new(glyph_cache.expect("glyph cache"), theme)
+    };
+
+    // Our dmonstration app that we'll control with our GUI.
+    let mut app = Editor::new(pal);
+
+    window.set_ups(60);
+
+    // Poll events from the window.
+    while let Some(event) = window.next() {
+        ui.handle_event(&event);
+        event.update(|_| ui.set_widgets(|mut ui| 
+        	set_widgets(&mut ui, &mut app))
+        );
+        window.draw_2d(|c, g| ui.draw_if_changed(c, g));
+    }
 }

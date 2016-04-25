@@ -259,6 +259,7 @@ impl fmt::Display for Group {
 // Selection
 ////////////////////////////////////////////////////////////////////////////////
 /// A possibly non-contiguous selection of addresses.
+#[derive(Default, Clone)]
 pub struct Selection {
 	inner: Vec<Interval<Address>>
 }

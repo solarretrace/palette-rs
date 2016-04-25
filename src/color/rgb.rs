@@ -338,7 +338,7 @@ impl From<Hsv> for Rgb {
 			h if 180.0 <= h && h < 240.0 => (0.0,   x,   c),
 			h if 240.0 <= h && h < 300.0 => (  x, 0.0,   c),
 			h if 300.0 <= h && h < 360.0 => (  c, 0.0,   x),
-			_ => unreachable!()		
+			_ => unreachable!()
 		};
 
 		Rgb {
