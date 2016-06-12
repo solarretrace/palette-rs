@@ -565,7 +565,7 @@ src/bin/main.rs:152         window.draw_2d(&event, |c, g| ui.draw_if_changed(c, 
 
 Our `draw_2d` function doesn't need to take `&event`. It looks like the example was using an outdated version of `piston_window`... The documentation for this function isn't very helpful:
 
-```
+```rust
 fn draw_2d<F>(&self, f: F) where F: FnOnce(Context, &mut G2d)
 Renders 2D graphics.
 ```

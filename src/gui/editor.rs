@@ -28,10 +28,15 @@
 
 use palette::Palette;
 use address::{PageCount, Selection};
-use Color;
+// use Color;
 
 use conrod::{
+	color,
+    Labelable,
+    Button,
     Canvas,
+    Text,
+    Color,
     Colorable,
     Frameable,
     Positionable,
@@ -42,6 +47,7 @@ use conrod::{
 };
 use conrod;
 use piston_window;
+
 use std::sync::mpsc;
 
 
@@ -69,8 +75,6 @@ pub struct Editor {
 	pub page: PageCount,
 	/// The current selection.
 	pub selection: Selection,
-	/// The diplay matrix for the current page.
-	pub color_matrix: [[Color; 16]; 16], 
     /// A channel for sending results to the `WidgetMatrix`.
     pub elem_sender: mpsc::Sender<(usize, usize, bool)>,
     /// A channel for receiving results from the `WidgetMatrix`.
@@ -81,13 +85,11 @@ impl Editor {
 	/// Constructs a new `Editor` for the given palette.
 	pub fn new(pal: Palette) -> Self {
 		let (elem_sender, elem_receiver) = mpsc::channel();
-		let mat = [[Color::new(100, 10, 20); 16]; 16];
 		Editor {
 			frame_width: 1.0,
 			palette: pal,
 			page: 0,
 			selection: Default::default(),
-			color_matrix: mat,
 			elem_sender: elem_sender,
 			elem_receiver: elem_receiver,
 		}
@@ -95,47 +97,36 @@ impl Editor {
 }
 
 /// Set all `Widget`s in the user interface.
-pub fn set_widgets(ui: &mut UiCell, app: &mut Editor) {
+pub fn set_widgets(ui: &mut UiCell, editor: &mut Editor) {
 	// Root canvas.
     Canvas::new()
-        .frame(2.0)
+        .frame(1.0)
         .pad(30.0)
-        .color(conrod::Color::Rgba(0.0, 0.0, 0.0, 0.0))
+        .color(color::rgb(100.0, 100.0, 100.0))
         .scroll_kids()
         .set(CANVAS, ui);
 
-    // Color matrix.
-    let (cols, rows) = (16, 16);
-    WidgetMatrix::new(cols, rows)
-        .down(20.0)
-        .w_h(520.0, 520.0) // Matrix width and height.
-        .each_widget(|_n, col: usize, row: usize| {
-            // Set the color.
-            let (r, g, b, a) = (
-                1.0, 
-                1.0,
-                1.0,
-                1.0
-            );
-            // Return the widget we want to set in each element position.
-            let elem = true;
-            let elem_sender = app.elem_sender.clone();
-            Toggle::new(elem)
-                .rgba(r, g, b, a)
-                .frame(app.frame_width)
-                .react(move |new_val: bool|
-                	elem_sender.send((col, row, new_val)).unwrap()
-                )
-        })
-        .set(COLOR_MATRIX, ui);
+        // Text example.
+    Text::new("Widget Demonstration")
+        .top_left_with_margins_on(CANVAS, 0.0, 20.0)
+        .font_size(32)
+        .color(color::rgb(0.2, 0.35, 0.45))
+        .set(TITLE, ui);
 
-    // Receive updates to the matrix from the `WidgetMatrix`.
-    while let Ok((col, row, value)) = app.elem_receiver.try_recv() {
-        // app.color_matrix[col][row] = value;
-    }
+
+    Button::new()
+        .w_h(200.0, 50.0)
+        .mid_left_of(CANVAS)
+        .down_from(TITLE, 45.0)
+        .rgb(0.4, 0.75, 0.6)
+        .frame(1.0)
+        .label("PRESS")
+        .react(|| {println!("pressed");})
+        .set(BUTTON, ui)
 }
 
 widget_ids! {
     CANVAS,
-    COLOR_MATRIX
+    TITLE,
+    BUTTON,
 }
