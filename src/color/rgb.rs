@@ -278,6 +278,28 @@ impl From<[f32; 3]> for Rgb {
 	}
 }
 
+/// Converts the color to an RGB vector.
+impl From<Rgb> for [f32; 3] {
+	fn from(rgb: Rgb) -> Self {
+		[
+			(rgb.r as f32) / (u8::MAX as f32),
+			(rgb.g as f32) / (u8::MAX as f32),
+			(rgb.b as f32) / (u8::MAX as f32)
+		]
+	}
+}
+
+/// Converts the color to an RGBA vector.
+impl From<Rgb> for [f32; 4] {
+	fn from(rgb: Rgb) -> Self {
+		[
+			(rgb.r as f32) / (u8::MAX as f32),
+			(rgb.g as f32) / (u8::MAX as f32),
+			(rgb.b as f32) / (u8::MAX as f32),
+			0.0
+		]
+	}
+}
 
 impl From<Cmyk> for Rgb {
 	fn from(cmyk: Cmyk) -> Self {

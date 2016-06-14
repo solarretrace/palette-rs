@@ -394,7 +394,19 @@ impl From<Xyz> for Color {
 	}
 }
 
+/// Converts the color to an RGB vector.
+impl From<Color> for [f32; 3] {
+	fn from(color: Color) -> Self {
+		Rgb::from(color).into()
+	}
+}
 
+/// Converts the color to an RGBA vector.
+impl From<Color> for [f32; 4] {
+	fn from(color: Color) -> Self {
+		Rgb::from(color).into()
+	}
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Test Module
