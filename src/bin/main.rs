@@ -65,39 +65,43 @@ fn main() {
 
 	println!("{}", pal);
 
+
+    let c = Color::new(0x23, 0xF1, 0x7A);
+    println!("{}", c);
+
     // Construct the window.
-    let mut window: PistonWindow =
-    	WindowSettings::new("Rampeditor 0.1.0", [600, 600])
-            .exit_on_esc(true)
-            .vsync(true)
-            .build()
-            .expect("new window");
+    // let mut window: PistonWindow =
+    // 	WindowSettings::new("Rampeditor 0.1.0", [600, 600])
+    //         .exit_on_esc(true)
+    //         .vsync(true)
+    //         .build()
+    //         .expect("new window");
 
-    // construct our `Ui`.
-    let mut ui = {
-        let assets = find_folder::Search::KidsThenParents(3, 5)
-            .for_folder("assets")
-            .expect("assets directory");
-        let font_path = assets.join("fonts/NotoSans/NotoSans-Regular.ttf");
-        let theme = Theme::default();
-        let glyph_cache = Glyphs::new(
-        	&font_path, 
-        	window.factory.clone()
-        );
-        Ui::new(glyph_cache.expect("glyph cache"), theme)
-    };
+    // // construct our `Ui`.
+    // let mut ui = {
+    //     let assets = find_folder::Search::KidsThenParents(3, 5)
+    //         .for_folder("assets")
+    //         .expect("assets directory");
+    //     let font_path = assets.join("fonts/NotoSans/NotoSans-Regular.ttf");
+    //     let theme = Theme::default();
+    //     let glyph_cache = Glyphs::new(
+    //     	&font_path, 
+    //     	window.factory.clone()
+    //     );
+    //     Ui::new(glyph_cache.expect("glyph cache"), theme)
+    // };
 
-    // Our dmonstration app that we'll control with our GUI.
-    let mut editor = Editor::new(pal);
+    // // Our dmonstration app that we'll control with our GUI.
+    // let mut editor = Editor::new(pal);
 
-    window.set_ups(60);
+    // window.set_ups(60);
 
-    // Poll events from the window.
-    while let Some(event) = window.next() {
-        ui.handle_event(event.clone());
-        event.update(|_| ui.set_widgets(|mut ui| 
-        	gui::set_widgets(&mut ui, &mut editor))
-        );
-        window.draw_2d(&event, |c, g| ui.draw_if_changed(c, g));
-    }
+    // // Poll events from the window.
+    // while let Some(event) = window.next() {
+    //     ui.handle_event(event.clone());
+    //     event.update(|_| ui.set_widgets(|mut ui| 
+    //     	gui::set_widgets(&mut ui, &mut editor))
+    //     );
+    //     window.draw_2d(&event, |c, g| ui.draw_if_changed(c, g));
+    // }
 }

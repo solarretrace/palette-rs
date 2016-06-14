@@ -29,6 +29,7 @@
 use palette::Palette;
 use address::{PageCount, Selection};
 // use Color;
+use super::picker::ColorPicker;
 
 use conrod::{
 	color,
@@ -62,6 +63,9 @@ pub type Ui = conrod::Ui<Backend>;
 pub type UiCell<'a> = conrod::UiCell<'a, Backend>;
 
 
+const GRID_ROWS: usize = 16;
+const GRID_COLUMNS: usize = 16;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Editor
 ////////////////////////////////////////////////////////////////////////////////
@@ -75,10 +79,15 @@ pub struct Editor {
 	pub page: PageCount,
 	/// The current selection.
 	pub selection: Selection,
+    
+    /// The currently displayed colors.
+    pub bool_matrix: [[bool; GRID_ROWS]; GRID_COLUMNS],
+
     /// A channel for sending results to the `WidgetMatrix`.
     pub elem_sender: mpsc::Sender<(usize, usize, bool)>,
     /// A channel for receiving results from the `WidgetMatrix`.
     pub elem_receiver: mpsc::Receiver<(usize, usize, bool)>,
+
 }
 
 impl Editor {
@@ -90,6 +99,7 @@ impl Editor {
 			palette: pal,
 			page: 0,
 			selection: Default::default(),
+            bool_matrix: [[true; GRID_ROWS]; GRID_COLUMNS],
 			elem_sender: elem_sender,
 			elem_receiver: elem_receiver,
 		}
@@ -102,31 +112,58 @@ pub fn set_widgets(ui: &mut UiCell, editor: &mut Editor) {
     Canvas::new()
         .frame(1.0)
         .pad(30.0)
-        .color(color::rgb(100.0, 100.0, 100.0))
+        .color(color::rgb(20.0, 0.0, 0.0))
         .scroll_kids()
         .set(CANVAS, ui);
 
-        // Text example.
-    Text::new("Widget Demonstration")
-        .top_left_with_margins_on(CANVAS, 0.0, 20.0)
-        .font_size(32)
-        .color(color::rgb(0.2, 0.35, 0.45))
-        .set(TITLE, ui);
+    let (cols, rows) = (GRID_COLUMNS, GRID_ROWS);
+    WidgetMatrix::new(cols, rows)
+        .top_left_with_margins_on(CANVAS, 0.0, 15.0)
+        .w_h(260.0, 260.0) // matrix width and height.
+        .each_widget(|_n, col: usize, row: usize| { // called for every matrix elem.
+
+            // Color effect for fun.
+            let (r, g, b, a) = (
+                0.5 + (col as f32 / cols as f32) / 2.0,
+                0.75,
+                1.0 - (row as f32 / rows as f32) / 2.0,
+                1.0
+            );
+
+            // Now return the widget we want to set in each element position.
+            // You can return any type that implements `Widget`.
+            // The returned widget will automatically be positioned and sized to the matrix
+            // element's rectangle.
+            let elem = editor.bool_matrix[col][row];
+            let elem_sender = editor.elem_sender.clone();
+            Toggle::new(elem)
+                .rgba(r, g, b, a)
+                .frame(editor.frame_width)
+                .react(move |new_val: bool| elem_sender.send((col, row, new_val)).unwrap())
+        })
+        .set(TOGGLE_MATRIX, ui);
+
+    // Receive updates to the matrix from the `WidgetMatrix`.
+    while let Ok((col, row, value)) = editor.elem_receiver.try_recv() {
+        editor.bool_matrix[col][row] = value;
+    }
 
 
-    Button::new()
-        .w_h(200.0, 50.0)
-        .mid_left_of(CANVAS)
-        .down_from(TITLE, 45.0)
-        .rgb(0.4, 0.75, 0.6)
-        .frame(1.0)
-        .label("PRESS")
-        .react(|| {println!("pressed");})
-        .set(BUTTON, ui)
+    ColorPicker::new()
+        .color(conrod::color::rgb(0.0, 0.3, 0.1))
+        .down(20.0)
+        .w_h(256.0, 256.0)
+        .label_color(conrod::color::WHITE)
+        .label("Circular Button")
+        // This is called when the user clicks the button.
+        .react(|| println!("Click"))
+        // Add the widget to the conrod::Ui. This schedules the widget it to be
+        // drawn when we call Ui::draw.
+        .set(COLOR_PICKER, ui);
 }
 
 widget_ids! {
     CANVAS,
-    TITLE,
-    BUTTON,
+    TOGGLE_MATRIX,
+    COLOR_PICKER,
 }

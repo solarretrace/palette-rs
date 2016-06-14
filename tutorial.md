@@ -574,5 +574,66 @@ Fortunately, the comments in the example and the function signature make it clea
 
 Anyway, removing the `&event` will allow us to compile, but now we just have a plain black window, with no widgets to be found.
 
-## Rendering the Widgets
+## Getting Something to Render
+
+After searching for a solution to the black-window problem for a couple weeks, resetting the dependencies and updating the build produced this error:
+
+```
+src/bin/main.rs:152:16: 152:64 error: this function takes 2 parameter but 1 parameter was supplied [E0061]
+src/bin/main.rs:152         window.draw_2d(|c, g| ui.draw_if_changed(c, g));
+```
+
+So now we've got to add this `&event` parameter back in. We've also got to remove the `.borrow()` call from our `window.factory` cloning. All of this just represents the dangers and frustrations with working on unstable APIs! The good news is now we have a rendering window:
+
+RENDERING OF WINDOW
+
+
+## Analyzing the GUI Needs.
+
+Typically, when designing a GUI from scratch, I'll want to make a list of what tasks need to be performed and order them by expected use frequency. The idea is to identify what kinds of work needs to be done so that we might have a good basis for designing work areas that take into account which tasks we're going to have to make compromises on. It also helps to identify which kinds of tools we have available, so that we can think ahead about which tasks require which kinds of interaction.
+
+Per-Session+ Tasks:
+-------------------
++ Create new palette
++ Load saved palette
++ Save current palette
+  - Save as
+
+Continuous Tasks:
+-----------------
++ Change viewed colors
+  - Page forward
+  - Page backward
+  - Goto page
+  - Scroll up/down
+  - Wrapping / scroll left-right
++ Add new colors
+  - Add element by order
++ Edit colors
+  - Color picking
+  - Adjust color components
++ Delete colors
++ Cut / copy / paste colors
++ Undo / redo edits
+  - View history
++ Edit color metadata
+
+
+Unusual Tasks:
+--------------
++ Configure application
+
+
+From this we can see that we'll probably need the following widgets:
+
+File selection dialog
+Palette element viewer
+Palette pager
+Color picker
+Text editor
+Button
+Dropdown box
+History viewer
+
+Since the color picker will be one of the more difficult and important parts of the GUI, we can start there.
 

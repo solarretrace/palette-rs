@@ -29,6 +29,10 @@
 // Module declarations.
 #[warn(missing_docs)]
 pub mod editor;
+#[warn(missing_docs)]
+pub mod picker;
+
 
 // Re-exports.
 pub use gui::editor::*;
+
