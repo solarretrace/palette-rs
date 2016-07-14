@@ -25,7 +25,7 @@
 //! Provides a Page:Line:Column addressing object for organizing the palette.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::Interval;
+use interval::Interval;
 
 use std::fmt;
 use std::u16;

@@ -1,10 +1,11 @@
 [root]
-name = "rampeditor-rs"
+name = "rampeditor"
 version = "0.1.0"
 dependencies = [
  "color 1.0.0 (git+https://github.com/skyschermer/color-rs)",
  "conrod 0.36.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "find_folder 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "interval 1.0.0 (git+https://github.com/skyschermer/interval-rs)",
  "piston2d-gfx_graphics 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "piston_window 0.45.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -361,6 +362,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "interpolation"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "interval"
+version = "1.0.0"
+source = "git+https://github.com/skyschermer/interval-rs#c39208e3b748010b99163166ffb23fb7b319aad2"
 
 [[package]]
 name = "itertools"

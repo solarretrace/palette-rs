@@ -31,6 +31,7 @@ extern crate piston_window;
 extern crate gfx_graphics;
 
 extern crate color;
+extern crate interval;
 
 // Module declarations.
 #[warn(missing_docs)]
@@ -39,8 +40,6 @@ pub mod palette;
 pub mod address;
 #[warn(missing_docs)]
 pub mod utilities;
-#[warn(missing_docs)]
-pub mod interval;
 #[warn(missing_docs)]
 pub mod gui;
 

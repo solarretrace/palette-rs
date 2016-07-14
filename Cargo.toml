@@ -1,5 +1,5 @@
 [package]
-name = "rampeditor-rs"
+name = "rampeditor"
 version = "0.1.0"
 authors = ["Skylor R Schermer <skyschermer@gmail.com>"]
 keywords = ["palette", "color"]
@@ -21,6 +21,7 @@ find_folder = "0.3.0"
 piston_window = "0.45.0"
 piston2d-gfx_graphics = "*"
 color = { git = "https://github.com/skyschermer/color-rs" }
+interval = { git = "https://github.com/skyschermer/interval-rs" }
 
 # The development profile, used for `cargo build`
 [profile.dev]
