@@ -28,6 +28,9 @@
 #[macro_use] 
 extern crate conrod;
 extern crate piston_window;
+extern crate gfx_graphics;
+
+extern crate color;
 
 // Module declarations.
 #[warn(missing_docs)]
@@ -39,12 +42,10 @@ pub mod utilities;
 #[warn(missing_docs)]
 pub mod interval;
 #[warn(missing_docs)]
-pub mod color;
-#[warn(missing_docs)]
 pub mod gui;
 
 // Re-exports.
-pub use color::{Color, Cmyk, Hsl, Hsv, Rgb, Xyz};
+pub use color::Color;
 pub use palette::Palette;
 pub use palette::format::Format;
 pub use address::{Address, Group, Selection};

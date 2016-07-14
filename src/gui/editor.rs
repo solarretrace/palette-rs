@@ -33,11 +33,11 @@ use super::picker::ColorPicker;
 
 use conrod::{
 	color,
-    Labelable,
-    Button,
+    // Labelable,
+    // Button,
     Canvas,
-    Text,
-    Color,
+    // Text,
+    // Color,
     Colorable,
     Frameable,
     Positionable,
@@ -150,11 +150,9 @@ pub fn set_widgets(ui: &mut UiCell, editor: &mut Editor) {
 
 
     ColorPicker::new()
-        .color(conrod::color::rgb(0.0, 0.3, 0.1))
+        .background_color(conrod::color::rgb(0.0, 0.3, 0.1))
         .down(20.0)
         .w_h(256.0, 256.0)
-        .label_color(conrod::color::WHITE)
-        .label("Circular Button")
         // This is called when the user clicks the button.
         .react(|| println!("Click"))
         // Add the widget to the conrod::Ui. This schedules the widget it to be

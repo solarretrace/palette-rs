@@ -2,8 +2,10 @@
 name = "rampeditor-rs"
 version = "0.1.0"
 dependencies = [
+ "color 1.0.0 (git+https://github.com/skyschermer/color-rs)",
  "conrod 0.36.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "find_folder 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "piston2d-gfx_graphics 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "piston_window 0.45.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -65,6 +67,11 @@ dependencies = [
  "libc 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "objc 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "color"
+version = "1.0.0"
+source = "git+https://github.com/skyschermer/color-rs#166d07526a41c574971437fbbb4b060fdba90424"
 
 [[package]]
 name = "color_quant"

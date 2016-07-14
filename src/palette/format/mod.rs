@@ -37,8 +37,6 @@ pub mod default;
 use palette::Palette;
 use palette::data::PaletteOperationData;
 use palette::operation::PaletteOperation;
-use palette::format::default::*;
-use palette::format::zpl::*;
 use palette;
 use address::Group;
 
