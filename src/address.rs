@@ -219,26 +219,20 @@ impl Group {
 
 impl Into<Selection> for Group {
 	fn into(self) -> Selection {
-		Selection::new([
-			match self {
-				Group::Line {page, line} => Interval::right_open(
-					Address::new(page, line, 0),
-					Address::new(page, line+1, 0)
-				),
-				Group::Page {page} => Interval::right_open(
-					Address::new(page, 0, 0),
-					Address::new(page+1, 0, 0)
-				),
-				Group::All => Interval::closed(
-					Address::new(0, 0, 0),
-					Address::new(
-						PAGE_MAX, 
-						LINE_MAX, 
-						COLUMN_MAX
-					),
-				),
-			}
-		].iter().cloned())
+		Selection::new(Some(match self {
+			Group::Line {page, line} => Interval::right_open(
+				Address::new(page, line, 0),
+				Address::new(page, line+1, 0)
+			),
+			Group::Page {page} => Interval::right_open(
+				Address::new(page, 0, 0),
+				Address::new(page+1, 0, 0)
+			),
+			Group::All => Interval::closed(
+				Address::new(0, 0, 0),
+				Address::new(PAGE_MAX, LINE_MAX, COLUMN_MAX)
+			),
+		}))
 	}
 }
 

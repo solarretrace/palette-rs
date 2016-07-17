@@ -1,61 +1,52 @@
 
 
-// use piston_window::Gfx2d;
-
-
-// fn get_texture() -> Texture {
-    // let mut image = image::ImageBuf::new(width, height);
-    // let mut draw = false;
-    // let mut texture = Texture::from_image(&image);
-// }
-
-
-
-/*----------------------------------------------------------------------------*/
-
 use conrod::{
-    // self,
     Backend,
-    // Circle,
     Color,
     Colorable,
     CommonBuilder,
-    // Dimensions,
     FontSize,
+    Image,
     IndexSlot,
-    // Labelable,
-    // Point,
-    // Positionable,
-    // Text,
     UpdateArgs,
     Widget,
     WidgetKind,
 };
 
+use piston_window::{PistonWindow, Texture};
+use piston_window;
+use image;
+use image::ImageBuffer;
+
+use std::sync::Arc;
 
 /// A `&'static str` that can be used to uniquely identify a `ColorPicker`.
 pub const KIND: WidgetKind = "ColorPicker";
 
 
 /// A widget for picking colors.
-pub struct ColorPicker<F> {
+pub struct ColorPicker<'w, F> {
     /// Common widget components.
     common: CommonBuilder,
     /// The style configuration for the widget.
     style: Style,
     /// Whether the widget is available for input.
     enabled: bool,
+    /// The window in which the widget will be drawn. This is used to manage 
+    /// resources associated with the image buffer of the selector.
+    window: &'w mut PistonWindow,
     /// Optional callback for when the color selection is changed.
     selection_react: Option<F>,
 }
 
-impl<F> ColorPicker<F> {
+impl<'w, F> ColorPicker<'w, F> {
     /// Create a button context to be built upon.
-    pub fn new() -> ColorPicker<F> {
+    pub fn new(window: &mut PistonWindow) -> ColorPicker<F> {
         ColorPicker {
             common: CommonBuilder::new(),
             style: Style::new(),
             enabled: true,
+            window: window,
             selection_react: None,
         }
     }
@@ -97,16 +88,17 @@ widget_style!{
 /// Represents the unique, cached state for our ColorPicker widget.
 #[derive(Clone, Debug, PartialEq)]
 pub struct State {
-    /// An index to use for our **Circle** primitive graphics widget.
-    circle_idx: IndexSlot,
-    /// An index to use for our **Text** primitive graphics widget (for the label).
-    text_idx: IndexSlot,
+    /// An index to use for our **Image** primitive graphics widget.
+    image_idx: IndexSlot,
+
+    buf_width: u32,
+    buf_height: u32,
 }
 
 
 
 
-impl<F> Widget for ColorPicker<F> where F: FnMut() {
+impl<'w, F> Widget for ColorPicker<'w, F> where F: FnMut() {
     type State = State;
     type Style = Style;
 
@@ -124,8 +116,9 @@ impl<F> Widget for ColorPicker<F> where F: FnMut() {
 
     fn init_state(&self) -> State {
         State {
-            circle_idx: IndexSlot::new(),
-            text_idx: IndexSlot::new(),
+            image_idx: IndexSlot::new(),
+            buf_width: 20,
+            buf_height: 20,
         }
     }
 
@@ -133,83 +126,46 @@ impl<F> Widget for ColorPicker<F> where F: FnMut() {
         self.style.clone()
     }
 
-    /// Update the state of the button by handling any input that has occurred since the last
-    /// update.
     fn update<B: Backend>(self, args: UpdateArgs<Self, B>) {
+
+        let UpdateArgs {idx, state, rect, mut ui, style, ..} = args;
+
         
-        // let UpdateArgs { idx, state, rect, mut ui, style, .. } = args;
+        let buf = ImageBuffer::from_fn(
+            state.buf_width, 
+            state.buf_height, 
+            |x, y| {
+                if (x+y) % 2 == 0 {
+                    image::Rgba([0u8, 0u8, 0u8, 0u8])
+                } else {
+                    image::Rgba([255u8, 255u8, 255u8, 255u8])
+                }
+            }
+        );
 
-        // let color = {
-        //     let input = ui.widget_input(idx);
+        let buf_texture = Texture::from_image(
+            &mut self.window.factory,
+            &buf,
+            &piston_window::TextureSettings::new()
+        ).unwrap();
 
-        //     // If the button was clicked, call the user's `react` function.
-        //     if input.clicks().left().next().is_some() {
-        //         if let Some(mut react) = self.maybe_react {
-        //             react();
-        //         }
-        //     }
-
-        //     let color = style.color(ui.theme());
-        //     input.mouse()
-        //         .map(|mouse| {
-        //             if is_over_circ([0.0, 0.0], mouse.rel_xy(), rect.dim()) {
-        //                 if mouse.buttons.left().is_down() {
-        //                     color.clicked()
-        //                 } else {
-        //                     color.highlighted()
-        //                 }
-        //             } else {
-        //                 color
-        //             }
-        //         })
-        //         .unwrap_or(color)
-        // };
-
-        // Finally, we'll describe how we want our widget drawn by simply instantiating the
-        // necessary primitive graphics widgets.
-        //
-        // Conrod will automatically determine whether or not any changes have occurred and
-        // whether or not any widgets need to be re-drawn.
-        //
-        // The primitive graphics widgets are special in that their unique state is used within
-        // conrod's backend to do the actual drawing. This allows us to build up more complex
-        // widgets by using these simple primitives with our familiar layout, coloring, etc
-        // methods.
-        //
-        // If you notice that conrod is missing some sort of primitive graphics that you
-        // require, please file an issue or open a PR so we can add it! :)
-
-        // First, we'll draw the **Circle** with a radius that is half our given width.
-        // let radius = rect.w() / 2.0;
-        // let circle_idx = state.circle_idx.get(&mut ui);
-        // Circle::fill(radius)
-        //     .middle_of(idx)
-        //     .graphics_for(idx)
-        //     .color(color)
-        //     .set(circle_idx, &mut ui);
-
-        // // Now we'll instantiate our label using the **Text** widget.
-        // let label_color = style.label_color(ui.theme());
-        // let font_size = style.label_font_size(ui.theme());
-        // let text_idx = state.text_idx.get(&mut ui);
-        // if let Some(ref label) = self.maybe_label {
-        //     Text::new(label)
-        //         .middle_of(idx)
-        //         .font_size(font_size)
-        //         .graphics_for(idx)
-        //         .color(label_color)
-        //         .set(text_idx, &mut ui);
-        // }
+        Image::from_texture(Arc::new(buf_texture))
+            .set(state.image_idx.get(&mut ui), &mut ui);
     }
-
 }
 
 /// Provide the chainable color() configuration method.
-impl<F> Colorable for ColorPicker<F> {
+impl<'w, F> Colorable for ColorPicker<'w, F> {
     fn color(mut self, color: Color) -> Self {
         self.style.background_color = Some(color);
         self
     }
 }
 
+// impl<'w, F> Sizeable for ColorPicker<'w, F> {
+//     fn x_dimension(self, x: Dimension) -> Self;
+//     fn y_dimension(self, x: Dimension) -> Self;
+//     fn get_x_dimension<B: Backend>(&self, ui: &Ui<B>) -> Dimension;
+//     fn get_y_dimension<B: Backend>(&self, ui: &Ui<B>) -> Dimension;
+// }
 

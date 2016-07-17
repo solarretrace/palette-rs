@@ -20,8 +20,10 @@ conrod = "0.36.1"
 find_folder = "0.3.0"
 piston_window = "0.45.0"
 piston2d-gfx_graphics = "*"
+image = "*"
 color = { git = "https://github.com/skyschermer/color-rs" }
 interval = { git = "https://github.com/skyschermer/interval-rs" }
+vecmath = "*"
 
 # The development profile, used for `cargo build`
 [profile.dev]

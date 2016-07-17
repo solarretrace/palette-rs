@@ -25,20 +25,21 @@ extern crate color;
 extern crate conrod;
 extern crate find_folder;
 extern crate piston_window;
+extern crate image;
+
 
 use color::Rgb;
-
 use conrod::{Theme, Widget};
 use piston_window::{
 	EventLoop, 
 	Glyphs, 
 	PistonWindow, 
 	UpdateEvent, 
-	WindowSettings
+	WindowSettings,
 };
-
 use rampeditor::*;
 use rampeditor::gui::*;
+
 
 fn main() {
 	let mut pal = Palette::new("Test Palette", Format::Default, true);
@@ -91,7 +92,7 @@ fn main() {
         Ui::new(glyph_cache.expect("glyph cache"), theme)
     };
 
-    // Our dmonstration app that we'll control with our GUI.
+
     let mut editor = Editor::new(pal);
 
     window.set_ups(60);
@@ -100,8 +101,10 @@ fn main() {
     while let Some(event) = window.next() {
         ui.handle_event(event.clone());
         event.update(|_| ui.set_widgets(|mut ui| 
-        	gui::set_widgets(&mut ui, &mut editor))
+        	gui::set_widgets(&mut ui, &mut editor, &mut window))
         );
-        window.draw_2d(&event, |c, g| ui.draw_if_changed(c, g));
+        window.draw_2d(&event, |c, g| {
+            ui.draw_if_changed(c, g);
+        });
     }
 }
