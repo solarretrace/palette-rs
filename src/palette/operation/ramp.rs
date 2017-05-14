@@ -67,7 +67,7 @@ impl Mixer for Ramp {
 /// # Example
 ///
 /// ```rust
-/// use rampeditor::*;
+/// use palette::*;
 /// 
 /// let mut pal = Palette::new("Example", Format::Default, true);
 ///

@@ -50,7 +50,7 @@ use address::Address;
 /// # Example
 ///
 /// ```rust
-/// use rampeditor::*;
+/// use palette::*;
 /// 
 /// let mut pal = Palette::new("Example", Format::Default, true);
 ///
@@ -167,7 +167,7 @@ impl Mixer for Watcher {
 /// # Example
 ///
 /// ```rust
-/// use rampeditor::*;
+/// use palette::*;
 /// 
 /// let mut pal = Palette::new("Example", Format::Default, true);
 ///

@@ -43,7 +43,7 @@ use color::Color;
 /// # Example
 ///
 /// ```rust
-/// use rampeditor::*;
+/// use palette::*;
 /// 
 /// let mut pal = Palette::new("Example", Format::Default, true);
 ///
@@ -143,7 +143,7 @@ impl PaletteOperation for InsertColor {
 /// # Example
 ///
 /// ```rust
-/// use rampeditor::*;
+/// use palette::*;
 /// 
 /// let mut pal = Palette::new("Example", Format::Default, true);
 ///

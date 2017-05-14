@@ -82,7 +82,7 @@ impl Address {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::Address;
+	/// use palette::Address;
 	/// 
 	/// let a = Address::new(0, 9, 9);
 	/// let b = a.wrapping_add(1, 10, 10, 10);
@@ -119,7 +119,7 @@ impl Address {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::{Address, Group};
+	/// use palette::{Address, Group};
 	/// 
 	/// let a = Address::new(1, 2, 3).page_group();
 	/// 
@@ -134,7 +134,7 @@ impl Address {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::{Address, Group};
+	/// use palette::{Address, Group};
 	/// 
 	/// let a = Address::new(1, 2, 3).line_group();
 	/// 
@@ -265,7 +265,7 @@ impl Selection {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::{Selection, Interval, Address};
+	/// use palette::{Selection, Interval, Address};
 	/// 
 	/// let sel = Selection::new([
 	///		Interval::open(Address::new(0, 0, 0), Address::new(1, 0, 0)),
@@ -290,7 +290,7 @@ impl Selection {
 	/// # Example
 	///
 	/// ```rust
-	/// # use rampeditor::{Selection, Interval, Address};
+	/// # use palette::{Selection, Interval, Address};
 	/// 
 	/// let mut sel = Selection::new([
 	///		Interval::closed(Address::new(0, 0, 0), Address::new(1, 0, 0)),
@@ -311,7 +311,7 @@ impl Selection {
 	/// # Example
 	///
 	/// ```rust
-	/// # use rampeditor::{Selection, Interval, Address};
+	/// # use palette::{Selection, Interval, Address};
 	/// 
 	/// let sel = Selection::new([
 	///		Interval::closed(Address::new(0, 0, 0), Address::new(1, 0, 0)),

@@ -124,8 +124,8 @@ impl PaletteOperationData {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::palette::data::PaletteOperationData;
-	/// use rampeditor::{Address, Color};
+	/// use palette::palette::data::PaletteOperationData;
+	/// use palette::{Address, Color};
 	/// 
 	/// let mut dat: PaletteOperationData = Default::default();
 	/// let slot = dat.create_slot(Address::new(1, 1, 1))
@@ -165,8 +165,8 @@ impl PaletteOperationData {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::palette::data::PaletteOperationData;
-	/// use rampeditor::Group;
+	/// use palette::palette::data::PaletteOperationData;
+	/// use palette::Group;
 	/// 
 	/// let mut dat: PaletteOperationData = Default::default();
 	/// dat.set_label(Group::All, "My Palette");
@@ -199,8 +199,8 @@ impl PaletteOperationData {
 	/// # Example
 	///
 	/// ```rust
-	/// use rampeditor::palette::data::PaletteOperationData;
-	/// use rampeditor::Group;
+	/// use palette::palette::data::PaletteOperationData;
+	/// use palette::Group;
 	/// 
 	/// let mut dat: PaletteOperationData = Default::default();
 	/// dat.set_name(Group::All, "My Palette");

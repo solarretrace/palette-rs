@@ -1,5 +1,5 @@
 [package]
-name = "rampeditor"
+name = "palette"
 version = "0.1.0"
 authors = ["Skylor R Schermer <skyschermer@gmail.com>"]
 keywords = ["palette", "color"]
@@ -12,7 +12,7 @@ documentation = ""
 exclude = ["*.sublime-project", "*.sublime-workspace"]
 
 [lib]
-name = "rampeditor"
+name = "palette"
 
 
 [dependencies]
