@@ -96,6 +96,7 @@ impl PaletteOperation for InsertColor {
 		}
 	}
 
+
 	fn apply(&mut self, data: &mut PaletteOperationData) -> Result<HistoryEntry> {
 		// Get starting address.
 		let starting_address = if let Some(address) = self.location {

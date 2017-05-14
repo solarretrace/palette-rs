@@ -75,6 +75,8 @@ use color::Color;
 use std::fmt;
 use std::result;
 
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Palette
 ////////////////////////////////////////////////////////////////////////////////
@@ -136,7 +138,7 @@ impl Palette {
 	#[allow(unused_variables)]
 	pub fn apply(
 		&mut self, 
-		operation: Box<PaletteOperation>) 
+		operation: Box<PaletteOperation>)
 		-> palette::Result<()> 
 	{
 		self.format.apply_operation(self, operation)

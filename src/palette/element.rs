@@ -34,8 +34,14 @@ use std::rc::Weak;
 use std::fmt;
 
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Mixer
+////////////////////////////////////////////////////////////////////////////////
+/// Provides a `mix` operation to express dependencies on other colors.
 pub trait Mixer {
-	fn mix(Vec<Color>) -> Color;
+	/// Returns a new `Color` generated from the given `Color`s.
+	fn mix(&self, colors: Vec<Color>) -> Color;
 }
 
 
@@ -94,7 +100,7 @@ pub enum ColorElement {
 	/// An element with dependencies. Generates a color from another.
 	Mixed {
 		/// The function that mixes the color from its dependencies.
-		mix: Box<Fn(Vec<Color>) -> Color>,
+		mixer: Box<Mixer>,
 		/// The `Slot`s to use for mixing a color.
 		sources: Vec<Weak<Slot>>,
  	},
@@ -108,7 +114,7 @@ impl ColorElement {
 		match self {
 			&ColorElement::Pure {color} => Some(color),
 
-			&ColorElement::Mixed {ref mix, ref sources} => {
+			&ColorElement::Mixed {ref mixer, ref sources} => {
 				// Package up color references into a Vec<Color> for the mix 
 				// function.
 				let mut slots = sources
@@ -123,7 +129,7 @@ impl ColorElement {
 					.get_color()
 					.expect("no color in valid slot")
 				).collect::<Vec<_>>();
-				Some(mix(colors))
+				Some(mixer.mix(colors))
 			}
 		}
 	}

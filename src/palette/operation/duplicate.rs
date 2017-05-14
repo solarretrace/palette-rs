@@ -25,16 +25,18 @@
 //! Defines operations for duplicating elements.
 //!
 ////////////////////////////////////////////////////////////////////////////////
+use color::Color;
+
 use super::{
 	PaletteOperation, 
 	HistoryEntry, 
 	OperationInfo, 
 	set_target, 
-	get_source
+	get_source,
 };
 use palette::{Result, Error};
 use palette::data::PaletteOperationData;
-use palette::element::ColorElement;
+use palette::element::{ColorElement, Mixer};
 use palette::operation::Undo;
 use address::Address;
 
@@ -139,6 +141,21 @@ impl PaletteOperation for CopyColor {
 	}
 }
 
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Watcher
+////////////////////////////////////////////////////////////////////////////////
+/// A first-order `Mixer` which will return its source color.
+#[derive(Debug, Clone, Copy)]
+pub struct Watcher;
+
+
+impl Mixer for Watcher {
+	fn mix(&self, colors: Vec<Color>) -> Color {
+		colors[0]
+	}
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -248,7 +265,7 @@ impl PaletteOperation for InsertWatcher {
 				
 		// Generate watcher element.
 		let new_element = ColorElement::Mixed {
-			mix: Box::new(move |colors| colors[0]),
+			mixer: Box::new(Watcher),
 			sources: vec![src.clone()]
 		};
 

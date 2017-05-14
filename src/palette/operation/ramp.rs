@@ -25,6 +25,8 @@
 //! Defines ramp creation operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
+use color::Color;
+
 use super::{
 	PaletteOperation, 
 	HistoryEntry, 
@@ -34,12 +36,27 @@ use super::{
 };
 use palette::Result;
 use palette::data::PaletteOperationData;
-use palette::element::ColorElement;
+use palette::element::{ColorElement, Mixer};
 use palette::operation::Undo;
 use address::Address;
-use color::Color;
 
 
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Ramp
+////////////////////////////////////////////////////////////////////////////////
+/// A second-order `Mixer` which will return the linear interpoloation of its
+/// source colors.
+#[derive(Debug, Clone, Copy)]
+pub struct Ramp(f32);
+
+
+impl Mixer for Ramp {
+	fn mix(&self, colors: Vec<Color>) -> Color {
+		Color::rgb_lerp(colors[0], colors[1], self.0)
+	}
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -159,7 +176,7 @@ impl PaletteOperation for InsertRamp {
 			let am = (1.0 / (self.count + 1) as f32) * (i + 1) as f32;
 
 			let new_element = ColorElement::Mixed {
-				mix: Box::new(move |colors| Color::rgb_lerp(colors[0], colors[1], am)),
+				mixer: Box::new(Ramp(am)),
 				sources: vec![src_from.clone(), src_to.clone()]
 			};
 
