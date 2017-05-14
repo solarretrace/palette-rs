@@ -148,22 +148,22 @@ pub fn prepare_new_line(data: &mut PaletteOperationData, group: Group) {
 	// 	where W: io::Write
 	// {
 	// 	// Write header.
-	// 	try!(out_buf.write(&ZPL_HEADER));
+	// 	out_buf.write(&ZPL_HEADER)?;
 
 	// 	// Write all pages in sequence.
 
 	// 	// Write level names.
 
 	// 	// Write footer.
-	// 	try!(out_buf.write(&ZPL_FOOTER_A));
+	// 	out_buf.write(&ZPL_FOOTER_A)?;
 	// 	for _ in 1..109 {
-	// 		try!(out_buf.write(&ZPL_FOOTER_B));
+	// 		out_buf.write(&ZPL_FOOTER_B)?;
 	// 	}
-	// 	try!(out_buf.write(&ZPL_FOOTER_C));
+	// 	out_buf.write(&ZPL_FOOTER_C)?;
 	// 	for _ in 1..79 {
-	// 		try!(out_buf.write(&ZPL_FOOTER_D));
+	// 		out_buf.write(&ZPL_FOOTER_D)?;
 	// 	}
-	// 	try!(out_buf.write(&ZPL_FOOTER_E));
+	// 	out_buf.write(&ZPL_FOOTER_E)?;
 	// 	Ok(())
 	// }
 

@@ -25,13 +25,6 @@
 //! A library providing color-ramp editing tools.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-#[macro_use] 
-extern crate conrod;
-extern crate gfx_graphics;
-
-extern crate piston_window;
-extern crate image;
-
 extern crate color;
 extern crate interval;
 
@@ -42,8 +35,6 @@ pub mod palette;
 pub mod address;
 #[warn(missing_docs)]
 pub mod utilities;
-// #[warn(missing_docs)]
-pub mod gui;
 
 // Re-exports.
 pub use color::Color;

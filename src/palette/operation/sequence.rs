@@ -85,7 +85,7 @@ impl PaletteOperation for SequenceOperation {
 
 		let operations = mem::replace(&mut self.operations, Vec::new());
 		for mut operation in operations {
-			let entry = try!(operation.apply(data));
+			let entry = operation.apply(data)?;
 			undo_sequence.push(entry.undo);
 		}
 		
@@ -157,7 +157,7 @@ impl PaletteOperation for RepeatOperation {
 		let mut undo_sequence: Vec<Box<PaletteOperation>> = Vec::new();
 
 		for _ in 0..self.repeat_count {
-			let entry = try!(self.operation.apply(data));
+			let entry = self.operation.apply(data)?;
 			undo_sequence.push(entry.undo);
 		}
 		

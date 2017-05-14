@@ -109,28 +109,28 @@ impl PaletteOperation for CopyColor {
 		let starting_address = if let Some(address) = self.location {
 			address
 		} else {
-			try!(data.first_free_address_after(Default::default()))
+			data.first_free_address_after(Default::default())?
 		};
 
 		// Get targets.
-		let target = try!(data.find_targets(
+		let target = data.find_targets(
 			1, 
 			starting_address,
 			self.overwrite,
 			None
-		))[0];
+		)?[0];
 
 		// Create new color.
 		let new_element = ColorElement::Pure {
-			color: try!(data
+			color: data
 				.get_slot(self.copying)
 				.and_then(|slot| slot.get_color())
-				.ok_or(Error::EmptyAddress(self.copying)))
+				.ok_or(Error::EmptyAddress(self.copying))?
 		};
 
 		// Set target.
 		let mut undo = Undo::new_for(self);
-		try!(set_target(data, target, new_element, &mut undo));
+		set_target(data, target, new_element, &mut undo)?;
 		
 		Ok(HistoryEntry {
 			info: self.get_info(),
@@ -226,25 +226,25 @@ impl PaletteOperation for InsertWatcher {
 		let starting_address = if let Some(address) = self.location {
 			address
 		} else {
-			try!(data.first_free_address_after(Default::default()))
+			data.first_free_address_after(Default::default())?
 		};
 
 		// Get targets.
-		let target = try!(data.find_targets(
+		let target = data.find_targets(
 			1, 
 			starting_address,
 			self.overwrite,
 			Some(vec![self.watching])
-		))[0];
+		)?[0];
 		
 		// Get source slot.
 		let mut undo = Undo::new_for(self);
-		let src = try!(get_source(
+		let src = get_source(
 			data, 
 			self.watching, 
 			self.make_sources, 
 			&mut undo
-		));
+		)?;
 				
 		// Generate watcher element.
 		let new_element = ColorElement::Mixed {
@@ -252,7 +252,7 @@ impl PaletteOperation for InsertWatcher {
 			sources: vec![src.clone()]
 		};
 
-		try!(set_target(data, target, new_element, &mut undo));
+		set_target(data, target, new_element, &mut undo)?;
 
 
 		Ok(HistoryEntry {

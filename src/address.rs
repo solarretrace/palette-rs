@@ -281,7 +281,7 @@ impl Selection {
 		where I: IntoIterator<Item=Interval<Address>> 
 	{
 		Selection {
-			inner: Interval::normalize(intervals.into_iter())
+			inner: Interval::union_all(intervals.into_iter())
 		}
 	}
 

@@ -101,16 +101,16 @@ impl PaletteOperation for InsertColor {
 		let starting_address = if let Some(address) = self.location {
 			address
 		} else {
-			try!(data.first_free_address_after(Default::default()))
+			data.first_free_address_after(Default::default())?
 		};
 
 		// Get targets.
-		let target = try!(data.find_targets(
+		let target = data.find_targets(
 			1, 
 			starting_address,
 			self.overwrite,
 			None
-		))[0];
+		)?[0];
 
 		// Check for derived color.
 		if !self.overwrite && 
@@ -123,7 +123,7 @@ impl PaletteOperation for InsertColor {
 		let new_element = ColorElement::Pure {color: self.color};
 		// Set target.
 		let mut undo = Undo::new_for(self);
-		try!(set_target(data, target, new_element, &mut undo));
+		set_target(data, target, new_element, &mut undo)?;
 		
 		Ok(HistoryEntry {
 			info: self.get_info(),
@@ -178,7 +178,7 @@ impl PaletteOperation for RemoveElement {
 	fn apply(&mut self, data: &mut PaletteOperationData) -> Result<HistoryEntry> {
 
 		let mut undo = Undo::new_for(self);
-		undo.record(self.address, Some(try!(data.remove_slot(self.address))));
+		undo.record(self.address, Some(data.remove_slot(self.address)?));
 		
 		Ok(HistoryEntry {
 			info: self.get_info(),

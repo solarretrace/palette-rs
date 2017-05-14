@@ -34,6 +34,11 @@ use std::rc::Weak;
 use std::fmt;
 
 
+pub trait Mixer {
+	fn mix(Vec<Color>) -> Color;
+}
+
+
 /// A wrapper around a `ColorElement` for enabling interior mutability.
 #[derive(Debug)]
 pub struct Slot {
@@ -86,7 +91,7 @@ pub enum ColorElement {
 		color: Color
 	},
 
-	/// An element with a single dependency. Generates a color from another.
+	/// An element with dependencies. Generates a color from another.
 	Mixed {
 		/// The function that mixes the color from its dependencies.
 		mix: Box<Fn(Vec<Color>) -> Color>,

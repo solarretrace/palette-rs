@@ -137,22 +137,22 @@ impl PaletteOperation for InsertRamp {
 		let starting_address = if let Some(address) = self.location {
 			address
 		} else {
-			try!(data.first_free_address_after(Default::default()))
+			data.first_free_address_after(Default::default())?
 		};
 
 		// Get target addresses.
-		let targets = try!(data.find_targets(
+		let targets = data.find_targets(
 			self.count, 
 			starting_address,
 			self.overwrite,
 			Some(vec![self.from, self.to]) // Exclude the source locations.
-		));
+		)?;
 
 		// Get source slots.
 		let mut undo = Undo::new_for(self);
 		let make = self.make_sources;
-		let src_from = try!(get_source(data, self.from, make, &mut undo));
-		let src_to = try!(get_source(data, self.to, make, &mut undo));
+		let src_from = get_source(data, self.from, make, &mut undo)?;
+		let src_to = get_source(data, self.to, make, &mut undo)?;
 		
 		// Generate ramp.
 		for (i, &address) in targets.iter().enumerate() {
@@ -163,7 +163,7 @@ impl PaletteOperation for InsertRamp {
 				sources: vec![src_from.clone(), src_to.clone()]
 			};
 
-			try!(set_target(data, address, new_element, &mut undo));
+			set_target(data, address, new_element, &mut undo)?;
 		}
 
 		Ok(HistoryEntry {

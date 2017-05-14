@@ -70,7 +70,7 @@ pub fn get_source(
 	if let Some(slot) = data.get_slot(address) {
 		Ok(Rc::downgrade(&slot))
 	} else if make_sources {
-		let slot = Rc::downgrade(&try!(data.create_slot(address)));
+		let slot = Rc::downgrade(&data.create_slot(address)?);
 		undo.record(address, None);
 		Ok(slot)
 	} else {
@@ -89,7 +89,7 @@ pub fn get_target(
 	if let Some(slot) = data.get_slot(address) {
 		Ok(slot)
 	} else {
-		let slot = try!(data.create_slot(address));
+		let slot = data.create_slot(address)?;
 		undo.record(address, None);
 		Ok(slot)
 	}
@@ -105,7 +105,7 @@ pub fn set_target(
 	-> Result<()>
 {
 	// Get the target slot.
-	let target = try!(get_target(data, address, undo));
+	let target = get_target(data, address, undo)?;
 
 	// Insert new element into palette.
 	let cur = mem::replace(&mut *target.borrow_mut(), new_element);

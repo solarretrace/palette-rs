@@ -63,12 +63,12 @@ pub struct Metadata {
 
 impl fmt::Display for Metadata {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		try!(match (self.name.as_ref(), self.format_label.as_ref()) {
+		match (self.name.as_ref(), self.format_label.as_ref()) {
 			(Some(name), Some(label)) => write!(f, "\"{}\" ({})", name, label),
 			(None, Some(label)) => write!(f, "({})", label),
 			(Some(name), None) => write!(f, "\"{}\"", name),
 			_ => Ok(())
-		});
+		}?;
 		write!(f, " [Lines: {}] [Columns: {}]", 
 			self.line_count, 
 			self.column_count
@@ -138,7 +138,7 @@ impl PaletteOperationData {
 		if self.slotmap.contains_key(&address) {
 			Err(Error::AddressInUse(address))
 		} else {
-			try!(self.prepare_address(address));
+			self.prepare_address(address)?;
 			let new_slot = Rc::new(Slot::new(Default::default()));
 			self.slotmap.insert(address, new_slot.clone());
 			Ok(new_slot)
@@ -150,10 +150,9 @@ impl PaletteOperationData {
 	/// removed element, or an error if the given address is empty.
 	pub fn remove_slot(&mut self, address: Address) -> Result<ColorElement> {
 		// Remove slot from slotmap.
-		let slot = try!(self.slotmap
+		let slot = self.slotmap
 			.remove(&address)
-			.ok_or(Error::EmptyAddress(address))
-		);
+			.ok_or(Error::EmptyAddress(address))?;
 
 		// Extract ColorElement and discard wrappers.
 		let element = mem::replace(&mut *slot.borrow_mut(), Default::default());
@@ -234,7 +233,7 @@ impl PaletteOperationData {
 		-> Result<Address> 
 	{
 		let mut address = starting_address;
-		try!(self.prepare_address(address));
+		self.prepare_address(address)?;
 
 		// Loop until we don't see a color.
 		while self.slotmap
@@ -345,7 +344,7 @@ impl PaletteOperationData {
 
 		if overwrite { // Get overwrite block.
 			while targets.len() < n {
-				try!(self.prepare_address(next));
+				self.prepare_address(next)?;
 				if targets.contains(&next) {
 					return Err(Error::MaxSlotLimitExceeded);
 				}
@@ -361,7 +360,7 @@ impl PaletteOperationData {
 				);
 			}
 		} else { // Find n free addresses.
-			try!(self.prepare_address(next));
+			self.prepare_address(next)?;
 
 			// Check if the starting address is empty.
 			if next == starting_address && 
@@ -378,7 +377,7 @@ impl PaletteOperationData {
 					self.get_line_count(next.page_group()),
 					self.get_column_count(next.line_group()),
 				);
-				next = try!(self.first_free_address_after(next));
+				next = self.first_free_address_after(next)?;
 				// Add the target if it's not in the exclude list.
 				if !exclude.clone().map_or(false, |ex| ex.contains(&next)) {
 					targets.insert(next);
@@ -412,44 +411,41 @@ impl fmt::Debug for PaletteOperationData {
 impl fmt::Display for PaletteOperationData {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
 		if let Some(data) = self.metadata.get(&Group::All) {
-			try!(write!(f, "{} ", data));
+			write!(f, "{} ", data)?;
 		}
-		try!(write!(f, 
+		write!(f, 
 			"[{} pages] [{} elements] [default wrap {}:{}]\n",
 			self.page_count,
 			self.len(),
 			self.default_line_count,
 			self.default_column_count
-		));
+		)?;
 
 		let mut cur_page_group = Group::All;
 		let mut cur_line_group = Group::All;
 		for (&address, ref slot) in self.slotmap.iter() {
 			if cur_page_group != address.page_group() {
 				match self.metadata.get(&address.page_group()) {
-					Some(meta) => try!(writeln!(f, "Page {} - {}", 
+					Some(meta) => writeln!(f, "Page {} - {}", 
 						address.page_group(), 
-						meta)
-					),
-					None => try!(writeln!(f, "Page {}", 
-						address.page_group())
-					)
+						meta)?
+					,
+					None => writeln!(f, "Page {}", address.page_group())?,
 				}
 			};
 			cur_page_group = address.page_group();
 			if cur_line_group != address.line_group() {
 				if let Some(meta) = self.metadata.get(&address.line_group()) {
-					try!(write!(f, "\t{}\n", meta));
+					write!(f, "\t{}\n", meta)?;
 				}
 				cur_line_group = address.line_group();
-				try!(write!(f, "\tAddress   Color    Order\n"));
+				write!(f, "\tAddress   Color    Order\n")?;
 			}
 
-			try!(writeln!(f, "\t{:X}  {:X}  {:<5}",
+			writeln!(f, "\t{:X}  {:X}  {:<5}",
 				address,
 				slot.borrow().get_color().unwrap_or(Color::new(0,0,0)),
-				slot.borrow().get_order(),
-			));
+				slot.borrow().get_order())?;
 		}
 		Ok(())
 	}
