@@ -22,11 +22,17 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! Defines a return results for error-producing palette operations.
+//! Defines results for error-producing `Palette` operations.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use address::Address;
 
+// Local imports.
+use address::{
+	Address,
+	Reference,
+};
+
+// Standard imports.
 use std::fmt;
 use std::result;
 use std::error;
@@ -42,14 +48,27 @@ pub type Result<T> = result::Result<T, Error>;
 pub enum Error {
 	/// Attempted to add a color to the palette, but the palette contains the 
 	/// maximum number of slots already.
-	MaxSlotLimitExceeded,
+	MaxCellLimitExceeded,
+
 	/// Attempted to set a color to a non-zeroth-order slot.
 	CannotSetDerivedColor,
+	
 	/// An address was provided that lies outside of the range defined for the 
 	/// palette.
 	InvalidAddress(Address),
+	
+	/// A `Reference` was generated for an invalid address.
+	InvalidReference(Reference),
+	
+	/// A `Reference` component was invalid.
+	InvalidReferenceComponent,
+
+	/// A `Reference` component was requested from an unresolved address.
+	UnresolvedReferenceComponent,
+	
 	/// An empty address was provided for an operation that requires a color.
 	EmptyAddress(Address),
+	
 	/// An element could not be created because the address was occupied.
 	AddressInUse(Address),
 }
@@ -58,12 +77,13 @@ pub enum Error {
 impl fmt::Display for Error {
 	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
 		match *self {
-			Error::EmptyAddress(address) => write!(f, "{}: {}", 
-				error::Error::description(self), 
-				address
-			),
+			Error::EmptyAddress(address)
+				=> write!(f, "{}: {}", 
+					error::Error::description(self), 
+					address
+				),
 
-			_ => write!(f, "{}", error::Error::description(self))
+			_	=> write!(f, "{}", error::Error::description(self))
 		}
 	}
 }
@@ -72,21 +92,30 @@ impl fmt::Display for Error {
 impl error::Error for Error {
 	fn description(&self) -> &str {
 		match *self {
-			Error::MaxSlotLimitExceeded => 
-				"maximum number of color slots for palette exceeded",
+			Error::MaxCellLimitExceeded
+				=> "maximum number of color slots for palette exceeded",
 
-			Error::CannotSetDerivedColor => 
-				"cannot assign color to a location containing a derived color \
-				value",
+			Error::CannotSetDerivedColor
+				=> "cannot assign color to a location containing a derived \
+				color value",
 
-			Error::InvalidAddress(..) => 
-				"address lies outside of allowed range",
+			Error::InvalidAddress(..)
+				=> "address lies outside of allowed range",
 
-			Error::EmptyAddress(..) => 
-				"empty address provided to an operation requiring a color",
+			Error::InvalidReference(..)
+				=> "cell reference lies outside of allowed range",
 
-			Error::AddressInUse(..) =>
-				"the address is in use",
+			Error::InvalidReferenceComponent
+				=> "reference component overflow or underflow.",
+
+			Error::UnresolvedReferenceComponent
+				=> "reference component did not resolve completely.",
+
+			Error::EmptyAddress(..)
+				=> "empty address provided to an operation requiring a color",
+
+			Error::AddressInUse(..)
+				=> "the address is in use",
 		}
 	}
 }

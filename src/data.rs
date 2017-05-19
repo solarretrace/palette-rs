@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 // 
-// Copyright (c) 2016 Skylor R. Schermer
+// Copyright (c) 2017 Skylor R. Schermer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,53 +22,74 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! Defines a structured PaletteOperationData object for storing common data for palette
+//! Defines a structured Data object for storing common data for palette
 //! formats.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::element::{Slot, ColorElement};
-use super::error::{Error, Result};
-use color::Color;
-use address::{Address, Group, 
-	PageCount, LineCount, ColumnCount, 
-	PAGE_MAX, LINE_MAX, COLUMN_MAX
+
+// Local imports.
+use address::{
+	Address,
+	Reference,
+	Page, Line, Column, 
+	PAGE_MAX, LINE_MAX, COLUMN_MAX,
+};
+use cell::Cell;
+use expression::Expression;
+use result::{
+	Error,
+	Result,
 };
 
+// Non-local imports.
+use color::Color;
+
+// Standard imports.
+use std::collections::{
+	BTreeMap,
+	BTreeSet,
+	HashMap,
+};
 use std::rc::Rc;
-use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
-use std::result;
 use std::mem;
 
-/// Default function for prepare_new_page and prepare_new_line triggers.
+
+
+/// Default function for `prepare_new_page` and `prepare_new_line` triggers.
 #[allow(unused_variables)]
-fn no_op(data: &mut PaletteOperationData, group: Group) {}
+fn no_op(_: &mut Data, _: &Reference) {}
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Metadata
+// MetaData
 ////////////////////////////////////////////////////////////////////////////////
 /// Provides metadata about palette data.
 #[derive(Debug, Default)]
-pub struct Metadata {
+pub struct MetaData {
 	/// A format-generated label for the item.
 	pub format_label: Option<String>,
+
 	/// A user-provided name for the item.
 	pub name: Option<String>,
+	
 	/// An override to the default line count for this group.
-	pub line_count: LineCount,
+	pub line_count: Line,
+	
 	/// An override to the default column count for this group.
-	pub column_count: ColumnCount,
+	pub column_count: Column,
 }
 
-impl fmt::Display for Metadata {
-	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
+impl fmt::Display for MetaData {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+
 		match (self.name.as_ref(), self.format_label.as_ref()) {
 			(Some(name), Some(label)) => write!(f, "\"{}\" ({})", name, label),
-			(None, Some(label)) => write!(f, "({})", label),
-			(Some(name), None) => write!(f, "\"{}\"", name),
-			_ => Ok(())
+			(None,		 Some(label)) => write!(f, "({})", label),
+			(Some(name), None)		  => write!(f, "\"{}\"", name),
+			_						  => Ok(())
 		}?;
+		
 		write!(f, " [Lines: {}] [Columns: {}]", 
 			self.line_count, 
 			self.column_count
@@ -77,86 +98,98 @@ impl fmt::Display for Metadata {
 }
 
 
+
 ////////////////////////////////////////////////////////////////////////////////
-// PaletteOperationData
+// Data
 ////////////////////////////////////////////////////////////////////////////////
 /// Encapsulates a single palette's operation-relevant data.
-pub struct PaletteOperationData {
-	/// A map assigning addresses to palette slots.
-	pub slotmap: BTreeMap<Address, Rc<Slot>>,
-	/// Provided metadata for various parts of the palette.
-	pub metadata: BTreeMap<Group, Metadata>,
-	/// The number of pages in the palette.
-	pub page_count: PageCount,
+pub struct Data {
+	/// A map assigning addresses to `Palette` cells.
+	pub cells: BTreeMap<Address, Rc<Cell>>,
+
+	/// A map assigning references to names.
+	pub names: HashMap<String, Reference>,
+
+	/// A map assigning metadata to references.
+	pub metadata: HashMap<Reference, MetaData>,
+
+	/// The maximum number of pages in the `Palette`.
+	pub maximum_page_count: Page,
+
 	/// The default number of lines in each page.
-	pub default_line_count: LineCount,
+	pub default_line_count: Line,
+
 	/// The default number of columns in each line.
-	pub default_column_count: ColumnCount,
-	/// Called before an element is added to a new page in the palette. The 
+	pub default_column_count: Column,
+
+	/// Called before a `Cell` is added to a new page in the palette. The 
 	/// expectation is that this will add the appropriate meta data to the 
 	/// palette. This will be called before the prepare_new_line function is 
 	/// called.
-	pub prepare_new_page: fn(&mut PaletteOperationData, Group),
-	/// Called before an element is added to a new line in the palette. The 
+	pub prepare_new_page: fn(&mut Data, &Reference),
+	
+	/// Called before an expression is added to a new line in the palette. The 
 	/// expectation is that this will add the appropriate meta data to the 
 	/// palette.
-	pub prepare_new_line: fn(&mut PaletteOperationData, Group),
+	pub prepare_new_line: fn(&mut Data, &Reference),
 }
 
 
-impl PaletteOperationData {
-	/// Returns the number of colors in the PaletteOperationData.
-	#[inline]
+impl Data {
+	/// Returns the number of colors in the Data.
 	pub fn len(&self) -> usize {
-		self.slotmap.len()
+		self.cells.len()
 	}
 
-	/// Returns a reference to the slot located at the given address, or None if
+	/// Returns whether there are any `Cell`s in the `Data`.
+	pub fn is_empty(&self) -> bool {
+		self.cells.is_empty()
+	}
+
+	/// Returns a reference to the cell located at the given address, or None if
 	/// the address is invalid or empty.
-	pub fn get_slot(&self, address: Address) -> Option<Rc<Slot>> {
-		self.slotmap.get(&address).map(|slot| slot.clone())
+	pub fn get_cell(&self, address: Address) -> Option<Rc<Cell>> {
+		self.cells.get(&address).map(Clone::clone)
 	}
 
-	/// Returns a reference to the slot located at the given address. If 
-	/// the address is empty, a new slot will be created an a weak reference 
+	/// Returns a reference to the cell located at the given address. If 
+	/// the address is empty, a new cell will be created an a weak reference 
 	/// will be returned. Returns None if the address is invalid.
 	///
 	/// # Example
 	///
 	/// ```rust
-	/// use palette::palette::data::PaletteOperationData;
+	/// use palette::data::Data;
 	/// use palette::{Address, Color};
 	/// 
-	/// let mut dat: PaletteOperationData = Default::default();
-	/// let slot = dat.create_slot(Address::new(1, 1, 1))
+	/// let mut dat: Data = Default::default();
+	/// let cell = dat.create_cell(Address::new(1, 1, 1))
 	/// 	.ok()
-	/// 	.unwrap(); // Create slot with default Color and unwrap weak ref.
-	///
-	/// assert_eq!(slot.get_color(), Some(Default::default()));
+	/// 	.unwrap(); // Create empty `Cell` and unwrap it.
 	/// ```
-	pub fn create_slot(&mut self, address: Address) -> Result<Rc<Slot>> {
-		if self.slotmap.contains_key(&address) {
+	pub fn create_cell(&mut self, address: Address) -> Result<Rc<Cell>> {
+		if self.cells.contains_key(&address) {
 			Err(Error::AddressInUse(address))
 		} else {
 			self.prepare_address(address)?;
-			let new_slot = Rc::new(Slot::new(Default::default()));
-			self.slotmap.insert(address, new_slot.clone());
-			Ok(new_slot)
+			let new_cell = Rc::new(Cell::new(Default::default()));
+			self.cells.insert(address, new_cell.clone());
+			Ok(new_cell)
 		}
 	}
 
 
-	/// Removes the element at the given address from the palette. Returns the 
-	/// removed element, or an error if the given address is empty.
-	pub fn remove_slot(&mut self, address: Address) -> Result<ColorElement> {
-		// Remove slot from slotmap.
-		let slot = self.slotmap
+	/// Removes the expression at the given address from the palette. Returns
+	/// the removed expression, or an error if the given address is empty.
+	pub fn remove_cell(&mut self, address: Address) -> Result<Expression> {
+		// Remove cell from cells.
+		let cell = self.cells
 			.remove(&address)
 			.ok_or(Error::EmptyAddress(address))?;
 
-		// Extract ColorElement and discard wrappers.
-		let element = mem::replace(&mut *slot.borrow_mut(), Default::default());
-		Ok(element)
+		// Extract Expression and discard wrappers.
+		let expr = mem::replace(&mut *cell.borrow_mut(), Default::default());
+		Ok(expr)
 	}
 
 	/// Returns the label associated with the given group, or
@@ -165,15 +198,15 @@ impl PaletteOperationData {
 	/// # Example
 	///
 	/// ```rust
-	/// use palette::palette::data::PaletteOperationData;
-	/// use palette::Group;
+	/// use palette::data::Data;
+	/// use palette::address::Reference;
 	/// 
-	/// let mut dat: PaletteOperationData = Default::default();
-	/// dat.set_label(Group::All, "My Palette");
+	/// let mut dat: Data = Default::default();
+	/// dat.set_label(Reference::all(), "My Palette");
 	///
-	/// assert_eq!(dat.get_label(Group::All), Some("My Palette"));
+	/// assert_eq!(dat.get_label(Reference::all()), Some("My Palette"));
 	/// ```
-	pub fn get_label(&self, group: Group) -> Option<&str> {
+	pub fn get_label(&self, group: Reference) -> Option<&str> {
 		self.metadata
 			.get(&group)
 			.and_then(|ref slotmap| slotmap.format_label.as_ref())
@@ -183,7 +216,7 @@ impl PaletteOperationData {
 	/// Sets the label for the given group.
 	pub fn set_label<S>(
 		&mut self, 
-		group: Group, 
+		group: Reference, 
 		format_label: S) 
 		where S: Into<String> 
 	{
@@ -196,18 +229,16 @@ impl PaletteOperationData {
 	/// Returns the name associated with the given group, or None if it has
 	/// no name.
 	///
-	/// # Example
-	///
 	/// ```rust
-	/// use palette::palette::data::PaletteOperationData;
-	/// use palette::Group;
+	/// use palette::data::Data;
+	/// use palette::address::Reference;
 	/// 
-	/// let mut dat: PaletteOperationData = Default::default();
-	/// dat.set_name(Group::All, "My Palette");
+	/// let mut dat: Data = Default::default();
+	/// dat.set_name(Reference::all(), "My Palette");
 	///
-	/// assert_eq!(dat.get_name(Group::All), Some("My Palette"));
+	/// assert_eq!(dat.get_name(Reference::all()), Some("My Palette"));
 	/// ```
-	pub fn get_name(&self, group: Group) -> Option<&str> {
+	pub fn get_name(&self, group: Reference) -> Option<&str> {
 		self.metadata
 			.get(&group)
 			.and_then(|ref data| data.name.as_ref())
@@ -215,7 +246,7 @@ impl PaletteOperationData {
 	}
 
 	/// Sets the name for the given group.
-	pub fn set_name<S>(&mut self, group: Group, name: S) 
+	pub fn set_name<S>(&mut self, group: Reference, name: S) 
 		where S: Into<String> 
 	{
 		self.metadata
@@ -226,7 +257,6 @@ impl PaletteOperationData {
 
 	/// Returns the next free address after the given address. And error will be
 	/// returned if there are no more free addresses.
-	#[inline]
 	pub fn first_free_address_after(
 		&mut self, 
 		starting_address: Address) 
@@ -236,20 +266,20 @@ impl PaletteOperationData {
 		self.prepare_address(address)?;
 
 		// Loop until we don't see a color.
-		while self.slotmap
+		while self.cells
 			.get(&address)
-			.and_then(|s| s.get_color())
+			.and_then(|s| s.color())
 			.is_some() 
 		{
-			address = address.wrapping_add(
+			address = address.wrapping_step(
 				1,
-				self.page_count,
-				self.get_line_count(address.page_group()), 
-				self.get_column_count(address.line_group())
+				self.maximum_page_count,
+				self.get_line_count(&Reference::page_of(&address)), 
+				self.get_column_count(&Reference::line_of(&address))
 			);
 			// Return an error if we've looped all the way around.
 			if address == starting_address {
-				return Err(Error::MaxSlotLimitExceeded);
+				return Err(Error::MaxCellLimitExceeded);
 			}
 		}
 		Ok(address)
@@ -257,15 +287,14 @@ impl PaletteOperationData {
 
 	/// Calls the prepare_new_page function and returns the current line count 
 	/// for the given group.
-	#[inline]
-	fn get_line_count(&mut self, group: Group) -> LineCount {
+	fn get_line_count(&mut self, group: &Reference) -> Line {
 		self.metadata
-			.get(&group)
+			.get(group)
 			.map_or(self.default_line_count, |ref meta| meta.line_count)
 	}
 
 	/// Sets the line count for a group.
-	pub fn set_line_count(&mut self, group: Group, line_count: LineCount) {
+	pub fn set_line_count(&mut self, group: Reference, line_count: Line) {
 		self.metadata
 			.entry(group)
 			.or_insert(Default::default())
@@ -274,8 +303,7 @@ impl PaletteOperationData {
 
 	/// Calls the prepare_new_line function and returns the current column count 
 	/// for the given group.
-	#[inline]
-	fn get_column_count(&mut self, group: Group) -> ColumnCount {
+	fn get_column_count(&mut self, group: &Reference) -> Column {
 		self.metadata
 			.get(&group)
 			.map_or(self.default_column_count, |ref meta| meta.column_count)
@@ -284,8 +312,8 @@ impl PaletteOperationData {
 	/// Sets the column count for a group.
 	pub fn set_column_count(
 		&mut self, 
-		group: Group, 
-		column_count: ColumnCount) 
+		group: Reference, 
+		column_count: Column) 
 	{
 		self.metadata
 			.entry(group)
@@ -295,11 +323,10 @@ impl PaletteOperationData {
 
 	/// Returns whether the give address lies within the bounds defined by the 
 	/// wrapping and max page settings for the palette.
-	#[inline]
 	fn check_address(&mut self, address: Address) -> bool {
-		address.page < self.page_count &&
-		address.line < self.get_line_count(address.page_group()) &&
-		address.column < self.get_column_count(address.line_group())
+		address.page < self.maximum_page_count &&
+		address.line < self.get_line_count(&Reference::page_of(&address)) &&
+		address.column < self.get_column_count(&Reference::line_of(&address))
 	}
 
 	/// Prepares an address by calling the palette format's metadata functions.
@@ -308,15 +335,17 @@ impl PaletteOperationData {
 	fn prepare_address(&mut self, address: Address) -> Result<()> {
 		let default_line_count = self.default_line_count;
 		let default_column_count = self.default_column_count;
-		let page_group = address.page_group();
-		let line_group = address.line_group();
+		let page_group = Reference::page_of(&address);
+		let line_group = Reference::line_of(&address);
+
 		if !self.metadata.contains_key(&page_group) {
-			self.set_line_count(page_group, default_line_count);
-			(self.prepare_new_page)(self, page_group);
+			self.set_line_count(page_group.clone(), default_line_count);
+			(self.prepare_new_page)(self, &page_group);
 		}
+
 		if !self.metadata.contains_key(&line_group) {
-			self.set_column_count(line_group, default_column_count);
-			(self.prepare_new_line)(self, line_group);
+			self.set_column_count(line_group.clone(), default_column_count);
+			(self.prepare_new_line)(self, &line_group);
 		}
 		
 		if self.check_address(address) {
@@ -327,7 +356,7 @@ impl PaletteOperationData {
 	}
 
 	/// Retrieves n target addresses after starting_address from the palette. If 
-	/// overwrite is true, the addresses may potentially contain elements. 
+	/// overwrite is true, the addresses may potentially contain expressions. 
 	/// Otherwise, they will be empty. Addresses provided in the exclude list 
 	/// will be skipped. Returns an error if more targets are requested than are
 	/// available in the palette.
@@ -346,17 +375,17 @@ impl PaletteOperationData {
 			while targets.len() < n {
 				self.prepare_address(next)?;
 				if targets.contains(&next) {
-					return Err(Error::MaxSlotLimitExceeded);
+					return Err(Error::MaxCellLimitExceeded);
 				}
 				// Add the target if it's not in the exclude list.
 				if !exclude.clone().map_or(false, |ex| ex.contains(&next)) {
 					targets.insert(next);
 				}
-				next = next.wrapping_add(
+				next = next.wrapping_step(
 					1,
-					self.page_count,
-					self.get_line_count(next.page_group()),
-					self.get_column_count(next.line_group()),
+					self.maximum_page_count,
+					self.get_line_count(&Reference::page_of(&next)),
+					self.get_column_count(&Reference::line_of(&next)),
 				);
 			}
 		} else { // Find n free addresses.
@@ -364,18 +393,18 @@ impl PaletteOperationData {
 
 			// Check if the starting address is empty.
 			if next == starting_address && 
-				self.slotmap.get(&next).and_then(|s| s.get_color()).is_none() &&
+				self.cells.get(&next).and_then(|s| s.color()).is_none() &&
 				!exclude.clone().map_or(false, |ex| ex.contains(&next))
 			{
 				targets.insert(next);
 			}
 			
 			while targets.len() < n {
-				next = next.wrapping_add(
+				next = next.wrapping_step(
 					1,
-					self.page_count,
-					self.get_line_count(next.page_group()),
-					self.get_column_count(next.line_group()),
+					self.maximum_page_count,
+					self.get_line_count(&Reference::page_of(&next)),
+					self.get_column_count(&Reference::line_of(&next)),
 				);
 				next = self.first_free_address_after(next)?;
 				// Add the target if it's not in the exclude list.
@@ -390,17 +419,17 @@ impl PaletteOperationData {
 }
 
 
-impl fmt::Debug for PaletteOperationData {
-	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		write!(f, "PaletteOperationData {{ \
-			slotmap: {:#?}, \
-			metadata: {:#?}, \
-			page_count: {}, \
+impl fmt::Debug for Data {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "Data {{ \
+			cells: {:#?}, \
+			names: {:#?}, \
+			maximum_page_count: {}, \
 			default_line_count: {}, \
 			default_column_count: {}",
-			self.slotmap,
-			self.metadata,
-			self.page_count,
+			self.cells,
+			self.names,
+			self.maximum_page_count,
 			self.default_line_count,
 			self.default_column_count,
 		)
@@ -408,56 +437,56 @@ impl fmt::Debug for PaletteOperationData {
 }
 
 
-impl fmt::Display for PaletteOperationData {
-	fn fmt(&self, f: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		if let Some(data) = self.metadata.get(&Group::All) {
+impl fmt::Display for Data {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		if let Some(data) = self.metadata.get(&Reference::all()) {
 			write!(f, "{} ", data)?;
 		}
 		write!(f, 
-			"[{} pages] [{} elements] [default wrap {}:{}]\n",
-			self.page_count,
+			"[{} pages] [{} expressions] [default wrap {}:{}]\n",
+			self.maximum_page_count,
 			self.len(),
 			self.default_line_count,
 			self.default_column_count
 		)?;
 
-		let mut cur_page_group = Group::All;
-		let mut cur_line_group = Group::All;
-		for (&address, ref slot) in self.slotmap.iter() {
-			if cur_page_group != address.page_group() {
-				match self.metadata.get(&address.page_group()) {
+		let mut cur_page_group = Reference::all();
+		let mut cur_line_group = Reference::all();
+		for (&address, ref cell) in self.cells.iter() {
+			if cur_page_group != Reference::page_of(&address) {
+				match self.metadata.get(&Reference::page_of(&address)) {
 					Some(meta) => writeln!(f, "Page {} - {}", 
-						address.page_group(), 
+						Reference::page_of(&address), 
 						meta)?
 					,
-					None => writeln!(f, "Page {}", address.page_group())?,
+					None => writeln!(f, "Page {}", Reference::page_of(&address))?,
 				}
 			};
-			cur_page_group = address.page_group();
-			if cur_line_group != address.line_group() {
-				if let Some(meta) = self.metadata.get(&address.line_group()) {
+			cur_page_group = Reference::page_of(&address);
+			if cur_line_group != Reference::line_of(&address) {
+				if let Some(meta) = self.metadata.get(&Reference::line_of(&address)) {
 					write!(f, "\t{}\n", meta)?;
 				}
-				cur_line_group = address.line_group();
-				write!(f, "\tAddress   Color    Order\n")?;
+				cur_line_group = Reference::line_of(&address);
+				write!(f, "\tAddress   Color\n")?;
 			}
 
-			writeln!(f, "\t{:X}  {:X}  {:<5}",
+			writeln!(f, "\t{:X}  {:X}",
 				address,
-				slot.borrow().get_color().unwrap_or(Color::new(0,0,0)),
-				slot.borrow().get_order())?;
+				cell.borrow().color().unwrap_or(Color::new(0,0,0)))?;
 		}
 		Ok(())
 	}
 }
 
 
-impl Default for PaletteOperationData {
+impl Default for Data {
 	fn default() -> Self {
-		PaletteOperationData {
-			slotmap: BTreeMap::new(),
-			metadata: BTreeMap::new(),
-			page_count: PAGE_MAX,
+		Data {
+			cells: BTreeMap::new(),
+			names: HashMap::new(),
+			metadata: HashMap::new(),
+			maximum_page_count: PAGE_MAX,
 			default_line_count: LINE_MAX,
 			default_column_count: COLUMN_MAX,
 			prepare_new_page: no_op,

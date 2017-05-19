@@ -22,53 +22,388 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! Provides a Page:Line:Column addressing object for organizing the palette.
+//! Provides Page:Line:Column addressing for the `Palette`'s `Cell`s.
+//!
+//! When a color-expression refers to another cell, we have to supply a
+//! reference to the cell or cells that are being operated on. Every cell is
+//! assigned a unique identifier called its `Address`, which is comprised of
+//! three components: the Page, Line, and Column. These components are always
+//! positive integers.
+//!
+//! There are several ways to reference cells, and each of these must be
+//! supported by the expression grammar, though functions within the palette may
+//! imbue additional requirements on the references. 
 //!
 ////////////////////////////////////////////////////////////////////////////////
+
+// Local imports.
+use result::{
+	Result,
+	Error,
+};
+
+// Non-local imports.
 use interval::Interval;
 
+// Standard imports.
 use std::fmt;
 use std::u16;
 use std::u8;
+use std::ops::Add;
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Address internal types and limits.
 ////////////////////////////////////////////////////////////////////////////////
-/// A type alias for the pages of an Address.
-pub type PageCount = u16;
-/// A type alias for the lines of an Address.
-pub type LineCount = u8;
-/// A type alias for the columns of an Address.
-pub type ColumnCount = u8;
+/// The page of an `Address`.
+pub type Page = u16;
+/// The line of an `Address`.
+pub type Line = u8;
+/// The column of an `Address`.
+pub type Column = u8;
 
 /// The maximum page in an Address.
-pub const PAGE_MAX: PageCount = u16::MAX;
+pub const PAGE_MAX: Page = u16::MAX;
 /// The maximum line in an Address.
-pub const LINE_MAX: LineCount = u8::MAX;
+pub const LINE_MAX: Line = u8::MAX;
 /// The maximum column in an Address.
-pub const COLUMN_MAX: ColumnCount = u8::MAX;
+pub const COLUMN_MAX: Column = u8::MAX;
+
+/// A page offset from an `Address`.
+pub type PageOffset = i32;
+/// A line offset from an `Address`.
+pub type LineOffset = i16;
+/// A column offset from an `Address`.
+pub type ColumnOffset = i16;
 
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Offset
+////////////////////////////////////////////////////////////////////////////////
+/// Allows computation of relative `Reference`s.
+trait Offset: Sized + Copy {
+	type Base: Add;
+	fn offset(self, base: &Self::Base) -> Result<Self::Base>;
+	fn is_negative(self) -> bool;
+}
+
+// Implementation for Page.
+impl Offset for i32 {
+	/// The base type to compute offsets from.
+	type Base = u16;
+
+	/// Computes the offset from the given component.
+	fn offset(self, base: &Self::Base) -> Result<Self::Base> {
+		let result = self + *base as Self;
+		if result < 0 || result > (PAGE_MAX as Self) {
+			Err(Error::InvalidReferenceComponent)
+		} else {
+			Ok(result as Self::Base)
+		}
+	}
+
+	/// Returns whether the offset is negative.
+	fn is_negative(self) -> bool {
+		self < 0
+	}
+}
+
+// Implementation for Line & Column.
+impl Offset for i16 {
+	type Base = u8;
+
+	fn offset(self, base: &Self::Base) -> Result<Self::Base> {
+		let result = self + *base as Self;
+		if result < 0 || result > (LINE_MAX as Self) {
+			Err(Error::InvalidReferenceComponent)
+		} else {
+			Ok(result as Self::Base)
+		}
+	}
+
+	fn is_negative(self) -> bool {
+		self < 0
+	}
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Reference
+////////////////////////////////////////////////////////////////////////////////
+/// A reference to a set of `Cell`s the in the palette.
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+pub struct Reference {
+	/// The pages being referenced.
+	page: ReferenceComponent<Page, PageOffset>,
+	
+	/// The lines being referenced.
+	line: ReferenceComponent<Line, LineOffset>,
+
+	/// The columns being referenced.
+	column: ReferenceComponent<Column, ColumnOffset>,
+}
+
+
+impl Reference {
+	/// Returns a `Reference` to the entire palette.
+	pub fn all() -> Reference {
+		use self::ReferenceComponent::*;
+
+		Reference {
+			page: All,
+			line: All,
+			column: All,
+		}
+	}
+
+	/// Returns a `Reference` to the page containing the given `Address`.
+	pub fn page_of(addr: &Address) -> Reference {
+		use self::ReferenceComponent::*;
+
+		Reference {
+			page: Index(addr.page),
+			line: All,
+			column: All,
+		}
+	}
+
+	/// Returns a `Reference` to the line containing the given `Address`.
+	pub fn line_of(addr: &Address) -> Reference {
+		use self::ReferenceComponent::*;
+
+		Reference {
+			page: Index(addr.page),
+			line: Index(addr.line),
+			column: All,
+		}
+	}
+
+	/// Returns the page being referenced.
+	///
+	/// # Errors
+	///
+	/// Returns an `UnresolvedReferenceComponent` error when the reference does
+	/// not resolve to a single page.
+	pub fn page(&self) -> Result<Page> {
+		use self::ReferenceComponent::*;
+
+		if let Reference {page: Index(page), ..} = *self {
+			Ok(page)
+		} else {
+			Err(Error::UnresolvedReferenceComponent)
+		}
+	}
+
+	/// Returns the line being referenced.
+	///
+	/// # Errors
+	///
+	/// Returns an `UnresolvedReferenceComponent` error when the reference does
+	/// not resolve to a single line.
+	pub fn line(&self) -> Result<Line> {
+		use self::ReferenceComponent::*;
+
+		if let Reference {line: Index(line), ..} = *self {
+			Ok(line)
+		} else {
+			Err(Error::UnresolvedReferenceComponent)
+		}
+	} 
+
+	/// Returns the column being referenced.
+	///
+	/// # Errors
+	///
+	/// Returns an `UnresolvedReferenceComponent` error when the reference does
+	/// not resolve to a single column.
+	pub fn column(&self) -> Result<Column> {
+		use self::ReferenceComponent::*;
+
+		if let Reference {column: Index(column), ..} = *self {
+			Ok(column)
+		} else {
+			Err(Error::UnresolvedReferenceComponent)
+		}
+	} 
+}
+
+
+impl From<Address> for Reference {
+	fn from(addr: Address) -> Self {
+		use self::ReferenceComponent::*;
+
+		Reference {
+			page: Index(addr.page),
+			line: Index(addr.line),
+			column: Index(addr.column),
+		}
+	}
+}
+
+
+impl Default for Reference {
+	fn default() -> Self {
+		use self::ReferenceComponent::*;
+
+		Reference {
+			page: All,
+			line: All,
+			column: All,
+		}
+	}
+}
+
+
+impl fmt::Display for Reference {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "{}/{}/{}", self.page, self.line, self.column)
+	}
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// ReferenceComponent
+////////////////////////////////////////////////////////////////////////////////
+/// A potentially indirect component of a `Reference`.
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+enum ReferenceComponent<T, O> {
+	Any,
+	Index(T),
+	Named(String),
+	#[allow(dead_code)]
+	Indirect(DirectReferenceComponent<T>, O),
+	All,
+}
+
+impl<T, O> ReferenceComponent<T, O>
+	where 
+		O: Offset<Base=T>,
+		T: Add
+{
+	/// Resolves index-relative components to their absolute positions, relative
+	/// to the given base index. 
+	///
+	/// # Errors
+	///
+	/// Returns an `InvalidReferenceComponent` error when the offset would
+	/// overflow or underflow the component boundaries.
+	#[allow(dead_code)]
+	pub fn resolve_index_indirection(&mut self, base: T) -> Result<()> {
+		use self::ReferenceComponent::*;
+
+		let mut resolved = None;
+		if let Indirect(ref drc, ref o) = *self {
+			resolved = match *drc {
+				DirectReferenceComponent::Any
+					=> Some(o.offset(&base)?),
+
+				DirectReferenceComponent::Index(ref i)
+					=> Some(o.offset(i)?),
+
+				_	=> None,
+			}
+		}
+
+		if let Some(res) = resolved {
+			*self = Index(res);
+		}
+		Ok(())
+	}
+}
+
+impl<T, O> From<DirectReferenceComponent<T>> for ReferenceComponent<T, O> {
+	fn from(drc: DirectReferenceComponent<T>) -> Self {
+		use self::DirectReferenceComponent::*;
+		match drc {
+			Any			=> ReferenceComponent::Any,
+			Index(i)	=> ReferenceComponent::Index(i),
+			Named(name)	=> ReferenceComponent::Named(name),
+		}
+	}
+}
+
+
+impl<T, O> fmt::Display for ReferenceComponent<T, O> 
+	where
+		T: fmt::Display,
+		O: fmt::Display + Offset,
+{
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		use self::ReferenceComponent::*;
+
+		match *self {
+			Any						=> write!(f, "_"),
+			Index(ref i)			=> write!(f, "{}", i),
+			Named(ref name)			=> write!(f, "{}", name),
+			Indirect(ref r, ref o)	=> if o.is_negative() {
+					write!(f, "{}{}", r, o)
+				} else {
+					write!(f, "{}+{}", r, o)
+				},
+			All						=> write!(f, "*"),
+		}
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// DirectReferenceComponent
+////////////////////////////////////////////////////////////////////////////////
+/// A direct component of a `Reference`.
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+enum DirectReferenceComponent<T> {
+	Any,
+	Index(T),
+	Named(String),
+}
+
+impl<T, O> From<ReferenceComponent<T, O>> for DirectReferenceComponent<T> {
+	fn from(rc: ReferenceComponent<T, O>) -> Self {
+		use self::DirectReferenceComponent::*;
+		match rc {
+			ReferenceComponent::Any			=> Any,
+			ReferenceComponent::Index(i)	=> Index(i),
+			ReferenceComponent::Named(name)	=> Named(name),
+			_	=> panic!("invalid reference component conversion"),
+		}
+	}
+}
+
+
+impl<T> fmt::Display for DirectReferenceComponent<T> where T: fmt::Display {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		use self::DirectReferenceComponent::*;
+
+		match *self {
+			Any				=> write!(f, "_"),
+			Index(ref i)	=> write!(f, "{}", i),
+			Named(ref name)	=> write!(f, "{}", name),
+		}
+	}
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Address
 ////////////////////////////////////////////////////////////////////////////////
-/// Encapsulates a single address name.
+/// The absolute position of a Cell.
 #[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone, Copy, Default)]
 pub struct Address {
 	/// The page of the Address.
-	pub page: PageCount,
+	pub page: Page,
+
 	/// The line of the Address.
-	pub line: LineCount,
+	pub line: Line,
+	
 	/// The column of the Address.
-	pub column: ColumnCount,
+	pub column: Column,
 }
 
 
 impl Address {
-	/// Creates a new Address.
-	pub fn new(page: PageCount, line: LineCount, column: ColumnCount) -> Self {
+	/// Creates a new `Address`.
+	pub fn new(page: Page, line: Line, column: Column) -> Self {
 		Address {
 			page: page,
 			line: line,
@@ -76,7 +411,7 @@ impl Address {
 		}
 	}
 
-	/// Returns the address n steps ahead, assuming the given wrapping 
+	/// Returns the `Address` n steps ahead, assuming the given wrapping 
 	/// parameters.
 	///
 	/// # Example
@@ -85,19 +420,19 @@ impl Address {
 	/// use palette::Address;
 	/// 
 	/// let a = Address::new(0, 9, 9);
-	/// let b = a.wrapping_add(1, 10, 10, 10);
+	/// let b = a.wrapping_step(1, 10, 10, 10);
 	/// 
 	/// assert_eq!(b, Address::new(1, 0, 0));
 	///
-	/// let c = Address::new(0, 0, 0).wrapping_add(200, 5, 5, 5);
+	/// let c = Address::new(0, 0, 0).wrapping_step(200, 5, 5, 5);
 	/// assert_eq!(c, Address::new(3, 0, 0));
 	/// ```
-	pub fn wrapping_add(
+	pub fn wrapping_step(
 		&self, 
 		n: usize,
-		pages: PageCount,
-		lines: LineCount, 
-		columns: ColumnCount) 
+		pages: Page,
+		lines: Line, 
+		columns: Column) 
 		-> Address
 	{
 		let (l, c) = (lines as usize, columns as usize);
@@ -108,42 +443,13 @@ impl Address {
 		let d = n2 / (l * c);
 		let m = n2 % (l * c);
 		Address::new(
-			d as PageCount % pages,
-			(m / c) as LineCount,
-			(m % c) as ColumnCount
+			d as Page % pages,
+			(m / c) as Line,
+			(m % c) as Column
 		)
 	}
-
-	/// Returns the page group containing the address.
-	///
-	/// # Example
-	///
-	/// ```rust
-	/// use palette::{Address, Group};
-	/// 
-	/// let a = Address::new(1, 2, 3).page_group();
-	/// 
-	/// assert_eq!(a, Group::Page {page: 1});
-	/// ```
-	pub fn page_group(&self) -> Group {
-		Group::Page {page: self.page}
-	}
-
-	/// Returns the line group containing the address.
-	///
-	/// # Example
-	///
-	/// ```rust
-	/// use palette::{Address, Group};
-	/// 
-	/// let a = Address::new(1, 2, 3).line_group();
-	/// 
-	/// assert_eq!(a, Group::Line {page: 1, line: 2});
-	/// ```
-	pub fn line_group(&self) -> Group {
-		Group::Line {page: self.page, line: self.line}
-	}
 }
+
 
 impl Into<Selection> for Address {
 	fn into(self) -> Selection {
@@ -151,101 +457,27 @@ impl Into<Selection> for Address {
 	}
 }
 
+
 impl fmt::Display for Address {
-	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(f, "{}:{}:{}", self.page, self.line, self.column)
 	}
 }
 
 
 impl fmt::UpperHex for Address {
-	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(f, "{:02X}:{:02X}:{:02X}", self.page, self.line, self.column)
 	}
 }
 
 
 impl fmt::LowerHex for Address {
-	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(f, "{:02x}:{:02x}:{:02x}", self.page, self.line, self.column)
 	}
 }
 
-
-////////////////////////////////////////////////////////////////////////////////
-// Group
-////////////////////////////////////////////////////////////////////////////////
-/// Encapsulates the group of a single line, page, or palette.
-#[derive(Debug, PartialOrd, PartialEq, Eq, Hash, Ord, Clone, Copy)]
-pub enum Group {
-	/// A single line group.
-	Line {
-		/// The page of the group.
-		page: PageCount, 
-		/// The line of the group.
-		line: LineCount
-	},
-	/// A single page group.
-	Page {
-		/// The page of the group.
-		page: PageCount
-	},
-	/// A full palette group.
-	All,
-}
-
-
-impl Group {
-	/// Returns the first address located within the group.
-	pub fn base_address(&self) -> Address {
-		match *self {
-			Group::Line {page, line} => Address::new(page, line, 0),
-			Group::Page {page} => Address::new(page, 0, 0),
-			Group::All => Address::new(0, 0, 0),
-		}
-	}
-
-	/// Returns whether the address is contained within the group.
-	pub fn contains(&self, address: Address) -> bool {
-		match *self {
-			Group::Line {page, line} 
-				=> address.page == page && address.line == line,
-			Group::Page {page} => address.page == page,
-			Group::All => true,
-		}
-	}
-}
-
-
-impl Into<Selection> for Group {
-	fn into(self) -> Selection {
-		Selection::new(Some(match self {
-			Group::Line {page, line} => Interval::right_open(
-				Address::new(page, line, 0),
-				Address::new(page, line+1, 0)
-			),
-			Group::Page {page} => Interval::right_open(
-				Address::new(page, 0, 0),
-				Address::new(page+1, 0, 0)
-			),
-			Group::All => Interval::closed(
-				Address::new(0, 0, 0),
-				Address::new(PAGE_MAX, LINE_MAX, COLUMN_MAX)
-			),
-		}))
-	}
-}
-
-
-impl fmt::Display for Group {
-	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		match *self {
-			Group::Line {page, line} => write!(f, "{}:{}:*", page, line),
-			Group::Page {page} => write!(f, "{}:*:*", page),
-			Group::All => write!(f, "*:*:*", ),
-		}
-	}
-}
 
 
 
@@ -261,22 +493,6 @@ pub struct Selection {
 
 impl Selection {
 	/// Creates a new selection from a collection of address intervals.
-	///
-	/// # Example
-	///
-	/// ```rust
-	/// use palette::{Selection, Interval, Address};
-	/// 
-	/// let sel = Selection::new([
-	///		Interval::open(Address::new(0, 0, 0), Address::new(1, 0, 0)),
-	///		Interval::open(Address::new(3, 0, 0), Address::new(3, 5, 0)),
-	///		Interval::closed(Address::new(8, 0, 6), Address::new(8, 0, 6))
-	///	].iter().cloned());
-	/// 
-	/// assert!(sel.contains(&Address::new(8, 0, 6)));
-	/// assert!(sel.contains(&Address::new(3, 0, 6)));
-	/// assert!(!sel.contains(&Address::new(0, 0, 0)));
-	/// ```
 	pub fn new<I>(intervals: I) -> Self 
 		where I: IntoIterator<Item=Interval<Address>> 
 	{
@@ -286,40 +502,11 @@ impl Selection {
 	}
 
 	/// Unions an interval into the selection.
-	///
-	/// # Example
-	///
-	/// ```rust
-	/// # use palette::{Selection, Interval, Address};
-	/// 
-	/// let mut sel = Selection::new([
-	///		Interval::closed(Address::new(0, 0, 0), Address::new(1, 0, 0)),
-	///	].iter().cloned());
-	/// 
-	/// assert!(!sel.contains(&Address::new(2, 0, 0)));
-	///
-	/// sel.union(Interval::open(Address::new(1, 0, 0), Address::new(4, 0, 0)));
-	///
-	/// assert!(sel.contains(&Address::new(2, 0, 0)));
-	/// ```
 	pub fn union(&mut self, interval: Interval<Address>) {
 		self.inner.push(interval);
 	}
 
 	/// Returns whether the given address is contained in the selection.
-	///
-	/// # Example
-	///
-	/// ```rust
-	/// # use palette::{Selection, Interval, Address};
-	/// 
-	/// let sel = Selection::new([
-	///		Interval::closed(Address::new(0, 0, 0), Address::new(1, 0, 0)),
-	///	].iter().cloned());
-	///
-	/// assert!(sel.contains(&Address::new(0, 0, 1)));
-	/// assert!(!sel.contains(&Address::new(10, 0, 0)));
-	/// ```
 	pub fn contains(&self, address: &Address) -> bool {
 		self.inner.iter().any(|int| int.contains(address))
 	}

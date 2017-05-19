@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 // 
-// Copyright (c) 2016 Skylor R. Schermer
+// Copyright (c) 2017 Skylor R. Schermer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,89 +22,80 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! Contains definitions for various palette editing operations.
+//! The `operation` module provides implementations of the high-level,
+//! reversable operations that may be applied to a `Palette`.
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
-#[warn(missing_docs)]
-pub mod arrange;
-#[warn(missing_docs)]
-pub mod duplicate;
-#[warn(missing_docs)]
-pub mod ramp;
-#[warn(missing_docs)]
-pub mod sequence;
-#[warn(missing_docs)]
-pub mod simple;
-#[warn(missing_docs)]
-pub mod undo;
 
-pub use palette::operation::arrange::*;
-pub use palette::operation::duplicate::*;
-pub use palette::operation::ramp::*;
-pub use palette::operation::sequence::*;
-pub use palette::operation::simple::*;
-pub use palette::operation::undo::*;
+// Sumbodules.
+mod undo;
 
-use palette::data::PaletteOperationData;
-use palette::element::{Slot, ColorElement};
-use palette::{Error, Result};
-use palette;
+// Submodule re-exports.
+pub use self::undo::Undo;
+
+// Local imports.
 use address::Address;
+use cell::Cell;
+use data::Data;
+use expression::Expression;
+use result::{Error, Result};
 
+// Standard imports.
 use std::fmt;
 use std::rc::{Rc, Weak};
 use std::mem;
 
+
 /// Returns a weak reference to the source element located at the given address 
-/// in the given palette. If the slot is empty, it will be created if 
+/// in the given palette. If the cell is empty, it will be created if 
 /// make_sources is true. If the source is created, its creation will be logged 
 /// in the provided Undo operation.
 pub fn get_source(
-	data: &mut PaletteOperationData, 
+	data: &mut Data, 
 	address: Address, 
 	make_sources: bool,
 	undo: &mut Undo) 
-	-> Result<Weak<Slot>>
+	-> Result<Weak<Cell>>
 {
-	if let Some(slot) = data.get_slot(address) {
-		Ok(Rc::downgrade(&slot))
+	if let Some(cell) = data.get_cell(address) {
+		Ok(Rc::downgrade(&cell))
 	} else if make_sources {
-		let slot = Rc::downgrade(&data.create_slot(address)?);
+		let cell = Rc::downgrade(&data.create_cell(address)?);
 		undo.record(address, None);
-		Ok(slot)
+		Ok(cell)
 	} else {
 		Err(Error::InvalidAddress(address))
 	}
 }
 
 /// Returns a reference to the target element located at the given address in
-/// the given palette. If the slot is empty, it will be created.
+/// the given palette. If the cell is empty, it will be created.
 pub fn get_target(
-	data: &mut PaletteOperationData, 
+	data: &mut Data, 
 	address: Address, 
 	undo: &mut Undo)
-	-> Result<Rc<Slot>>
+	-> Result<Rc<Cell>>
 {
-	if let Some(slot) = data.get_slot(address) {
-		Ok(slot)
+	if let Some(cell) = data.get_cell(address) {
+		Ok(cell)
 	} else {
-		let slot = data.create_slot(address)?;
+		let cell = data.create_cell(address)?;
 		undo.record(address, None);
-		Ok(slot)
+		Ok(cell)
 	}
 }
 
-/// Stores the given ColorElement in the slot at the given address in the given 
-/// palette. If the slot is empty, it will be created.
+/// Stores the given Expression in the cell at the given address in the given 
+/// palette. If the cell is empty, it will be created.
 pub fn set_target(
-	data: &mut PaletteOperationData,
+	data: &mut Data,
 	address: Address,
-	new_element: ColorElement,
+	new_element: Expression,
 	undo: &mut Undo)
 	-> Result<()>
 {
-	// Get the target slot.
+	// Get the target cell.
 	let target = get_target(data, address, undo)?;
 
 	// Insert new element into palette.
@@ -124,10 +115,9 @@ pub trait PaletteOperation: fmt::Debug {
 	fn get_info(&self) -> OperationInfo;
 
 	/// Applies the operation to the given palette.
-	fn apply(&mut self, data: &mut PaletteOperationData) 
-		-> palette::Result<HistoryEntry>;
+	fn apply(&mut self, data: &mut Data) 
+		-> Result<HistoryEntry>;
 }
-
 
 
 
@@ -157,7 +147,6 @@ impl OperationHistory {
 
 
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // HistoryEntry
 ////////////////////////////////////////////////////////////////////////////////
@@ -171,6 +160,7 @@ pub struct HistoryEntry {
 }
 
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // OperationInfo
 ////////////////////////////////////////////////////////////////////////////////
@@ -182,3 +172,5 @@ pub struct OperationInfo {
 	/// The details of the operation.
 	pub details: Option<String>,
 }
+
+

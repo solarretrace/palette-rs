@@ -27,8 +27,11 @@
 //! not work on versions 1.92 or older.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use palette::data::PaletteOperationData;
-use address::{Group, PageCount, LineCount, ColumnCount};
+
+use address::{
+	Reference,
+	Page, Line, Column};
+use data::Data;
 
 
 const ZPL_COLOR_DEPTH_SCALE: f32 = 0.25;
@@ -71,17 +74,17 @@ const ZPL_FOOTER_E : [u8;36] = [
 	0x3f, 0x07, 0x07, 0x07
 ];
 
-const ZPL_PAGE_LIMIT: PageCount =  0x203;
-const ZPL_DEFAULT_LINE_LIMIT: LineCount =  16;
-const ZPL_DEFAULT_COLUMN_LIMIT: ColumnCount =  16;
+const ZPL_PAGE_LIMIT: Page =  0x203;
+const ZPL_DEFAULT_LINE_LIMIT: Line =  16;
+const ZPL_DEFAULT_COLUMN_LIMIT: Column =  16;
 
-const MAIN_PAGE_LIMIT: PageCount = 0;
-const LEVEL_PAGE_LIMIT: PageCount = 512;
-const SPRITE_PAGE_LIMIT: PageCount = 515;
+const MAIN_PAGE_LIMIT: Page = 0;
+const LEVEL_PAGE_LIMIT: Page = 512;
+const SPRITE_PAGE_LIMIT: Page = 515;
 
 
 /// Returns the level label for the given line.
-fn get_level_label(line: LineCount) -> String {
+fn get_level_label(line: Line) -> String {
 	format!("CSET {} ({})", line,
 		if line == 0 || line == 4 || line == 7 || line == 10 {
 			"2"
@@ -97,9 +100,9 @@ fn get_level_label(line: LineCount) -> String {
 
 
 /// Called when a new palette is created. Initializes the palette data.
-pub fn initialize(data: &mut PaletteOperationData) {
-	data.set_label(Group::All, "ZplPalette 1.0.0");
-	data.page_count = ZPL_PAGE_LIMIT;
+pub fn initialize(data: &mut Data) {
+	data.set_label(Reference::all(), "ZplPalette 1.0.0");
+	data.maximum_page_count = ZPL_PAGE_LIMIT;
 	data.default_line_count = ZPL_DEFAULT_LINE_LIMIT;
 	data.default_column_count = ZPL_DEFAULT_COLUMN_LIMIT;
 	data.prepare_new_page = prepare_new_page;
@@ -108,38 +111,39 @@ pub fn initialize(data: &mut PaletteOperationData) {
 
 	
 /// The function to call when a new page is created.
-pub fn prepare_new_page(data: &mut PaletteOperationData, group: Group) {
-	if let Group::Page {page} = group {
-		if page <= MAIN_PAGE_LIMIT {
-			data.set_name(group, "Main");
-			data.set_label(group, "Level 0");
-			data.set_line_count(group, 14);
-		} else if page <= LEVEL_PAGE_LIMIT {
-			data.set_label(group, format!("Level {}", page));
-		} else {
-			data.set_label(group, format!("Sprite Page {}", page));
-		}
+pub fn prepare_new_page(data: &mut Data, group: &Reference) {
+	let page = group.page().expect("prepare page group with page reference");
+	if page <= MAIN_PAGE_LIMIT {
+		data.set_name(group.clone(), "Main");
+		data.set_label(group.clone(), "Level 0");
+		data.set_line_count(group.clone(), 14);
+	} else if page <= LEVEL_PAGE_LIMIT {
+		data.set_label(group.clone(), format!("Level {}", page));
+	} else {
+		data.set_label(group.clone(), format!("Sprite Page {}", page));
 	}
 }
 
 
 /// The function to call when a new line is created.
-pub fn prepare_new_line(data: &mut PaletteOperationData, group: Group) {
-	if let Group::Line {page, line} = group {
-		if page <= MAIN_PAGE_LIMIT {
-			data.set_label(group, format!("Main CSET {}", line));
-		} else if page <= LEVEL_PAGE_LIMIT {
-			data.set_label(group, 
-				get_level_label(line)
-			);
-		} else {
-			data.set_label(group, 
-				format!("Sprite CSET {}", page as usize 
-					- LEVEL_PAGE_LIMIT as usize + line as usize
-				)
-			);
-		}
+pub fn prepare_new_line(data: &mut Data, group: &Reference) {
+	let page = group.page().expect("prepare line group with page reference");
+	let line = group.line().expect("prepare line group with line reference");
+
+	if page <= MAIN_PAGE_LIMIT {
+		data.set_label(group.clone(), format!("Main CSET {}", line));
+	} else if page <= LEVEL_PAGE_LIMIT {
+		data.set_label(group.clone(), 
+			get_level_label(line)
+		);
+	} else {
+		data.set_label(group.clone(), 
+			format!("Sprite CSET {}", page as usize 
+				- LEVEL_PAGE_LIMIT as usize + line as usize
+			)
+		);
 	}
+	
 }
 
 

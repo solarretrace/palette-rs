@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 // 
-// Copyright (c) 2016 Skylor R. Schermer
+// Copyright (c) 2017 Skylor R. Schermer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,17 +22,24 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 //!
-//! Defines an undo operation to be returned by other operations.
+//! The `undo` module provides an `Undo` operation on a `Palette`.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use super::{PaletteOperation, HistoryEntry, OperationInfo};
-use palette::Result;
-use palette::data::PaletteOperationData;
-use palette::element::ColorElement;
-use address::Address;
 
-use std::mem;
+// Local imports.
+use address::Address;
+use data::Data;
+use expression::Expression;
+use operation::{
+	HistoryEntry,
+	OperationInfo,
+	PaletteOperation,
+};
+use result::Result;
+
+// Standard imports.
 use std::collections::HashMap;
+use std::mem;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -40,19 +47,21 @@ use std::collections::HashMap;
 ////////////////////////////////////////////////////////////////////////////////
 /// Restores a saved set of elements in the palette. 
 /// 
-/// The Undo operations stores ColorElements using a HashMap, which means it can
-/// only store one entry for each address. An create operation will have
+/// The Undo operation stores `Expression`s using a `HashMap`, which means it
+/// can only store one entry for each address. A create operation will have
 /// priority over any other change recorded. In otherwords, if there is an
-/// "address: None" entry in the Undo,  nothing will overwrite it. This ensures
-/// that the element at that address  will be deleted if the Undo operation is
-/// applied later.
+/// "address: None" entry in the `Undo`,  nothing will overwrite it. This
+/// ensures  that the element at that address will be deleted if the `Undo`
+/// operation is applied later.
 #[derive(Debug)]
 pub struct Undo {
 	/// The operation being undone.
 	undoing: OperationInfo,
-	/// The ColorElements to restore when applying the Undo.
-	saved: HashMap<Address, Option<ColorElement>>,
+
+	/// The Expressions to restore when applying the Undo.
+	saved: HashMap<Address, Option<Expression>>,
 }
+
 
 impl Undo {
 	/// Creates a new Undo operation.
@@ -80,7 +89,7 @@ impl Undo {
 
 	/// Records an element change to be replayed by the Undo operation.
 	#[inline]
-	pub fn record(&mut self, address: Address, element: Option<ColorElement>) {
+	pub fn record(&mut self, address: Address, element: Option<Expression>) {
 		if self.saved.get(&address).map_or(true, |e| !e.is_none()) {
 			self.saved.insert(address, element);
 		}
@@ -97,32 +106,32 @@ impl PaletteOperation for Undo {
 		}
 	}
 
-	fn apply(&mut self, data: &mut PaletteOperationData) -> Result<HistoryEntry> {
+	fn apply(&mut self, data: &mut Data) -> Result<HistoryEntry> {
 		let mut redo = Undo::new();
 
 		let saved = mem::replace(&mut self.saved, HashMap::new());
 
 		for (address, item) in saved {
-			match (item.is_some(), data.get_slot(address).is_some()) {
+			match (item.is_some(), data.get_cell(address).is_some()) {
 
-				(true, true) => { // The slot was modified.
+				(true, true) => { // The cell was modified.
 					let elem = item.unwrap();
-					let slot = data.get_slot(address).unwrap();
-					let cur = mem::replace(&mut *slot.borrow_mut(), elem);
+					let cell = data.get_cell(address).unwrap();
+					let cur = mem::replace(&mut *cell.borrow_mut(), elem);
 					redo.record(address, Some(cur));
 					continue;
 				},
 
-				(true, false) => { // The slot was deleted.
+				(true, false) => { // The cell was deleted.
 					let elem = item.unwrap();
-					let slot = data.create_slot(address).unwrap();
-					mem::replace(&mut *slot.borrow_mut(), elem);
+					let cell = data.create_cell(address).unwrap();
+					mem::replace(&mut *cell.borrow_mut(), elem);
 					redo.record(address, None);
 					continue;
 				},
 
-				(false, true) => { // The slot was added.
-					let cur = data.remove_slot(address)?;
+				(false, true) => { // The cell was added.
+					let cur = data.remove_cell(address)?;
 					redo.record(address, Some(cur));
 					continue;
 				},

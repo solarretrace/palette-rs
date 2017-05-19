@@ -26,21 +26,23 @@
 //!
 ////////////////////////////////////////////////////////////////////////////////
 
-// Module declarations.
-#[warn(missing_docs)]
+// Submodules.
 #[allow(dead_code)]
+#[warn(missing_docs)]
 pub mod zpl;
 #[warn(missing_docs)]
 pub mod default;
 
 // Module imports.
-use palette::Palette;
-use palette::data::PaletteOperationData;
-use palette::operation::PaletteOperation;
-use palette;
-use address::Group;
+use Palette;
+use address::Reference;
+use data::Data;
+use operation::PaletteOperation;
+use result::Result;
 
+// Standard imports.
 use std::io;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Format
@@ -51,6 +53,7 @@ pub enum Format {
 	/// The default palette format; provides no special behaviors or 
 	/// restrictions.
 	Default,
+
 	/// The ZPL palette format. Lines are 15 columns wide, and there are 16 
 	/// lines per page, for 211 pages. The names of lines and pages are 
 	/// auto-generated.
@@ -60,7 +63,7 @@ pub enum Format {
 
 impl Format {
 	/// Called when a new palette is created. Initializes the palette data.
-	pub fn initialize(self, data: &mut PaletteOperationData)  {
+	pub fn initialize(self, data: &mut Data)  {
 		match self {
 			Format::Zpl => zpl::initialize(data),
 			_ => (),
@@ -70,8 +73,8 @@ impl Format {
 	/// Called when a new page is created.
 	pub fn prepare_new_page(
 		self, data: 
-		&mut PaletteOperationData, 
-		group: Group) 
+		&mut Data, 
+		group: &Reference) 
 	{
 		match self {
 			Format::Zpl => zpl::prepare_new_page(data, group),
@@ -82,8 +85,8 @@ impl Format {
 	/// Called when a new line is created.
 	pub fn prepare_new_line(
 		self, 
-		data: &mut PaletteOperationData, 
-		group: Group) 
+		data: &mut Data, 
+		group: &Reference) 
 	{
 		match self {
 			Format::Zpl => zpl::prepare_new_line(data, group),
@@ -96,18 +99,18 @@ impl Format {
 		self, 
 		palette: &mut Palette, 
 		operation: Box<PaletteOperation>) 
-		-> palette::Result<()>
+		-> Result<()>
 	{
 		default::apply_operation(palette, operation)
 	}
 
 	/// Reverses the most recently applied operation.
-	pub fn undo(self, palette: &mut Palette) -> palette::Result<()> {
+	pub fn undo(self, palette: &mut Palette) -> Result<()> {
 		default::undo(palette)
 	}
 
 	/// Reverses the most recently applied undo operation.
-	pub fn redo(self, palette: &mut Palette) -> palette::Result<()> {
+	pub fn redo(self, palette: &mut Palette) -> Result<()> {
 		default::redo(palette)
 	}
 

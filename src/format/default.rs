@@ -25,16 +25,19 @@
 //! Provides components for interacting with the default palette format.
 //!
 ////////////////////////////////////////////////////////////////////////////////
-use palette::Palette;
-use palette::operation::PaletteOperation;
-use palette;
+
+// Local imports.
+use ::Palette;
+use operation::PaletteOperation;
+use result::Result;
+
 
 
 /// Applies the given operation to the palette.
 pub fn apply_operation(
 	palette: &mut Palette, 
 	mut operation: Box<PaletteOperation>) 
-	-> palette::Result<()> 
+	-> Result<()> 
 {
 	let data = &mut palette.data;
 	let history = &mut palette.operation_history;
@@ -50,7 +53,7 @@ pub fn apply_operation(
 
 
 /// Reverses the most recently applied operation.
-pub fn undo(palette: &mut Palette) -> palette::Result<()> {
+pub fn undo(palette: &mut Palette) -> Result<()> {
 	let data = &mut palette.data;
 	let history = &mut palette.operation_history;
 	// Check if history is enable.
@@ -68,7 +71,7 @@ pub fn undo(palette: &mut Palette) -> palette::Result<()> {
 
 
 /// Reverses the most recently applied undo operation.
-pub fn redo(palette: &mut Palette) -> palette::Result<()> {
+pub fn redo(palette: &mut Palette) -> Result<()> {
 	let data = &mut palette.data;
 	let history = &mut palette.operation_history;
 	// Check if history is enable.
