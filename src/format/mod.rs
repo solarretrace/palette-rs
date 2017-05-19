@@ -60,7 +60,7 @@ pub enum Format {
 	Zpl,
 }
 
-
+#[cfg_attr(feature = "cargo-clippy", allow(single_match))]
 impl Format {
 	/// Called when a new palette is created. Initializes the palette data.
 	pub fn initialize(self, data: &mut Data)  {

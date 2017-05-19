@@ -149,7 +149,7 @@ impl Data {
 	/// Returns a reference to the cell located at the given address, or None if
 	/// the address is invalid or empty.
 	pub fn get_cell(&self, address: Address) -> Option<Rc<Cell>> {
-		self.cells.get(&address).map(Clone::clone)
+		self.cells.get(&address).cloned()
 	}
 
 	/// Returns a reference to the cell located at the given address. If 
@@ -167,6 +167,7 @@ impl Data {
 	/// 	.ok()
 	/// 	.unwrap(); // Create empty `Cell` and unwrap it.
 	/// ```
+	#[cfg_attr(feature = "cargo-clippy", allow(map_entry))]
 	pub fn create_cell(&mut self, address: Address) -> Result<Rc<Cell>> {
 		if self.cells.contains_key(&address) {
 			Err(Error::AddressInUse(address))
@@ -185,7 +186,7 @@ impl Data {
 		// Remove cell from cells.
 		let cell = self.cells
 			.remove(&address)
-			.ok_or(Error::EmptyAddress(address))?;
+			.ok_or_else(|| Error::EmptyAddress(address))?;
 
 		// Extract Expression and discard wrappers.
 		let expr = mem::replace(&mut *cell.borrow_mut(), Default::default());
@@ -204,12 +205,12 @@ impl Data {
 	/// let mut dat: Data = Default::default();
 	/// dat.set_label(Reference::all(), "My Palette");
 	///
-	/// assert_eq!(dat.get_label(Reference::all()), Some("My Palette"));
+	/// assert_eq!(dat.get_label(&Reference::all()), Some("My Palette"));
 	/// ```
-	pub fn get_label(&self, group: Reference) -> Option<&str> {
+	pub fn get_label(&self, group: &Reference) -> Option<&str> {
 		self.metadata
-			.get(&group)
-			.and_then(|ref slotmap| slotmap.format_label.as_ref())
+			.get(group)
+			.and_then(|slotmap| slotmap.format_label.as_ref())
 			.map(|label| &label[..])
 	}
 
@@ -222,7 +223,7 @@ impl Data {
 	{
 		self.metadata
 			.entry(group)
-			.or_insert(Default::default())
+			.or_insert_with(Default::default)
 			.format_label = Some(format_label.into());
 	}
 
@@ -236,12 +237,12 @@ impl Data {
 	/// let mut dat: Data = Default::default();
 	/// dat.set_name(Reference::all(), "My Palette");
 	///
-	/// assert_eq!(dat.get_name(Reference::all()), Some("My Palette"));
+	/// assert_eq!(dat.get_name(&Reference::all()), Some("My Palette"));
 	/// ```
-	pub fn get_name(&self, group: Reference) -> Option<&str> {
+	pub fn get_name(&self, group: &Reference) -> Option<&str> {
 		self.metadata
-			.get(&group)
-			.and_then(|ref data| data.name.as_ref())
+			.get(group)
+			.and_then(|data| data.name.as_ref())
 			.map(|name| &name[..])
 	}
 
@@ -251,7 +252,7 @@ impl Data {
 	{
 		self.metadata
 			.entry(group)
-			.or_insert(Default::default())
+			.or_insert_with(Default::default)
 			.name = Some(name.into());
 	}
 
@@ -290,14 +291,14 @@ impl Data {
 	fn get_line_count(&mut self, group: &Reference) -> Line {
 		self.metadata
 			.get(group)
-			.map_or(self.default_line_count, |ref meta| meta.line_count)
+			.map_or(self.default_line_count, |meta| meta.line_count)
 	}
 
 	/// Sets the line count for a group.
 	pub fn set_line_count(&mut self, group: Reference, line_count: Line) {
 		self.metadata
 			.entry(group)
-			.or_insert(Default::default())
+			.or_insert_with(Default::default)
 			.line_count = line_count;
 	}
 
@@ -305,8 +306,8 @@ impl Data {
 	/// for the given group.
 	fn get_column_count(&mut self, group: &Reference) -> Column {
 		self.metadata
-			.get(&group)
-			.map_or(self.default_column_count, |ref meta| meta.column_count)
+			.get(group)
+			.map_or(self.default_column_count, |meta| meta.column_count)
 	}
 
 	/// Sets the column count for a group.
@@ -317,7 +318,7 @@ impl Data {
 	{
 		self.metadata
 			.entry(group)
-			.or_insert(Default::default())
+			.or_insert_with(Default::default)
 			.column_count = column_count;
 	}
 
@@ -452,7 +453,8 @@ impl fmt::Display for Data {
 
 		let mut cur_page_group = Reference::all();
 		let mut cur_line_group = Reference::all();
-		for (&address, ref cell) in self.cells.iter() {
+		for (&address, cell) in &self.cells {
+
 			if cur_page_group != Reference::page_of(&address) {
 				match self.metadata.get(&Reference::page_of(&address)) {
 					Some(meta) => writeln!(f, "Page {} - {}", 
@@ -462,6 +464,7 @@ impl fmt::Display for Data {
 					None => writeln!(f, "Page {}", Reference::page_of(&address))?,
 				}
 			};
+
 			cur_page_group = Reference::page_of(&address);
 			if cur_line_group != Reference::line_of(&address) {
 				if let Some(meta) = self.metadata.get(&Reference::line_of(&address)) {
@@ -473,7 +476,7 @@ impl fmt::Display for Data {
 
 			writeln!(f, "\t{:X}  {:X}",
 				address,
-				cell.borrow().color().unwrap_or(Color::new(0,0,0)))?;
+				cell.borrow().color().unwrap_or_else(|| Color::new(0,0,0)))?;
 		}
 		Ok(())
 	}

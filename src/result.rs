@@ -37,7 +37,7 @@ use std::fmt;
 use std::result;
 use std::error;
 
-/// An alias for std::result::Result<T, palette::Error>.
+/// An alias for `std::result::Result<T, palette::Error>`.
 pub type Result<T> = result::Result<T, Error>;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -53,7 +53,7 @@ pub enum Error {
 	/// Attempted to set a color to a non-zeroth-order slot.
 	CannotSetDerivedColor,
 	
-	/// An address was provided that lies outside of the range defined for the 
+	/// An `Address` was provided that lies outside of the range defined for the 
 	/// palette.
 	InvalidAddress(Address),
 	

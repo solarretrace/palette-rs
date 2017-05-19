@@ -453,7 +453,7 @@ impl Address {
 
 impl Into<Selection> for Address {
 	fn into(self) -> Selection {
-		Selection::new([Interval::closed(self.clone(), self)].iter().cloned())
+		Selection::new([Interval::closed(self, self)].iter().cloned())
 	}
 }
 

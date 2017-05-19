@@ -44,7 +44,7 @@ pub fn apply_operation(
 	// Apply operation.
 	let entry = operation.apply(data)?;
 	// Add history entry if history is enabled.
-	if let &mut Some(ref mut history) = history {
+	if let Some(ref mut history) = *history {
 		history.undo_entries.push(entry);
 		history.redo_entries.clear();
 	}
@@ -57,7 +57,7 @@ pub fn undo(palette: &mut Palette) -> Result<()> {
 	let data = &mut palette.data;
 	let history = &mut palette.operation_history;
 	// Check if history is enable.
-	if let &mut Some(ref mut history) = history {
+	if let Some(ref mut history) = *history {
 		// Check for history entry.
 		if let Some(mut entry) = history.undo_entries.pop() {
 			let redo = entry.undo.apply(data)?;
@@ -75,7 +75,7 @@ pub fn redo(palette: &mut Palette) -> Result<()> {
 	let data = &mut palette.data;
 	let history = &mut palette.operation_history;
 	// Check if history is enable.
-	if let &mut Some(ref mut history) = history {
+	if let Some(ref mut history) = *history {
 		// Check for history entry.
 		if let Some(mut entry) = history.redo_entries.pop() {
 			let undo = entry.undo.apply(data)?;

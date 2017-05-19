@@ -57,8 +57,8 @@ impl Expression {
 
 impl fmt::Debug for Expression {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		match self {
-			&Expression::Color(ref color) => 
+		match *self {
+			Expression::Color(ref color) => 
 				write!(f, "Expression::Color({:?})", color),
 		}
 	}

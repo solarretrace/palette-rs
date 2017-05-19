@@ -29,7 +29,8 @@ use std::f32;
 
 
 /// Returns true if the given float values are nearly equal, taking into account
-/// relative error and infinites. 
+/// relative error and infinites.
+#[cfg_attr(feature = "cargo-clippy", allow(float_cmp))]
 #[inline]
 pub fn nearly_equal(a: f32, b: f32) -> bool {
 	let abs_a = a.abs();

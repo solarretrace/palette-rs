@@ -49,8 +49,8 @@ use std::mem;
 
 /// Returns a weak reference to the source element located at the given address 
 /// in the given palette. If the cell is empty, it will be created if 
-/// make_sources is true. If the source is created, its creation will be logged 
-/// in the provided Undo operation.
+/// `make_sources` is true. If the source is created, its creation will be
+/// logged  in the provided Undo operation.
 pub fn get_source(
 	data: &mut Data, 
 	address: Address, 
@@ -126,7 +126,7 @@ pub trait PaletteOperation: fmt::Debug {
 ////////////////////////////////////////////////////////////////////////////////
 /// Maintains a history of operations applied to a palette and their associated
 /// undo operations.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct OperationHistory {
 	/// The record of available undos.
 	pub undo_entries: Vec<HistoryEntry>,
@@ -134,16 +134,6 @@ pub struct OperationHistory {
 	pub redo_entries: Vec<HistoryEntry>,
 }
 
-
-impl OperationHistory {
-	/// Creates a new, empty OperationHistory
-	pub fn new() -> OperationHistory {
-		OperationHistory {
-			undo_entries: Vec::new(),
-			redo_entries: Vec::new(),
-		}
-	}
-}
 
 
 

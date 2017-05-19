@@ -111,6 +111,7 @@ pub fn initialize(data: &mut Data) {
 
 	
 /// The function to call when a new page is created.
+#[cfg_attr(feature = "cargo-clippy", allow(absurd_extreme_comparisons))]
 pub fn prepare_new_page(data: &mut Data, group: &Reference) {
 	let page = group.page().expect("prepare page group with page reference");
 	if page <= MAIN_PAGE_LIMIT {
@@ -126,6 +127,7 @@ pub fn prepare_new_page(data: &mut Data, group: &Reference) {
 
 
 /// The function to call when a new line is created.
+#[cfg_attr(feature = "cargo-clippy", allow(absurd_extreme_comparisons))]
 pub fn prepare_new_line(data: &mut Data, group: &Reference) {
 	let page = group.page().expect("prepare line group with page reference");
 	let line = group.line().expect("prepare line group with line reference");

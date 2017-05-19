@@ -110,7 +110,7 @@ impl Palette {
 		let mut pal = Palette {
 			data: Default::default(),
 			operation_history: if history {
-					Some(OperationHistory::new())
+					Some(Default::default())
 				} else {
 				    None
 				},
