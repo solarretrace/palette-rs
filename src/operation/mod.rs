@@ -29,9 +29,22 @@
 
 
 // Sumbodules.
+#[warn(missing_docs)]
+mod basic;
+#[warn(missing_docs)]
+mod combine;
+#[warn(missing_docs)]
 mod undo;
 
 // Submodule re-exports.
+pub use self::basic::{
+	InsertCell,
+	DeleteCell,
+};
+pub use self::combine::{
+	Repeat,
+	Sequence,
+};
 pub use self::undo::Undo;
 
 // Local imports.
@@ -50,8 +63,8 @@ use std::mem;
 /// Returns a weak reference to the source element located at the given address 
 /// in the given palette. If the cell is empty, it will be created if 
 /// `make_sources` is true. If the source is created, its creation will be
-/// logged  in the provided Undo operation.
-pub fn get_source(
+/// logged in the provided Undo operation.
+pub(crate) fn get_source(
 	data: &mut Data, 
 	address: Address, 
 	make_sources: bool,
@@ -71,7 +84,7 @@ pub fn get_source(
 
 /// Returns a reference to the target element located at the given address in
 /// the given palette. If the cell is empty, it will be created.
-pub fn get_target(
+pub(crate) fn get_target(
 	data: &mut Data, 
 	address: Address, 
 	undo: &mut Undo)
@@ -88,7 +101,7 @@ pub fn get_target(
 
 /// Stores the given Expression in the cell at the given address in the given 
 /// palette. If the cell is empty, it will be created.
-pub fn set_target(
+pub(crate) fn set_target(
 	data: &mut Data,
 	address: Address,
 	new_element: Expression,

@@ -58,7 +58,7 @@ pub struct Undo {
 	/// The operation being undone.
 	undoing: OperationInfo,
 
-	/// The Expressions to restore when applying the Undo.
+	/// The `Expression`s to restore when applying the Undo.
 	saved: HashMap<Address, Option<Expression>>,
 }
 

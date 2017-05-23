@@ -41,9 +41,6 @@ use result::{
 	Result,
 };
 
-// Non-local imports.
-use color::Color;
-
 // Standard imports.
 use std::collections::{
 	BTreeMap,
@@ -444,7 +441,7 @@ impl fmt::Display for Data {
 			write!(f, "{} ", data)?;
 		}
 		write!(f, 
-			"[{} pages] [{} expressions] [default wrap {}:{}]\n",
+			"[{} pages] [{} expression(s)] [default wrap {}:{}]\n",
 			self.maximum_page_count,
 			self.len(),
 			self.default_line_count,
@@ -474,9 +471,12 @@ impl fmt::Display for Data {
 				write!(f, "\tAddress   Color\n")?;
 			}
 
-			writeln!(f, "\t{:X}  {:X}",
+			writeln!(f, "\t{:X}  {}",
 				address,
-				cell.borrow().color().unwrap_or_else(|| Color::new(0,0,0)))?;
+				cell.borrow()
+					.color()
+					.map(|c| c.to_string())
+					.unwrap_or("-".to_string()))?;
 		}
 		Ok(())
 	}

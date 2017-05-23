@@ -42,6 +42,8 @@ use std::fmt;
 /// An AST in the color-expression grammar.
 #[derive(Clone, Copy)]
 pub enum Expression {
+	/// An empty expression.
+	Empty,
 	/// A pure color.
 	Color(Color)
 }
@@ -58,8 +60,11 @@ impl Expression {
 impl fmt::Debug for Expression {
 	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
 		match *self {
-			Expression::Color(ref color) => 
-				write!(f, "Expression::Color({:?})", color),
+			Expression::Empty
+				=> write!(f, "Expression::Empty"),
+
+			Expression::Color(ref color)
+				=> write!(f, "Expression::Color({:?})", color),
 		}
 	}
 }
@@ -67,6 +72,6 @@ impl fmt::Debug for Expression {
 
 impl Default for Expression {
 	fn default() -> Self {
-		Expression::Color(Default::default())
+		Expression::Empty
 	}
 }
