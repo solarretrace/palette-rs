@@ -55,7 +55,7 @@ use result::Result;
 ///
 /// pal.apply(Box::new(InsertCell::new())).unwrap();
 ///
-/// assert_eq!(pal.get_color(Address::new(0, 0, 0)), None);
+/// assert_eq!(pal.color(Address::new(0, 0, 0)), None);
 /// 
 /// ```
 #[derive(Debug, Clone, Copy, Default)]
@@ -92,7 +92,7 @@ impl InsertCell {
 
 
 impl PaletteOperation for InsertCell {
-	fn get_info(&self) -> OperationInfo {
+	fn info(&self) -> OperationInfo {
 		OperationInfo {
 			name: "Insert Cell",
 			details: Some(format!("{:?}", self))
@@ -121,7 +121,7 @@ impl PaletteOperation for InsertCell {
 		set_target(data, target, Default::default(), &mut undo)?;
 		
 		Ok(HistoryEntry {
-			info: self.get_info(),
+			info: self.info(),
 			undo: Box::new(undo),
 		})
 	}
@@ -163,7 +163,7 @@ impl DeleteCell {
 
 
 impl PaletteOperation for DeleteCell {
-	fn get_info(&self) -> OperationInfo {
+	fn info(&self) -> OperationInfo {
 		OperationInfo {
 			name: "Remove Cell",
 			details: Some(format!("{:?}", self))
@@ -176,7 +176,7 @@ impl PaletteOperation for DeleteCell {
 		undo.record(self.address, Some(data.remove_cell(self.address)?));
 		
 		Ok(HistoryEntry {
-			info: self.get_info(),
+			info: self.info(),
 			undo: Box::new(undo),
 		})
 	}

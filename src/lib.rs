@@ -152,7 +152,7 @@ impl Palette {
 
 	/// Returns the color at the given address, or None if the cell is empty.
 	pub fn color(&self, address: Address) -> Option<Color> {
-		self.data.get_cell(address).and_then(|cell| cell.color())
+		self.data.cell(address).and_then(|cell| cell.color())
 	}
 
 

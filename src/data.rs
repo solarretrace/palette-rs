@@ -145,7 +145,7 @@ impl Data {
 
 	/// Returns a reference to the cell located at the given address, or None if
 	/// the address is invalid or empty.
-	pub fn get_cell(&self, address: Address) -> Option<Rc<Cell>> {
+	pub fn cell(&self, address: Address) -> Option<Rc<Cell>> {
 		self.cells.get(&address).cloned()
 	}
 
@@ -202,9 +202,9 @@ impl Data {
 	/// let mut dat: Data = Default::default();
 	/// dat.set_label(Reference::all(), "My Palette");
 	///
-	/// assert_eq!(dat.get_label(&Reference::all()), Some("My Palette"));
+	/// assert_eq!(dat.label(&Reference::all()), Some("My Palette"));
 	/// ```
-	pub fn get_label(&self, group: &Reference) -> Option<&str> {
+	pub fn label(&self, group: &Reference) -> Option<&str> {
 		self.metadata
 			.get(group)
 			.and_then(|slotmap| slotmap.format_label.as_ref())
@@ -234,9 +234,9 @@ impl Data {
 	/// let mut dat: Data = Default::default();
 	/// dat.set_name(Reference::all(), "My Palette");
 	///
-	/// assert_eq!(dat.get_name(&Reference::all()), Some("My Palette"));
+	/// assert_eq!(dat.name(&Reference::all()), Some("My Palette"));
 	/// ```
-	pub fn get_name(&self, group: &Reference) -> Option<&str> {
+	pub fn name(&self, group: &Reference) -> Option<&str> {
 		self.metadata
 			.get(group)
 			.and_then(|data| data.name.as_ref())
@@ -272,8 +272,8 @@ impl Data {
 			address = address.wrapping_step(
 				1,
 				self.maximum_page_count,
-				self.get_line_count(&Reference::page_of(&address)), 
-				self.get_column_count(&Reference::line_of(&address))
+				self.line_count(&Reference::page_of(&address)), 
+				self.column_count(&Reference::line_of(&address))
 			);
 			// Return an error if we've looped all the way around.
 			if address == starting_address {
@@ -285,7 +285,7 @@ impl Data {
 
 	/// Calls the prepare_new_page function and returns the current line count 
 	/// for the given group.
-	fn get_line_count(&mut self, group: &Reference) -> Line {
+	fn line_count(&mut self, group: &Reference) -> Line {
 		self.metadata
 			.get(group)
 			.map_or(self.default_line_count, |meta| meta.line_count)
@@ -301,7 +301,7 @@ impl Data {
 
 	/// Calls the prepare_new_line function and returns the current column count 
 	/// for the given group.
-	fn get_column_count(&mut self, group: &Reference) -> Column {
+	fn column_count(&mut self, group: &Reference) -> Column {
 		self.metadata
 			.get(group)
 			.map_or(self.default_column_count, |meta| meta.column_count)
@@ -323,8 +323,8 @@ impl Data {
 	/// wrapping and max page settings for the palette.
 	fn check_address(&mut self, address: Address) -> bool {
 		address.page < self.maximum_page_count &&
-		address.line < self.get_line_count(&Reference::page_of(&address)) &&
-		address.column < self.get_column_count(&Reference::line_of(&address))
+		address.line < self.line_count(&Reference::page_of(&address)) &&
+		address.column < self.column_count(&Reference::line_of(&address))
 	}
 
 	/// Prepares an address by calling the palette format's metadata functions.
@@ -382,8 +382,8 @@ impl Data {
 				next = next.wrapping_step(
 					1,
 					self.maximum_page_count,
-					self.get_line_count(&Reference::page_of(&next)),
-					self.get_column_count(&Reference::line_of(&next)),
+					self.line_count(&Reference::page_of(&next)),
+					self.column_count(&Reference::line_of(&next)),
 				);
 			}
 		} else { // Find n free addresses.
@@ -401,8 +401,8 @@ impl Data {
 				next = next.wrapping_step(
 					1,
 					self.maximum_page_count,
-					self.get_line_count(&Reference::page_of(&next)),
-					self.get_column_count(&Reference::line_of(&next)),
+					self.line_count(&Reference::page_of(&next)),
+					self.column_count(&Reference::line_of(&next)),
 				);
 				next = self.first_free_address_after(next)?;
 				// Add the target if it's not in the exclude list.

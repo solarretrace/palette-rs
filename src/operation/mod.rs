@@ -63,15 +63,15 @@ use std::mem;
 /// Returns a weak reference to the source element located at the given address 
 /// in the given palette. If the cell is empty, it will be created if 
 /// `make_sources` is true. If the source is created, its creation will be
-/// logged in the provided Undo operation.
-pub(crate) fn get_source(
+/// logged in the provided `Undo` operation.
+pub(crate) fn source(
 	data: &mut Data, 
 	address: Address, 
 	make_sources: bool,
 	undo: &mut Undo) 
 	-> Result<Weak<Cell>>
 {
-	if let Some(cell) = data.get_cell(address) {
+	if let Some(cell) = data.cell(address) {
 		Ok(Rc::downgrade(&cell))
 	} else if make_sources {
 		let cell = Rc::downgrade(&data.create_cell(address)?);
@@ -84,13 +84,13 @@ pub(crate) fn get_source(
 
 /// Returns a reference to the target element located at the given address in
 /// the given palette. If the cell is empty, it will be created.
-pub(crate) fn get_target(
+pub(crate) fn target(
 	data: &mut Data, 
 	address: Address, 
 	undo: &mut Undo)
 	-> Result<Rc<Cell>>
 {
-	if let Some(cell) = data.get_cell(address) {
+	if let Some(cell) = data.cell(address) {
 		Ok(cell)
 	} else {
 		let cell = data.create_cell(address)?;
@@ -109,7 +109,7 @@ pub(crate) fn set_target(
 	-> Result<()>
 {
 	// Get the target cell.
-	let target = get_target(data, address, undo)?;
+	let target = target(data, address, undo)?;
 
 	// Insert new element into palette.
 	let cur = mem::replace(&mut *target.borrow_mut(), new_element);
@@ -125,7 +125,7 @@ pub(crate) fn set_target(
 /// Provides the methods for modifying palettes.
 pub trait PaletteOperation: fmt::Debug {
 	/// Returns information about the operation.
-	fn get_info(&self) -> OperationInfo;
+	fn info(&self) -> OperationInfo;
 
 	/// Applies the operation to the given palette.
 	fn apply(&mut self, data: &mut Data) 

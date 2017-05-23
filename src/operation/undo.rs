@@ -82,7 +82,7 @@ impl Undo {
 		where O: PaletteOperation
 	{
 		Undo {
-			undoing: operation.get_info(),
+			undoing: operation.info(),
 			saved: Default::default(),
 		}
 	}
@@ -99,7 +99,7 @@ impl Undo {
 
 
 impl PaletteOperation for Undo {
-	fn get_info(&self) -> OperationInfo {
+	fn info(&self) -> OperationInfo {
 		OperationInfo {
 			name: "Undo",
 			details: Some(format!("{:?}", self))
@@ -112,11 +112,11 @@ impl PaletteOperation for Undo {
 		let saved = mem::replace(&mut self.saved, HashMap::new());
 
 		for (address, item) in saved {
-			match (item.is_some(), data.get_cell(address).is_some()) {
+			match (item.is_some(), data.cell(address).is_some()) {
 
 				(true, true) => { // The cell was modified.
 					let elem = item.unwrap();
-					let cell = data.get_cell(address).unwrap();
+					let cell = data.cell(address).unwrap();
 					let cur = mem::replace(&mut *cell.borrow_mut(), elem);
 					redo.record(address, Some(cur));
 					continue;
@@ -141,7 +141,7 @@ impl PaletteOperation for Undo {
 		}
 
 		Ok(HistoryEntry {
-			info: self.get_info(),
+			info: self.info(),
 			undo: Box::new(redo),
 		})
 	}

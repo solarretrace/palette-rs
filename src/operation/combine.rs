@@ -59,8 +59,8 @@ use std::mem;
 ///		])
 /// )).unwrap();
 ///
-/// assert_eq!(pal.get_color(Address::new(0, 0, 0)), Some(Color::new(10, 10, 10)));
-/// assert_eq!(pal.get_color(Address::new(0, 0, 1)), Some(Color::new(20, 20, 20)));
+/// assert_eq!(pal.color(Address::new(0, 0, 0)), Some(Color::new(10, 10, 10)));
+/// assert_eq!(pal.color(Address::new(0, 0, 1)), Some(Color::new(20, 20, 20)));
 /// ```
 #[derive(Debug)]
 pub struct Sequence {
@@ -78,7 +78,7 @@ impl Sequence {
 
 
 impl PaletteOperation for Sequence {
-	fn get_info(&self) -> OperationInfo {
+	fn info(&self) -> OperationInfo {
 		OperationInfo {
 			name: "Sequence",
 			details: Some(format!("{:?}", self))
@@ -95,7 +95,7 @@ impl PaletteOperation for Sequence {
 		}
 
 		Ok(HistoryEntry {
-			info: self.get_info(),
+			info: self.info(),
 			undo: Box::new(Sequence::new(undo_sequence)),
 		})
 	}
@@ -120,9 +120,9 @@ impl PaletteOperation for Sequence {
 ///		)).repeat(3)
 /// )).unwrap();
 ///
-/// assert_eq!(pal.get_color(Address::new(0, 0, 0)), Some(Color::new(50, 50, 78)));
-/// assert_eq!(pal.get_color(Address::new(0, 0, 1)), Some(Color::new(50, 50, 78)));
-/// assert_eq!(pal.get_color(Address::new(0, 0, 2)), Some(Color::new(50, 50, 78)));
+/// assert_eq!(pal.color(Address::new(0, 0, 0)), Some(Color::new(50, 50, 78)));
+/// assert_eq!(pal.color(Address::new(0, 0, 1)), Some(Color::new(50, 50, 78)));
+/// assert_eq!(pal.color(Address::new(0, 0, 2)), Some(Color::new(50, 50, 78)));
 /// ```
 #[derive(Debug)]
 pub struct Repeat {
@@ -151,7 +151,7 @@ impl Repeat {
 
 
 impl PaletteOperation for Repeat {
-	fn get_info(&self) -> OperationInfo {
+	fn info(&self) -> OperationInfo {
 		OperationInfo {
 			name: "Repeat",
 			details: Some(format!("{:?}", self))
@@ -167,7 +167,7 @@ impl PaletteOperation for Repeat {
 		}
 
 		Ok(HistoryEntry {
-			info: self.get_info(),
+			info: self.info(),
 			undo: Box::new(Sequence::new(undo_sequence)),
 		})
 	}

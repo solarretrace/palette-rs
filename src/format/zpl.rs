@@ -84,7 +84,7 @@ const SPRITE_PAGE_LIMIT: Page = 515;
 
 
 /// Returns the level label for the given line.
-fn get_level_label(line: Line) -> String {
+fn level_label(line: Line) -> String {
 	format!("CSET {} ({})", line,
 		if line == 0 || line == 4 || line == 7 || line == 10 {
 			"2"
@@ -136,7 +136,7 @@ pub fn prepare_new_line(data: &mut Data, group: &Reference) {
 		data.set_label(group.clone(), format!("Main CSET {}", line));
 	} else if page <= LEVEL_PAGE_LIMIT {
 		data.set_label(group.clone(), 
-			get_level_label(line)
+			level_label(line)
 		);
 	} else {
 		data.set_label(group.clone(), 
